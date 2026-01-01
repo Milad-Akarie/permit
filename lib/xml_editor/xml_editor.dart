@@ -59,11 +59,27 @@ class XmlEditor {
     _updateDocument();
   }
 
-  /// Add a key-value pair to an Info.plist file
+  /// Add a manifest permission
+  void addManifestPermission({
+    required String permissionName,
+    List<String>? comments,
+  }) {
+    addManifestTag(
+      path: 'manifest',
+      tag: '<uses-permission android:name="$permissionName" />',
+      comments: comments,
+    );
+  }
+
+  /// Add a key-value pair to a plist file at a specific path
   ///
-  /// Example:
+  /// The value parameter is optional. If null, only the key will be added.
+  /// The path parameter is required and specifies where to add the entry.
+  ///
+  /// Example with root dict:
   /// ```dart
   /// editor.addPlistEntry(
+  ///   path: 'plist.dict',
   ///   key: 'NSCameraUsageDescription',
   ///   value: '<string>We need camera access for photos</string>',
   ///   keyComments: ['@permit camera'],
@@ -71,16 +87,28 @@ class XmlEditor {
   ///   anchorKeys: ['NSPhotoLibraryUsageDescription', 'NSMicrophoneUsageDescription'],
   /// );
   /// ```
+  ///
+  /// Example with nested path:
+  /// ```dart
+  /// editor.addPlistEntry(
+  ///   path: 'plist.dict.customDict',
+  ///   key: 'item1',
+  ///   value: '<string>value1</string>',
+  /// );
+  /// ```
   void addPlistEntry({
+    required String path,
     required String key,
-    required String value,
+    String? value,
     List<String>? keyComments,
     List<String>? valueComments,
     List<String>? anchorKeys,
   }) {
-    final dict = _findDictElement();
+    // Find the target dict element at the specified path
+    final dict = _findElementByPath(path);
+
     if (dict == null) {
-      throw Exception('Could not find <dict> element in plist');
+      throw Exception('Could not find <dict> element at path: $path');
     }
 
     // Find insertion position
@@ -100,19 +128,40 @@ class XmlEditor {
     }
     insertLines.add('${insertInfo.indent}<key>$key</key>');
 
-    // Add value comments if provided
-    if (valueComments != null && valueComments.isNotEmpty) {
-      for (final comment in valueComments) {
-        insertLines.add('${insertInfo.indent}<!-- $comment -->');
+    // Add value only if provided
+    if (value != null) {
+      // Add value comments if provided
+      if (valueComments != null && valueComments.isNotEmpty) {
+        for (final comment in valueComments) {
+          insertLines.add('${insertInfo.indent}<!-- $comment -->');
+        }
       }
+      insertLines.add('${insertInfo.indent}$value');
     }
-    insertLines.add('${insertInfo.indent}$value');
 
     // Insert at the appropriate position
     lines.insertAll(insertInfo.lineIndex, insertLines);
 
     // Reparse document so subsequent operations see the change
     _updateDocument();
+  }
+
+  // add plistUsageDescription
+  void addPlistUsageDescription({
+    required String key,
+    required String description,
+    List<String>? keyComments,
+    List<String>? valueComments,
+    List<String>? anchorKeys,
+  }) {
+    addPlistEntry(
+      path: 'plist.dict',
+      key: key,
+      value: '<string>$description</string>',
+      keyComments: keyComments,
+      valueComments: valueComments,
+      anchorKeys: anchorKeys,
+    );
   }
 
   /// Remove a tag from manifest with its associated comments
@@ -154,6 +203,19 @@ class XmlEditor {
 
     // Reparse document after removal so subsequent operations see the change
     _updateDocument();
+  }
+
+  /// Remove a manifest permission by name with its associated comments
+  void removeManifestPermission({
+    required String permissionName,
+    List<String>? comments,
+  }) {
+    removeManifestTag(
+      path: 'manifest',
+      tagName: 'uses-permission',
+      attribute: ('android:name', permissionName),
+      comments: comments,
+    );
   }
 
   /// Find the line range of a child element by tag name and attribute within a parent element
@@ -246,17 +308,19 @@ class XmlEditor {
   /// Example:
   /// ```dart
   /// editor.removePlistEntry(
+  ///   path: 'plist.dict',
   ///   key: 'NSCameraUsageDescription',
   ///   commentMarkers: ['@permit'],
   /// );
   /// ```
   void removePlistEntry({
+    required String path,
     required String key,
     List<String>? commentMarkers,
   }) {
-    final dict = _findDictElement();
+    final dict = _findElementByPath(path);
     if (dict == null) {
-      throw Exception('Could not find <dict> element in plist');
+      throw Exception('Could not find <dict> element at path: $path');
     }
 
     // Find the key element
@@ -293,6 +357,25 @@ class XmlEditor {
 
     // Reparse document after removal so subsequent operations see the change
     _updateDocument();
+  }
+
+  /// Remove a plist usage description by key with its associated comments
+  ///
+  /// Example:
+  /// ```dart
+  /// editor.removePlistUsageDescription(
+  ///   key: 'NSCameraUsageDescription',
+  ///   commentMarkers: ['@permit'],
+  /// );
+  void removePlistUsageDescription({
+    required String key,
+    List<String>? commentMarkers,
+  }) {
+    removePlistEntry(
+      path: 'plist.dict',
+      key: key,
+      commentMarkers: commentMarkers,
+    );
   }
 
   /// Find all tags by name within a specific path
@@ -408,11 +491,6 @@ class XmlEditor {
     }
 
     return current;
-  }
-
-  /// Find the dict element in a plist file
-  XmlElement? _findDictElement() {
-    return document.findAllElements('dict').firstOrNull;
   }
 
   /// Find a specific key in a plist dict

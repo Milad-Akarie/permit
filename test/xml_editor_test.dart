@@ -525,9 +525,9 @@ void main() {
     group('addPlistEntry', () {
       test('should add a new plist entry with comments', () {
         final editor = XmlEditor(plistContent);
-        editor.addPlistEntry(
+        editor.addPlistUsageDescription(
           key: 'NSMicrophoneUsageDescription',
-          value: '<string>We need microphone access</string>',
+          description: 'We need microphone access',
           keyComments: ['@permit microphone'],
         );
 
@@ -539,9 +539,9 @@ void main() {
 
       test('should add entry after anchor key', () {
         final editor = XmlEditor(plistContent);
-        editor.addPlistEntry(
+        editor.addPlistUsageDescription(
           key: 'NSContactsUsageDescription',
-          value: '<string>We need contacts access</string>',
+          description: 'We need contacts access',
           anchorKeys: ['NSPhotoLibraryUsageDescription'],
         );
 
@@ -554,6 +554,7 @@ void main() {
       test('should add plist entry without comments', () {
         final editor = XmlEditor(plistContent);
         editor.addPlistEntry(
+          path: 'plist.dict',
           key: 'NSBluetoothPeripheralUsageDescription',
           value: '<string>We need bluetooth access</string>',
         );
@@ -562,12 +563,70 @@ void main() {
         expect(result.contains('NSBluetoothPeripheralUsageDescription'), true);
       });
 
-      test('should throw exception when dict not found', () {
+      test('should add plist entry with null value (key only)', () {
+        final editor = XmlEditor(plistContent);
+        editor.addPlistEntry(
+          path: 'plist.dict',
+          key: 'TestKeyOnly',
+          value: null,
+          keyComments: ['@permit test key'],
+        );
+
+        final result = editor.toXmlString();
+        expect(result.contains('TestKeyOnly'), true);
+        expect(result.contains('@permit test key'), true);
+        // Value should not be present after the key
+        final lines = result.split('\n');
+        final keyLine = lines.indexWhere((line) => line.contains('TestKeyOnly'));
+        expect(keyLine, greaterThanOrEqualTo(0));
+        // Check next non-comment line is not a string/value
+        int nextLineIdx = keyLine + 1;
+        while (nextLineIdx < lines.length && lines[nextLineIdx].trim().startsWith('<!--')) {
+          nextLineIdx++;
+        }
+        expect(lines[nextLineIdx].contains('<string>'), false);
+      });
+
+      test('should add entry at specified path', () {
+        final plistWithArray = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <key>ArrayKey</key>
+    <array>
+    </array>
+</dict>
+</plist>''';
+        final editor = XmlEditor(plistWithArray);
+        editor.addPlistEntry(
+          path: 'plist.dict',
+          key: 'NewKey',
+          value: '<string>new value</string>',
+        );
+
+        final result = editor.toXmlString();
+        expect(result.contains('NewKey'), true);
+        expect(result.contains('new value'), true);
+      });
+
+      test('should throw exception when dict not found at path', () {
         final invalidPlist = '<?xml version="1.0"?><plist version="1.0"><array></array></plist>';
         final editor = XmlEditor(invalidPlist);
 
         expect(
           () => editor.addPlistEntry(
+            path: 'plist.dict',
+            key: 'TestKey',
+            value: '<string>Test</string>',
+          ),
+          throwsException,
+        );
+      });
+
+      test('should throw exception when specified path not found', () {
+        final editor = XmlEditor(plistContent);
+        expect(
+          () => editor.addPlistEntry(
+            path: 'plist.dict.nonexistent',
             key: 'TestKey',
             value: '<string>Test</string>',
           ),
@@ -590,7 +649,7 @@ void main() {
 </dict>
 </plist>''';
         final editor = XmlEditor(plistWithComments);
-        editor.removePlistEntry(
+        editor.removePlistUsageDescription(
           key: 'NSCameraUsageDescription',
           commentMarkers: ['@permit'],
         );
@@ -606,7 +665,7 @@ void main() {
         final editor = XmlEditor(plistContent);
         // Note: removePlistEntry removes from the key through the value
         // It should remove both the key line and the value line
-        editor.removePlistEntry(
+        editor.removePlistUsageDescription(
           key: 'NSLocationWhenInUseUsageDescription',
         );
 
@@ -620,7 +679,7 @@ void main() {
       test('should throw exception for non-existent key', () {
         final editor = XmlEditor(plistContent);
         expect(
-          () => editor.removePlistEntry(key: 'NonexistentKey'),
+          () => editor.removePlistUsageDescription(key: 'NonexistentKey'),
           throwsException,
         );
       });
@@ -630,7 +689,7 @@ void main() {
         final editor = XmlEditor(invalidPlist);
 
         expect(
-          () => editor.removePlistEntry(key: 'TestKey'),
+          () => editor.removePlistUsageDescription(key: 'TestKey'),
           throwsException,
         );
       });
@@ -797,7 +856,7 @@ void main() {
 </plist>''';
 
       final editor = XmlEditor(plist);
-      editor.removePlistEntry(key: 'MyArrayKey');
+      editor.removePlistEntry(path: 'plist.dict', key: 'MyArrayKey');
 
       final out = editor.toXmlString();
       expect(out.contains('MyArrayKey'), false);
