@@ -2,19 +2,14 @@ import 'dart:io';
 import 'package:permit/xml_editor/xml_editor.dart';
 
 void main(List<String> ags) {
-  final xmlFile = File('bin/Info.plist');
-  final xmlContent = xmlFile.readAsStringSync();
-  final editor = PlistEditor(xmlContent);
+  final xmlFile = File('bin/AndroidManifest.xml');
+  final editor = ManifestEditor(xmlFile.readAsStringSync());
   // editor.addManifestTag(
   //   path: 'manifest',
   //   tag: '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />',
   //   comments: ['@permit.gen'],
   // );
-  editor.addUsageDescription(
-    key: 'NSLocationWhenInUseUsageDescription',
-    description: 'Needed for tracking bus location',
-    keyComments: ['@permit.gen'],
-  );
+
   // editor.removePlistEntry(key: 'NSLocationWhenInUseUsageDescription', commentMarkers: ['@permit.gen']);
 
   // editor.addPlistEntry(

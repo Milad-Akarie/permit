@@ -36,6 +36,7 @@ class PlistEditor extends XmlEditor {
     List<String>? keyComments,
     List<String>? valueComments,
     List<String>? anchorKeys,
+    bool override = true,
   }) {
     // Find the target dict element at the specified path
     final dict = _findElementByPath(path);
@@ -44,8 +45,40 @@ class PlistEditor extends XmlEditor {
       throw Exception('Could not find <dict> element at path: $path');
     }
 
+    // If override is true, check if the key already exists and remove it
+    if (override) {
+      final existingKey = _findPlistKey(dict, key);
+      if (existingKey != null) {
+        // Key exists, remove it with its value and @permit comments
+        final keyInfo = _findElementLines(existingKey);
+        if (keyInfo != null) {
+          // Find the value element (next element after key)
+          final valueElement = _getNextSiblingElement(existingKey);
+          if (valueElement != null) {
+            final valueInfo = _findElementLines(valueElement);
+            if (valueInfo != null) {
+              // Find all @permit comments above the key
+              int startLine = _findCommentBlockStart(keyInfo.startLine, ['@permit']);
+
+              // Remove from start of comments to end of value
+              lines.removeRange(startLine, valueInfo.endLine + 1);
+
+              // Reparse document after removal
+              _updateDocument();
+            }
+          }
+        }
+      }
+    }
+
+    // Re-find the dict after potential removal
+    final currentDict = _findElementByPath(path);
+    if (currentDict == null) {
+      throw Exception('Could not find <dict> element at path: $path');
+    }
+
     // Find insertion position
-    final insertInfo = _findPlistInsertPosition(dict, anchorKeys: anchorKeys);
+    final insertInfo = _findPlistInsertPosition(currentDict, anchorKeys: anchorKeys);
     if (insertInfo == null) {
       throw Exception('Could not find insertion point in plist');
     }
@@ -86,6 +119,7 @@ class PlistEditor extends XmlEditor {
     List<String>? keyComments,
     List<String>? valueComments,
     List<String>? anchorKeys,
+    bool override = true,
   }) {
     addEntry(
       path: 'plist.dict',
@@ -94,6 +128,7 @@ class PlistEditor extends XmlEditor {
       keyComments: keyComments,
       valueComments: valueComments,
       anchorKeys: anchorKeys,
+      override: override,
     );
   }
 

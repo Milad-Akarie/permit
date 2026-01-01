@@ -363,4 +363,202 @@ void main() {
       );
     });
   });
+
+  group('override functionality', () {
+    test('should override existing key with new comments', () {
+      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <key>NSCameraUsageDescription</key>
+    <string>We need camera access for photos</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistContent);
+
+      // Add a usage description with initial comments
+      editor.addUsageDescription(
+        key: 'NSLocationWhenInUseUsageDescription',
+        description: 'Old location description',
+        keyComments: ['@permit old location comment'],
+      );
+
+      String result = editor.toXmlString();
+      expect(result.contains('NSLocationWhenInUseUsageDescription'), true);
+      expect(result.contains('Old location description'), true);
+      expect(result.contains('@permit old location comment'), true);
+
+      // Override with new comments
+      editor.addUsageDescription(
+        key: 'NSLocationWhenInUseUsageDescription',
+        description: 'New location description',
+        keyComments: ['@permit new location comment', 'Updated for feature X'],
+        override: true,
+      );
+
+      result = editor.toXmlString();
+      expect(result.contains('NSLocationWhenInUseUsageDescription'), true);
+      expect(result.contains('New location description'), true);
+      expect(result.contains('@permit new location comment'), true);
+      expect(result.contains('Updated for feature X'), true);
+      expect(result.contains('Old location description'), false);
+      expect(result.contains('@permit old location comment'), false);
+
+      // Should only have one NSLocationWhenInUseUsageDescription key
+      final keyCount = result.split('<key>NSLocationWhenInUseUsageDescription</key>').length - 1;
+      expect(keyCount, equals(1));
+    });
+
+    test('should override existing entry with new comments using addEntry', () {
+      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <!-- @permit bluetooth v1 -->
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>Old bluetooth description</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistContent);
+
+      // Override with new comments
+      editor.addEntry(
+        path: 'plist.dict',
+        key: 'NSBluetoothPeripheralUsageDescription',
+        value: '<string>New bluetooth description</string>',
+        keyComments: ['@permit bluetooth v2', 'Enhanced bluetooth support'],
+        override: true,
+      );
+
+      final result = editor.toXmlString();
+      expect(result.contains('NSBluetoothPeripheralUsageDescription'), true);
+      expect(result.contains('New bluetooth description'), true);
+      expect(result.contains('@permit bluetooth v2'), true);
+      expect(result.contains('Enhanced bluetooth support'), true);
+      expect(result.contains('Old bluetooth description'), false);
+      expect(result.contains('@permit bluetooth v1'), false);
+
+      // Should only have one NSBluetoothPeripheralUsageDescription key
+      final keyCount = result.split('<key>NSBluetoothPeripheralUsageDescription</key>').length - 1;
+      expect(keyCount, equals(1));
+    });
+
+    test('should remove old @permit comments when overriding', () {
+      final plistWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <!-- @permit old comment line 1 -->
+    <!-- @permit old comment line 2 -->
+    <key>NSCameraUsageDescription</key>
+    <string>Old camera description</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistWithComments);
+
+      // Override with new comments
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'New camera description',
+        keyComments: ['@permit new camera permission'],
+        override: true,
+      );
+
+      final result = editor.toXmlString();
+      expect(result.contains('NSCameraUsageDescription'), true);
+      expect(result.contains('New camera description'), true);
+      expect(result.contains('@permit new camera permission'), true);
+      expect(result.contains('Old camera description'), false);
+      expect(result.contains('@permit old comment line 1'), false);
+      expect(result.contains('@permit old comment line 2'), false);
+    });
+
+    test('should override key-only entry (no value)', () {
+      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <!-- @permit old key -->
+    <key>TestKey</key>
+    <string>some value</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistContent);
+
+      // Override with new key and value
+      editor.addEntry(
+        path: 'plist.dict',
+        key: 'TestKey',
+        value: '<string>new value</string>',
+        keyComments: ['@permit new key'],
+        override: true,
+      );
+
+      final result = editor.toXmlString();
+      expect(result.contains('TestKey'), true);
+      expect(result.contains('new value'), true);
+      expect(result.contains('@permit new key'), true);
+      expect(result.contains('some value'), false);
+      expect(result.contains('@permit old key'), false);
+    });
+
+    test('should not override when override=false and key exists', () {
+      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <key>NSCameraUsageDescription</key>
+    <string>Existing camera description</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistContent);
+
+      // This should not throw because we're checking existence differently
+      // But we expect duplicate keys if override=false
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'New camera description',
+        keyComments: ['@permit new camera'],
+        override: false,
+      );
+
+      final result = editor.toXmlString();
+      // Both descriptions should exist
+      expect(result.contains('Existing camera description'), true);
+      expect(result.contains('New camera description'), true);
+
+      // Should have TWO NSCameraUsageDescription keys
+      final keyCount = result.split('<key>NSCameraUsageDescription</key>').length - 1;
+      expect(keyCount, equals(2));
+    });
+
+    test('should handle override with valueComments', () {
+      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <key>TestKey</key>
+    <string>old value</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistContent);
+
+      // Override with both key and value comments
+      editor.addEntry(
+        path: 'plist.dict',
+        key: 'TestKey',
+        value: '<string>new value</string>',
+        keyComments: ['@permit new key comment'],
+        valueComments: ['@permit new value comment'],
+        override: true,
+      );
+
+      final result = editor.toXmlString();
+      expect(result.contains('TestKey'), true);
+      expect(result.contains('new value'), true);
+      expect(result.contains('@permit new key comment'), true);
+      expect(result.contains('@permit new value comment'), true);
+      expect(result.contains('old value'), false);
+    });
+  });
 }

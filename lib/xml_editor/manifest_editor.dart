@@ -9,6 +9,7 @@ class ManifestEditor extends XmlEditor {
     required String path,
     required String tag,
     List<String>? comments,
+    bool override = true,
   }) {
     final parent = _findElementByPath(path);
     if (parent == null) {
@@ -19,8 +20,52 @@ class ManifestEditor extends XmlEditor {
     final tagNameMatch = RegExp(r'<(\w+[\w:-]*)').firstMatch(tag);
     final tagName = tagNameMatch?.group(1) ?? '';
 
+    // If override is true, check if a tag with the same attributes exists
+    if (override && tagName.isNotEmpty) {
+      // Parse the tag to extract its attributes
+      try {
+        final wrappedTag = tag.contains('<?xml') ? tag : '<?xml version="1.0"?>\n<root>$tag</root>';
+        final doc = XmlDocument.parse(wrappedTag);
+        final parsedEl = doc.findAllElements(tagName).firstOrNull;
+
+        if (parsedEl != null && parsedEl.attributes.isNotEmpty) {
+          // Try to find an existing tag with the same primary attribute
+          // For Android manifest tags, typically the "android:name" attribute is the key identifier
+          final nameAttr = parsedEl.getAttribute('android:name');
+          if (nameAttr != null) {
+            final existingElementInfo = _findElementLinesByTagAndAttribute(
+              parent,
+              tagName,
+              ('android:name', nameAttr),
+            );
+
+            if (existingElementInfo != null) {
+              // Remove existing tag including @permit comments
+              int startLine = _findCommentBlockStart(existingElementInfo.startLine, ['@permit']);
+              lines.removeRange(startLine, existingElementInfo.endLine + 1);
+              _updateDocument();
+
+              // Re-find parent after document update
+              final updatedParent = _findElementByPath(path);
+              if (updatedParent == null) {
+                throw Exception('Parent element not found after override: $path');
+              }
+            }
+          }
+        }
+      } catch (_) {
+        // If parsing fails, continue with normal insertion
+      }
+    }
+
+    // Re-find parent to ensure we have fresh reference
+    final currentParent = _findElementByPath(path);
+    if (currentParent == null) {
+      throw Exception('Parent element not found: $path');
+    }
+
     // Find insertion position based on siblings of the same type
-    final insertInfo = _findManifestInsertPosition(parent, tagName: tagName);
+    final insertInfo = _findManifestInsertPosition(currentParent, tagName: tagName);
     if (insertInfo == null) {
       throw Exception('Could not find insertion point for: $path');
     }
@@ -43,14 +88,45 @@ class ManifestEditor extends XmlEditor {
     _updateDocument();
   }
 
+  /// adds a feature to application tag
+  void addFeature({
+    required String name,
+    bool required = false,
+    List<String>? comments,
+    bool override = true,
+  }) {
+    addTag(
+      path: 'manifest.application',
+      tag: '<uses-feature android:name="$name" android:required="${required.toString().toLowerCase()}" />',
+      comments: comments,
+      override: override,
+    );
+  }
+
+  // removes a feature from application tag
+  void removeFeature({
+    required String name,
+    List<String>? comments,
+  }) {
+    removeTag(
+      path: 'manifest.application',
+      tagName: 'uses-feature',
+      attribute: ('android:name', name),
+      comments: comments,
+    );
+  }
+
+  /// Adds a permission to the manifest
   void addPermission({
     required String permissionName,
     List<String>? comments,
+    bool override = true,
   }) {
     addTag(
       path: 'manifest',
       tag: '<uses-permission android:name="$permissionName" />',
       comments: comments,
+      override: override,
     );
   }
 

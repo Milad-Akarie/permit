@@ -501,5 +501,152 @@ void main() {
         expect(editor.validate(), true);
       });
     });
+
+    group('override functionality', () {
+      test('should override existing permission with new comments', () {
+        final editor = ManifestEditor(manifestContent);
+
+        // Add a permission with initial comments
+        editor.addPermission(
+          permissionName: 'android.permission.LOCATION',
+          comments: ['@permit old location comment'],
+        );
+
+        String result = editor.toXmlString();
+        expect(result.contains('android.permission.LOCATION'), true);
+        expect(result.contains('@permit old location comment'), true);
+
+        // Override with new comments
+        editor.addPermission(
+          permissionName: 'android.permission.LOCATION',
+          comments: ['@permit new location comment', 'Updated for new feature'],
+          override: true,
+        );
+
+        result = editor.toXmlString();
+        expect(result.contains('android.permission.LOCATION'), true);
+        expect(result.contains('@permit new location comment'), true);
+        expect(result.contains('Updated for new feature'), true);
+        expect(result.contains('@permit old location comment'), false);
+
+        // Should only have one LOCATION permission
+        final count = result.split('android.permission.LOCATION').length - 1;
+        expect(count, equals(1));
+      });
+
+      test('should override existing tag with new comments using addTag', () {
+        final editor = ManifestEditor(manifestContent);
+
+        // Add a uses-permission with initial comments
+        editor.addTag(
+          path: 'manifest',
+          tag: '<uses-permission android:name="android.permission.BLUETOOTH" />',
+          comments: ['@permit bluetooth v1'],
+        );
+
+        String result = editor.toXmlString();
+        expect(result.contains('android.permission.BLUETOOTH'), true);
+        expect(result.contains('@permit bluetooth v1'), true);
+
+        // Override with new comments
+        editor.addTag(
+          path: 'manifest',
+          tag: '<uses-permission android:name="android.permission.BLUETOOTH" />',
+          comments: ['@permit bluetooth v2', 'Enhanced bluetooth support'],
+          override: true,
+        );
+
+        result = editor.toXmlString();
+        expect(result.contains('android.permission.BLUETOOTH'), true);
+        expect(result.contains('@permit bluetooth v2'), true);
+        expect(result.contains('Enhanced bluetooth support'), true);
+        expect(result.contains('@permit bluetooth v1'), false);
+
+        // Should only have one BLUETOOTH permission
+        final count = result.split('android.permission.BLUETOOTH').length - 1;
+        expect(count, equals(1));
+      });
+
+      test('should override existing feature with new comments', () {
+        final manifestWithFeature = '''<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:label="TestApp">
+        <!-- @permit camera v1 -->
+        <uses-feature android:name="android.hardware.camera" android:required="true" />
+    </application>
+</manifest>''';
+
+        final editor = ManifestEditor(manifestWithFeature);
+
+        // Override with new comments and different required value
+        editor.addFeature(
+          name: 'android.hardware.camera',
+          required: false,
+          comments: ['@permit camera v2', 'Camera is now optional'],
+          override: true,
+        );
+
+        final result = editor.toXmlString();
+        expect(result.contains('android.hardware.camera'), true);
+        expect(result.contains('@permit camera v2'), true);
+        expect(result.contains('Camera is now optional'), true);
+        expect(result.contains('@permit camera v1'), false);
+        expect(result.contains('android:required="false"'), true);
+
+        // Should only have one camera feature
+        final count = result.split('android.hardware.camera').length - 1;
+        expect(count, equals(1));
+      });
+
+      test('should not override when override=false', () {
+        final editor = ManifestEditor(manifestContent);
+
+        // Add a permission
+        editor.addPermission(
+          permissionName: 'android.permission.LOCATION',
+          comments: ['@permit first location'],
+        );
+
+        // Add same permission with override=false (should create duplicate)
+        editor.addPermission(
+          permissionName: 'android.permission.LOCATION',
+          comments: ['@permit second location'],
+          override: false,
+        );
+
+        final result = editor.toXmlString();
+        // Both permissions should exist
+        expect(result.contains('@permit first location'), true);
+        expect(result.contains('@permit second location'), true);
+
+        // Should have TWO LOCATION permissions
+        final count = result.split('android.permission.LOCATION').length - 1;
+        expect(count, equals(2));
+      });
+
+      test('should remove old @permit comments when overriding', () {
+        final manifestWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- @permit old comment line 1 -->
+    <!-- @permit old comment line 2 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+</manifest>''';
+
+        final editor = ManifestEditor(manifestWithComments);
+
+        // Override with new comments
+        editor.addPermission(
+          permissionName: 'android.permission.CAMERA',
+          comments: ['@permit new camera permission'],
+          override: true,
+        );
+
+        final result = editor.toXmlString();
+        expect(result.contains('android.permission.CAMERA'), true);
+        expect(result.contains('@permit new camera permission'), true);
+        expect(result.contains('@permit old comment line 1'), false);
+        expect(result.contains('@permit old comment line 2'), false);
+      });
+    });
   });
 }
