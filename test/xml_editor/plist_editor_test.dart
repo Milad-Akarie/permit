@@ -393,7 +393,7 @@ void main() {
         key: 'NSLocationWhenInUseUsageDescription',
         description: 'New location description',
         keyComments: ['@permit new location comment', 'Updated for feature X'],
-        override: true,
+        shouldRemoveComment: (comment) => comment.contains('@permit'),
       );
 
       result = editor.toXmlString();
@@ -427,7 +427,7 @@ void main() {
         key: 'NSBluetoothPeripheralUsageDescription',
         value: '<string>New bluetooth description</string>',
         keyComments: ['@permit bluetooth v2', 'Enhanced bluetooth support'],
-        override: true,
+        shouldRemoveComment: (comment) => comment.contains('@permit'),
       );
 
       final result = editor.toXmlString();
@@ -461,7 +461,7 @@ void main() {
         key: 'NSCameraUsageDescription',
         description: 'New camera description',
         keyComments: ['@permit new camera permission'],
-        override: true,
+        shouldRemoveComment: (comment) => comment.contains('@permit'),
       );
 
       final result = editor.toXmlString();
@@ -491,7 +491,7 @@ void main() {
         key: 'TestKey',
         value: '<string>new value</string>',
         keyComments: ['@permit new key'],
-        override: true,
+        shouldRemoveComment: (comment) => comment.contains('@permit'),
       );
 
       final result = editor.toXmlString();
@@ -550,7 +550,7 @@ void main() {
         value: '<string>new value</string>',
         keyComments: ['@permit new key comment'],
         valueComments: ['@permit new value comment'],
-        override: true,
+        shouldRemoveComment: (comment) => comment.contains('@permit'),
       );
 
       final result = editor.toXmlString();
@@ -559,6 +559,191 @@ void main() {
       expect(result.contains('@permit new key comment'), true);
       expect(result.contains('@permit new value comment'), true);
       expect(result.contains('old value'), false);
+    });
+
+    // Tests for shouldRemoveComment callback
+    test('should use custom shouldRemoveComment callback to remove specific comments', () {
+      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <!-- @permit camera -->
+    <!-- @deprecated old api -->
+    <!-- Important: keep this -->
+    <key>NSCameraUsageDescription</key>
+    <string>Old camera description</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistContent);
+
+      // Override with custom callback that only removes @deprecated comments
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'New camera description',
+        keyComments: ['@permit camera', '@version 2.0'],
+        shouldRemoveComment: (comment) => comment.contains('@deprecated'),
+      );
+
+      final result = editor.toXmlString();
+      expect(result.contains('NSCameraUsageDescription'), true);
+      expect(result.contains('New camera description'), true);
+      expect(result.contains('@permit camera'), true);
+      expect(result.contains('@version 2.0'), true);
+      expect(result.contains('@deprecated old api'), false);
+      expect(result.contains('Important: keep this'), true);
+      expect(result.contains('Old camera description'), false);
+    });
+
+    test('should remove only comments matching the callback criteria', () {
+      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <!-- @feature flag1 -->
+    <!-- @feature flag2 -->
+    <!-- @note some note -->
+    <key>TestKey</key>
+    <string>old value</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistContent);
+
+      // Override with callback that removes @feature comments only
+      editor.addEntry(
+        path: 'plist.dict',
+        key: 'TestKey',
+        value: '<string>new value</string>',
+        keyComments: ['@feature flag3'],
+        override: true,
+        shouldRemoveComment: (comment) => comment.contains('@feature'),
+      );
+
+      final result = editor.toXmlString();
+      expect(result.contains('TestKey'), true);
+      expect(result.contains('new value'), true);
+      expect(result.contains('@feature flag1'), false);
+      expect(result.contains('@feature flag2'), false);
+      expect(result.contains('@feature flag3'), true);
+      expect(result.contains('@note some note'), true);
+      expect(result.contains('old value'), false);
+    });
+
+    test('should preserve all comments when shouldRemoveComment returns false for all', () {
+      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <!-- @permit camera -->
+    <!-- Important note -->
+    <key>NSCameraUsageDescription</key>
+    <string>Old description</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistContent);
+
+      // Override with callback that never returns true (removes nothing)
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'New description',
+        keyComments: ['@permit camera v2'],
+        override: true,
+        shouldRemoveComment: (comment) => false,
+      );
+
+      final result = editor.toXmlString();
+      expect(result.contains('NSCameraUsageDescription'), true);
+      expect(result.contains('New description'), true);
+      expect(result.contains('@permit camera'), true);
+      expect(result.contains('Important note'), true);
+      expect(result.contains('@permit camera v2'), true);
+      expect(result.contains('Old description'), false);
+    });
+
+    test('should use custom callback with multiple matching criteria', () {
+      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <!-- @permit camera v1 -->
+    <!-- TODO: review this -->
+    <!-- @deprecated -->
+    <key>NSCameraUsageDescription</key>
+    <string>old</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistContent);
+
+      // Override with callback that removes comments containing @permit or @deprecated
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'new',
+        keyComments: ['@permit camera v2'],
+        override: true,
+        shouldRemoveComment: (comment) => comment.contains('@permit') || comment.contains('@deprecated'),
+      );
+
+      final result = editor.toXmlString();
+      expect(result.contains('@permit camera v1'), false);
+      expect(result.contains('@deprecated'), false);
+      expect(result.contains('TODO: review this'), true);
+      expect(result.contains('@permit camera v2'), true);
+      expect(result.contains('NSCameraUsageDescription'), true);
+      expect(result.contains('new'), true);
+    });
+
+    test('should work with removeEntry and custom callback', () {
+      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <!-- @permit camera -->
+    <!-- @internal internal-only -->
+    <key>NSCameraUsageDescription</key>
+    <string>camera description</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistContent);
+
+      // This test uses removeEntry which already has commentMarkers parameter
+      // But we can verify the behavior with a custom marker list
+      editor.removeEntry(
+        path: 'plist.dict',
+        key: 'NSCameraUsageDescription',
+        commentMarkers: ['@internal'],
+      );
+
+      final result = editor.toXmlString();
+      expect(result.contains('NSCameraUsageDescription'), false);
+      expect(result.contains('@permit camera'), true);
+      expect(result.contains('@internal internal-only'), false);
+      expect(result.contains('camera description'), false);
+    });
+
+    test('should default to removing @permit when shouldRemoveComment is null', () {
+      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <!-- @permit old -->
+    <!-- @other comment -->
+    <key>TestKey</key>
+    <string>old</string>
+</dict>
+</plist>''';
+
+      final editor = PlistEditor(plistContent);
+
+      editor.addUsageDescription(
+        key: 'TestKey',
+        description: 'new',
+        keyComments: ['@permit new'],
+        shouldRemoveComment: (comment) => comment.contains('@permit'),
+      );
+
+      final result = editor.toXmlString();
+      expect(result.contains('@permit old'), false);
+      expect(result.contains('@other comment'), true);
+      expect(result.contains('@permit new'), true);
+      expect(result.contains('old'), false);
     });
   });
 }

@@ -10,6 +10,7 @@ class ManifestEditor extends XmlEditor {
     required String tag,
     List<String>? comments,
     bool override = true,
+    CommentRemoverPredicate? shouldRemoveComment,
   }) {
     final parent = _findElementByPath(path);
     if (parent == null) {
@@ -40,10 +41,9 @@ class ManifestEditor extends XmlEditor {
             );
 
             if (existingElementInfo != null) {
-              // Remove existing tag including @permit comments
-              int startLine = _findCommentBlockStart(existingElementInfo.startLine, ['@permit']);
-              lines.removeRange(startLine, existingElementInfo.endLine + 1);
-              _updateDocument();
+              // Remove existing tag including comments that match our criteria
+              // Default to removing @permit comments if no callback specified
+              _removeElementAndMatchingComments(existingElementInfo, shouldRemoveComment);
 
               // Re-find parent after document update
               final updatedParent = _findElementByPath(path);
@@ -94,12 +94,14 @@ class ManifestEditor extends XmlEditor {
     bool required = false,
     List<String>? comments,
     bool override = true,
+    CommentRemoverPredicate? shouldRemoveComment,
   }) {
     addTag(
       path: 'manifest.application',
       tag: '<uses-feature android:name="$name" android:required="${required.toString().toLowerCase()}" />',
       comments: comments,
       override: override,
+      shouldRemoveComment: shouldRemoveComment,
     );
   }
 
@@ -118,15 +120,17 @@ class ManifestEditor extends XmlEditor {
 
   /// Adds a permission to the manifest
   void addPermission({
-    required String permissionName,
+    required String name,
     List<String>? comments,
     bool override = true,
+    CommentRemoverPredicate? shouldRemoveComment,
   }) {
     addTag(
       path: 'manifest',
-      tag: '<uses-permission android:name="$permissionName" />',
+      tag: '<uses-permission android:name="$name" />',
       comments: comments,
       override: override,
+      shouldRemoveComment: shouldRemoveComment,
     );
   }
 
@@ -148,11 +152,14 @@ class ManifestEditor extends XmlEditor {
 
     int startLine = elementInfo.startLine;
     if (comments != null && comments.isNotEmpty) {
-      startLine = _findCommentBlockStart(elementInfo.startLine, comments);
+      final predicate = (String c) => comments.any((marker) => c.contains(marker));
+      _removeElementAndMatchingComments(elementInfo, predicate);
+      return;
     }
 
-    lines.removeRange(startLine, elementInfo.endLine + 1);
-
+    // Default behavior: remove @permit comments and the element
+    int defaultStart = _findCommentBlockStart(elementInfo.startLine, shouldRemoveComment: (c) => c.contains('@permit'));
+    lines.removeRange(defaultStart, elementInfo.endLine + 1);
     _updateDocument();
   }
 
@@ -167,30 +174,6 @@ class ManifestEditor extends XmlEditor {
       comments: comments,
     );
   }
-
-  // Backwards-compatible aliases (old API)
-  void addManifestTag({
-    required String path,
-    required String tag,
-    List<String>? comments,
-  }) => addTag(path: path, tag: tag, comments: comments);
-
-  void addManifestPermission({
-    required String permissionName,
-    List<String>? comments,
-  }) => addPermission(permissionName: permissionName, comments: comments);
-
-  void removeManifestTag({
-    required String path,
-    required String tagName,
-    required (String, String) attribute,
-    List<String>? comments,
-  }) => removeTag(path: path, tagName: tagName, attribute: attribute, comments: comments);
-
-  void removeManifestPermission({
-    required String permissionName,
-    List<String>? comments,
-  }) => removePermission(permissionName: permissionName, comments: comments);
 
   // Internal helper used by removeTag
   _ElementLines? _findElementLinesByTagAndAttribute(

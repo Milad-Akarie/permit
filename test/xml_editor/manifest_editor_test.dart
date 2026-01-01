@@ -508,7 +508,7 @@ void main() {
 
         // Add a permission with initial comments
         editor.addPermission(
-          permissionName: 'android.permission.LOCATION',
+          name: 'android.permission.LOCATION',
           comments: ['@permit old location comment'],
         );
 
@@ -518,9 +518,9 @@ void main() {
 
         // Override with new comments
         editor.addPermission(
-          permissionName: 'android.permission.LOCATION',
+          name: 'android.permission.LOCATION',
           comments: ['@permit new location comment', 'Updated for new feature'],
-          override: true,
+          shouldRemoveComment: (comment) => comment.contains('@permit'),
         );
 
         result = editor.toXmlString();
@@ -553,7 +553,7 @@ void main() {
           path: 'manifest',
           tag: '<uses-permission android:name="android.permission.BLUETOOTH" />',
           comments: ['@permit bluetooth v2', 'Enhanced bluetooth support'],
-          override: true,
+          shouldRemoveComment: (comment) => comment.contains('@permit'),
         );
 
         result = editor.toXmlString();
@@ -583,7 +583,7 @@ void main() {
           name: 'android.hardware.camera',
           required: false,
           comments: ['@permit camera v2', 'Camera is now optional'],
-          override: true,
+          shouldRemoveComment: (comment) => comment.contains('@permit'),
         );
 
         final result = editor.toXmlString();
@@ -603,13 +603,13 @@ void main() {
 
         // Add a permission
         editor.addPermission(
-          permissionName: 'android.permission.LOCATION',
+          name: 'android.permission.LOCATION',
           comments: ['@permit first location'],
         );
 
         // Add same permission with override=false (should create duplicate)
         editor.addPermission(
-          permissionName: 'android.permission.LOCATION',
+          name: 'android.permission.LOCATION',
           comments: ['@permit second location'],
           override: false,
         );
@@ -636,9 +636,9 @@ void main() {
 
         // Override with new comments
         editor.addPermission(
-          permissionName: 'android.permission.CAMERA',
+          name: 'android.permission.CAMERA',
           comments: ['@permit new camera permission'],
-          override: true,
+          shouldRemoveComment: (comment) => comment.contains('@permit'),
         );
 
         final result = editor.toXmlString();
@@ -646,6 +646,166 @@ void main() {
         expect(result.contains('@permit new camera permission'), true);
         expect(result.contains('@permit old comment line 1'), false);
         expect(result.contains('@permit old comment line 2'), false);
+      });
+
+      // Tests for shouldRemoveComment callback
+      test('should use custom shouldRemoveComment callback to remove specific comments', () {
+        final manifestWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- @permit camera -->
+    <!-- @deprecated old api -->
+    <!-- Important: keep this -->
+    <uses-permission android:name="android.permission.CAMERA" />
+</manifest>''';
+
+        final editor = ManifestEditor(manifestWithComments);
+
+        // Override with custom callback that only removes @deprecated comments
+        editor.addTag(
+          path: 'manifest',
+          tag: '<uses-permission android:name="android.permission.CAMERA" />',
+          comments: ['@permit camera', '@version 2.0'],
+          override: true,
+          shouldRemoveComment: (comment) => comment.contains('@deprecated'),
+        );
+
+        final result = editor.toXmlString();
+        expect(result.contains('android.permission.CAMERA'), true);
+        expect(result.contains('@permit camera'), true);
+        expect(result.contains('@version 2.0'), true);
+        expect(result.contains('@deprecated old api'), false);
+        expect(result.contains('Important: keep this'), true);
+      });
+
+      test('should remove only comments matching the callback criteria', () {
+        final manifestWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- @feature flag1 -->
+    <!-- @feature flag2 -->
+    <!-- @note some note -->
+    <uses-permission android:name="android.permission.LOCATION" />
+</manifest>''';
+
+        final editor = ManifestEditor(manifestWithComments);
+
+        // Override with callback that removes @feature comments only
+        editor.addTag(
+          path: 'manifest',
+          tag: '<uses-permission android:name="android.permission.LOCATION" />',
+          comments: ['@feature flag3'],
+          override: true,
+          shouldRemoveComment: (comment) => comment.contains('@feature'),
+        );
+
+        final result = editor.toXmlString();
+        expect(result.contains('android.permission.LOCATION'), true);
+        expect(result.contains('@feature flag1'), false);
+        expect(result.contains('@feature flag2'), false);
+        expect(result.contains('@feature flag3'), true);
+        expect(result.contains('@note some note'), true);
+      });
+
+      test('should preserve all comments when shouldRemoveComment returns false for all', () {
+        final manifestWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- @permit camera -->
+    <!-- Important note -->
+    <uses-permission android:name="android.permission.CAMERA" />
+</manifest>''';
+
+        final editor = ManifestEditor(manifestWithComments);
+
+        // Override with callback that never returns true (removes nothing)
+        editor.addTag(
+          path: 'manifest',
+          tag: '<uses-permission android:name="android.permission.CAMERA" />',
+          comments: ['@permit camera v2'],
+          override: true,
+          shouldRemoveComment: (comment) => false,
+        );
+
+        final result = editor.toXmlString();
+        expect(result.contains('android.permission.CAMERA'), true);
+        expect(result.contains('@permit camera'), true);
+        expect(result.contains('Important note'), true);
+        expect(result.contains('@permit camera v2'), true);
+      });
+
+      test('should use custom callback with multiple matching criteria', () {
+        final manifestWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- @permit camera v1 -->
+    <!-- TODO: review this -->
+    <!-- @deprecated -->
+    <uses-permission android:name="android.permission.CAMERA" />
+</manifest>''';
+
+        final editor = ManifestEditor(manifestWithComments);
+
+        // Override with callback that removes comments containing @permit or @deprecated
+        editor.addTag(
+          path: 'manifest',
+          tag: '<uses-permission android:name="android.permission.CAMERA" />',
+          comments: ['@permit camera v2'],
+          override: true,
+          shouldRemoveComment: (comment) => comment.contains('@permit') || comment.contains('@deprecated'),
+        );
+
+        final result = editor.toXmlString();
+        expect(result.contains('@permit camera v1'), false);
+        expect(result.contains('@deprecated'), false);
+        expect(result.contains('TODO: review this'), true);
+        expect(result.contains('@permit camera v2'), true);
+        expect(result.contains('android.permission.CAMERA'), true);
+      });
+
+      test('should default to removing @permit when shouldRemoveComment is null', () {
+        final manifestWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- @permit old -->
+    <!-- @other comment -->
+    <uses-permission android:name="android.permission.CAMERA" />
+</manifest>''';
+
+        final editor = ManifestEditor(manifestWithComments);
+
+        // Override without providing shouldRemoveComment (should default to removing @permit)
+        editor.addTag(
+          path: 'manifest',
+          tag: '<uses-permission android:name="android.permission.CAMERA" />',
+          comments: ['@permit new'],
+          shouldRemoveComment: (comment) => comment.contains('@permit'),
+        );
+
+        final result = editor.toXmlString();
+        expect(result.contains('@permit old'), false);
+        expect(result.contains('@other comment'), true);
+        expect(result.contains('@permit new'), true);
+      });
+
+      test('should work with addPermission and custom callback', () {
+        final manifestWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- @permit camera -->
+    <!-- @internal internal-only -->
+    <uses-permission android:name="android.permission.CAMERA" />
+</manifest>''';
+
+        final editor = ManifestEditor(manifestWithComments);
+
+        // Override with callback that only removes @internal comments
+        editor.addPermission(
+          name: 'android.permission.CAMERA',
+          comments: ['@permit camera v2'],
+          override: true,
+          shouldRemoveComment: (comment) => comment.contains('@internal'),
+        );
+
+        final result = editor.toXmlString();
+        expect(result.contains('android.permission.CAMERA'), true);
+        expect(result.contains('@permit camera'), true);
+        expect(result.contains('@internal internal-only'), false);
+        expect(result.contains('@permit camera v2'), true);
       });
     });
   });

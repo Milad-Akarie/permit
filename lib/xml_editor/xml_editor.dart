@@ -3,6 +3,8 @@ import 'package:xml/xml.dart';
 part 'plist_editor.dart';
 part 'manifest_editor.dart';
 
+typedef CommentRemoverPredicate = bool Function(String comment);
+
 /// A surgical XML editor that preserves the original file format
 class XmlEditor {
   final String originalContent;
@@ -266,18 +268,26 @@ class XmlEditor {
   }
 
   /// Find the start of a comment block above a line
-  int _findCommentBlockStart(int lineIndex, List<String> commentMarkers) {
+  /// Use [shouldRemoveComment] callback to determine which comments to include in removal
+  int _findCommentBlockStart(
+    int lineIndex, {
+    bool Function(String comment)? shouldRemoveComment,
+  }) {
+    if (shouldRemoveComment == null) return lineIndex;
+
     int startLine = lineIndex;
 
-    // Look backwards for comments with matching markers
+    // Look backwards for comments that match the removal criteria
     for (int i = lineIndex - 1; i >= 0; i--) {
       final line = lines[i].trim();
 
       // Check if this is a comment line
       if (line.startsWith('<!--') && line.endsWith('-->')) {
-        // Check if it contains any of the markers
-        bool hasMarker = commentMarkers.any((marker) => line.contains(marker));
-        if (hasMarker) {
+        // Extract the comment text (without <!-- and -->)
+        final commentText = line.substring(4, line.length - 3).trim();
+
+        // Check if this comment should be removed
+        if (shouldRemoveComment(commentText)) {
           startLine = i;
         } else {
           // Non-matching comment, stop here
@@ -425,6 +435,57 @@ class XmlEditor {
     final line = lines[lineIndex];
     final match = RegExp(r'^(\s*)').firstMatch(line);
     return match?.group(1) ?? '';
+  }
+
+  /// Remove an element (given by its line range) and selectively remove
+  /// any preceding comment lines for which [shouldRemoveComment] returns true.
+  ///
+  /// This removes only the matching comment lines and the element itself.
+  /// Non-matching comments are left in place.
+  void _removeElementAndMatchingComments(_ElementLines elementInfo, CommentRemoverPredicate? shouldRemoveComment) {
+    // Collect indices to remove: the element's lines plus any matching comment lines above
+    final indicesToRemove = <int>[];
+
+    // Add element lines
+    for (int i = elementInfo.startLine; i <= elementInfo.endLine; i++) {
+      indicesToRemove.add(i);
+    }
+
+    if (shouldRemoveComment != null) {
+      // Scan upward for contiguous comment lines (skip empty lines)
+      for (int i = elementInfo.startLine - 1; i >= 0; i--) {
+        final line = lines[i].trim();
+        if (line.isEmpty) {
+          // skip empty lines but continue scanning
+          continue;
+        }
+
+        if (line.startsWith('<!--') && line.endsWith('-->')) {
+          final commentText = line.substring(4, line.length - 3).trim();
+          if (shouldRemoveComment(commentText)) {
+            indicesToRemove.add(i);
+            // continue scanning; we want to collect other matching comments even if non-matching ones exist
+            continue;
+          } else {
+            // Non-matching comment: continue scanning upward because there may be matching comments further up
+            continue;
+          }
+        }
+
+        // Non-comment, non-empty line: stop scanning
+        break;
+      }
+    }
+
+    // Remove indices in descending order to avoid shifting issues
+    indicesToRemove.sort((a, b) => b.compareTo(a));
+    for (final idx in indicesToRemove) {
+      if (idx >= 0 && idx < lines.length) {
+        lines.removeAt(idx);
+      }
+    }
+
+    _updateDocument();
   }
 }
 

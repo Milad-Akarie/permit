@@ -37,6 +37,7 @@ class PlistEditor extends XmlEditor {
     List<String>? valueComments,
     List<String>? anchorKeys,
     bool override = true,
+    CommentRemoverPredicate? shouldRemoveComment,
   }) {
     // Find the target dict element at the specified path
     final dict = _findElementByPath(path);
@@ -57,11 +58,13 @@ class PlistEditor extends XmlEditor {
           if (valueElement != null) {
             final valueInfo = _findElementLines(valueElement);
             if (valueInfo != null) {
-              // Find all @permit comments above the key
-              int startLine = _findCommentBlockStart(keyInfo.startLine, ['@permit']);
-
-              // Remove from start of comments to end of value
-              lines.removeRange(startLine, valueInfo.endLine + 1);
+              // Remove both the key and its value; create a combined element range
+              final combined = _ElementLines(
+                startLine: keyInfo.startLine,
+                endLine: valueInfo.endLine,
+                indent: keyInfo.indent,
+              );
+              _removeElementAndMatchingComments(combined, shouldRemoveComment);
 
               // Reparse document after removal
               _updateDocument();
@@ -120,6 +123,7 @@ class PlistEditor extends XmlEditor {
     List<String>? valueComments,
     List<String>? anchorKeys,
     bool override = true,
+    CommentRemoverPredicate? shouldRemoveComment,
   }) {
     addEntry(
       path: 'plist.dict',
@@ -129,6 +133,7 @@ class PlistEditor extends XmlEditor {
       valueComments: valueComments,
       anchorKeys: anchorKeys,
       override: override,
+      shouldRemoveComment: shouldRemoveComment,
     );
   }
 
@@ -176,15 +181,16 @@ class PlistEditor extends XmlEditor {
     }
 
     // Find all comments above the key
-    int startLine = keyInfo.startLine;
     if (commentMarkers != null && commentMarkers.isNotEmpty) {
-      startLine = _findCommentBlockStart(keyInfo.startLine, commentMarkers);
+      bool predicate(String c) => commentMarkers.any((marker) => c.contains(marker));
+      final combined = _ElementLines(startLine: keyInfo.startLine, endLine: valueInfo.endLine, indent: keyInfo.indent);
+      _removeElementAndMatchingComments(combined, predicate);
+      return;
     }
 
-    // Remove from start of comments to end of value
-    lines.removeRange(startLine, valueInfo.endLine + 1);
-
-    // Reparse document after removal so subsequent operations see the change
+    // If no markers provided, remove entire element+comments (default behavior)
+    int defaultStart = _findCommentBlockStart(keyInfo.startLine, shouldRemoveComment: (c) => c.contains('@permit'));
+    lines.removeRange(defaultStart, valueInfo.endLine + 1);
     _updateDocument();
   }
 

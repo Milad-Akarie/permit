@@ -4,11 +4,11 @@ import 'package:permit/xml_editor/xml_editor.dart';
 void main(List<String> ags) {
   final xmlFile = File('bin/AndroidManifest.xml');
   final editor = ManifestEditor(xmlFile.readAsStringSync());
-  // editor.addManifestTag(
-  //   path: 'manifest',
-  //   tag: '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />',
-  //   comments: ['@permit.gen'],
-  // );
+  editor.addPermission(
+    name: 'android.permission.CAMERA',
+    comments: ['@permit.gen: Needed to take photos22222'],
+    shouldRemoveComment: (comment) => comment.startsWith('@permit'),
+  );
 
   // editor.removePlistEntry(key: 'NSLocationWhenInUseUsageDescription', commentMarkers: ['@permit.gen']);
 
