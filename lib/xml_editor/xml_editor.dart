@@ -2,14 +2,14 @@ import 'dart:io';
 import 'package:xml/xml.dart';
 
 /// A surgical XML editor that preserves the original file format
-class SurgicalXmlEditor {
+class XmlEditor {
   final String originalContent;
-  final XmlDocument document;
+  late XmlDocument document;
   final List<String> lines;
 
-  SurgicalXmlEditor(this.originalContent)
-    : document = XmlDocument.parse(originalContent),
-      lines = originalContent.split('\n');
+  XmlEditor(this.originalContent) : lines = originalContent.split('\n') {
+    document = XmlDocument.parse(originalContent);
+  }
 
   /// Add a tag to an Android manifest file
   ///
@@ -54,6 +54,9 @@ class SurgicalXmlEditor {
 
     // Insert at the appropriate position
     lines.insertAll(insertInfo.lineIndex, insertLines);
+
+    // Reparse document so subsequent operations see the change
+    _updateDocument();
   }
 
   /// Add a key-value pair to an Info.plist file
@@ -107,6 +110,9 @@ class SurgicalXmlEditor {
 
     // Insert at the appropriate position
     lines.insertAll(insertInfo.lineIndex, insertLines);
+
+    // Reparse document so subsequent operations see the change
+    _updateDocument();
   }
 
   /// Remove a tag from manifest with its associated comments
@@ -115,19 +121,124 @@ class SurgicalXmlEditor {
   /// ```dart
   /// editor.removeManifestTag(
   ///   path: 'manifest.application.activity',
-  ///   commentMarkers: ['@permit', '@custom'],
+  ///   tagName: 'activity',
+  ///   attribute: {'android:name': 'com.example.MainActivity'},
+  ///   comments: ['@permit'],
   /// );
   /// ```
   void removeManifestTag({
     required String path,
+    required String tagName,
+    required (String, String) attribute,
     List<String>? comments,
   }) {
-    final element = _findElementByPath(path);
-    if (element == null) {
-      throw Exception('Element not found: $path');
+    final parent = _findElementByPath(path);
+    if (parent == null) {
+      throw Exception('Parent element not found: $path');
     }
 
-    _removeElementWithComments(element, comments);
+    // Try to locate the element's line range directly in the file, searching within the parent
+    final elementInfo = _findElementLinesByTagAndAttribute(parent, tagName, attribute);
+    if (elementInfo == null) {
+      throw Exception('Element not found: $tagName with attribute $attribute');
+    }
+
+    // Compute start line including optional comment block
+    int startLine = elementInfo.startLine;
+    if (comments != null && comments.isNotEmpty) {
+      startLine = _findCommentBlockStart(elementInfo.startLine, comments);
+    }
+
+    // Remove from start of comments (if any) to end of element
+    lines.removeRange(startLine, elementInfo.endLine + 1);
+
+    // Reparse document after removal so subsequent operations see the change
+    _updateDocument();
+  }
+
+  /// Find the line range of a child element by tag name and attribute within a parent element
+  _ElementLines? _findElementLinesByTagAndAttribute(
+    XmlElement parent,
+    String tagName,
+    (String, String) attribute,
+  ) {
+    // Get the parent's line range so we only search within it
+    final parentInfo = _findElementLines(parent);
+    if (parentInfo == null) return null;
+
+    // Search for the opening tag of the child inside the parent's lines
+    for (var i = parentInfo.startLine; i <= parentInfo.endLine; i++) {
+      final line = lines[i];
+      if (!line.contains('<$tagName')) continue;
+
+      // Find end of opening tag (may span multiple lines)
+      int j = i;
+      for (; j < lines.length; j++) {
+        if (lines[j].contains('>')) break;
+      }
+      if (j >= lines.length) continue;
+
+      // Determine if self-closing
+      final openingSegment = lines.sublist(i, j + 1).join('\n');
+      final isSelfClosingOpening = openingSegment.contains('/>');
+
+      int endLine = j;
+      if (isSelfClosingOpening) {
+        // build snippet and parse to confirm attribute
+        final snippet = openingSegment;
+        try {
+          final doc = XmlDocument.parse(
+            snippet.contains('<?xml') ? snippet : '<?xml version="1.0"?>\n<root>$snippet</root>',
+          );
+          // Extract the element from the wrapper
+          final parsedEl = doc.findAllElements(tagName).firstOrNull;
+          if (parsedEl != null && parsedEl.getAttribute(attribute.$1) == attribute.$2) {
+            return _ElementLines(startLine: i, endLine: j, indent: _getLineIndent(i));
+          }
+        } catch (_) {
+          // ignore parse errors for snippet
+        }
+        continue;
+      }
+
+      // Not self-closing: find corresponding closing tag
+      int depth = 0;
+      bool inOpenTag = true;
+      for (var k = j; k < lines.length; k++) {
+        final currentLine = lines[k];
+        if (inOpenTag) {
+          if (currentLine.contains('>') && !currentLine.contains('/>')) {
+            inOpenTag = false;
+            depth = 1;
+            continue;
+          }
+        } else {
+          if (currentLine.contains('<$tagName')) depth++;
+          if (currentLine.contains('</$tagName>')) {
+            depth--;
+            if (depth == 0) {
+              endLine = k;
+              break;
+            }
+          }
+        }
+      }
+
+      // Build full element text and parse it to accurately check attributes
+      final elementText = lines.sublist(i, endLine + 1).join('\n');
+      try {
+        final wrapped = '<?xml version="1.0"?>\n<root>\n$elementText\n</root>';
+        final doc = XmlDocument.parse(wrapped);
+        final parsedEl = doc.findAllElements(tagName).firstOrNull;
+        if (parsedEl != null && parsedEl.getAttribute(attribute.$1) == attribute.$2) {
+          return _ElementLines(startLine: i, endLine: endLine, indent: _getLineIndent(i));
+        }
+      } catch (_) {
+        // ignore parse errors and continue
+      }
+    }
+
+    return null;
   }
 
   /// Remove a plist key-value pair with its associated comments
@@ -179,6 +290,30 @@ class SurgicalXmlEditor {
 
     // Remove from start of comments to end of value
     lines.removeRange(startLine, valueInfo.endLine + 1);
+
+    // Reparse document after removal so subsequent operations see the change
+    _updateDocument();
+  }
+
+  /// Find all tags by name within a specific path
+  ///
+  /// Example:
+  /// ```dart
+  /// final activities = editor.findTagsByNameInPath(
+  ///   path: 'manifest.application',
+  ///   tagName: 'activity',
+  /// );
+  /// ```
+  List<XmlElement> findTags({
+    required String path,
+    required String name,
+  }) {
+    final parent = _findElementByPath(path);
+    if (parent == null) {
+      return [];
+    }
+
+    return parent.findElements(name).toList();
   }
 
   /// Find all tags by tag name
@@ -209,6 +344,50 @@ class SurgicalXmlEditor {
     final elements = tagName != null ? document.findAllElements(tagName) : document.descendants.whereType<XmlElement>();
 
     return elements.where((e) => e.getAttribute(attributeName) == attributeValue).toList();
+  }
+
+  /// Get comments associated with an XML element
+  ///
+  /// This searches backward from the element's position to find any
+  /// comment lines that immediately precede it.
+  ///
+  /// Example:
+  /// ```dart
+  /// final permission = editor.findTagsByAttribute(
+  ///   tagName: 'uses-permission',
+  ///   attributeName: 'android:name',
+  ///   attributeValue: 'android.permission.INTERNET',
+  /// ).first;
+  ///
+  /// final comments = editor.getCommentsOf(permission);
+  /// // Returns: ['@permit internet access', 'Required for API calls']
+  /// ```
+  List<String> getCommentsOf(XmlElement element) {
+    final elementInfo = _findElementLines(element);
+    if (elementInfo == null) {
+      return [];
+    }
+
+    final comments = <String>[];
+
+    // Look backwards from the element's line for comment lines
+    for (int i = elementInfo.startLine - 1; i >= 0; i--) {
+      final line = lines[i].trim();
+
+      // Check if this is a comment line
+      if (line.startsWith('<!--') && line.endsWith('-->')) {
+        final commentText = line.replaceFirst('<!--', '').replaceFirst('-->', '').trim();
+        comments.insert(0, commentText); // Insert at beginning to maintain order
+      } else if (line.isEmpty) {
+        // Empty line, continue looking
+        continue;
+      } else {
+        // Non-comment, non-empty line, stop here
+        break;
+      }
+    }
+
+    return comments;
   }
 
   /// Find an element by dot-separated path
@@ -328,7 +507,7 @@ class SurgicalXmlEditor {
     final baseIndent = _getLineIndent(parentLineIndex);
     return _InsertPosition(
       lineIndex: openTagEndLine + 1,
-      indent: baseIndent + '    ',
+      indent: '$baseIndent    ',
     );
   }
 
@@ -376,29 +555,8 @@ class SurgicalXmlEditor {
     final baseIndent = _getLineIndent(dictInfo.startLine);
     return _InsertPosition(
       lineIndex: dictInfo.startLine + 1,
-      indent: baseIndent + '    ',
+      indent: '$baseIndent    ',
     );
-  }
-
-  /// Remove an element with its associated comments
-  void _removeElementWithComments(
-    XmlElement element,
-    List<String>? commentMarkers,
-  ) {
-    final elementInfo = _findElementLines(element);
-    if (elementInfo == null) {
-      throw Exception('Could not locate element in file');
-    }
-
-    int startLine = elementInfo.startLine;
-
-    // Find comment block start if markers provided
-    if (commentMarkers != null && commentMarkers.isNotEmpty) {
-      startLine = _findCommentBlockStart(elementInfo.startLine, commentMarkers);
-    }
-
-    // Remove the lines
-    lines.removeRange(startLine, elementInfo.endLine + 1);
   }
 
   /// Find the start of a comment block above a line
@@ -441,7 +599,28 @@ class SurgicalXmlEditor {
     // Build a pattern to match this specific element by its attributes
     final attributes = element.attributes.map((a) => '${a.name.qualified}="${a.value}"').toList();
 
+    // For elements with text content, get the content
+    final elementText = element.innerText.trim();
+
+    // Only use occurrence counting for leaf elements (no child elements)
+    final hasChildElements = element.children.whereType<XmlElement>().isNotEmpty;
+
+    // Find which occurrence this element is among siblings of the same type
+    int elementIndex = 0;
+    if (!hasChildElements) {
+      final parent = element.parent;
+      if (parent != null) {
+        for (final child in parent.children) {
+          if (child is XmlElement && child.name.qualified == tagName) {
+            if (child == element) break;
+            elementIndex++;
+          }
+        }
+      }
+    }
+
     // Find the element in lines
+    int occurrenceCount = 0;
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
 
@@ -450,14 +629,38 @@ class SurgicalXmlEditor {
         bool allAttributesMatch =
             attributes.isEmpty ||
             attributes.every((attr) {
-              // Check this line and next few lines for multi-line tags
-              for (var j = i; j < i + 10 && j < lines.length; j++) {
-                if (lines[j].contains(attr)) return true;
+              // Check only within the element's opening tag (don't scan arbitrary following lines)
+              for (var j = i; j < lines.length; j++) {
+                final current = lines[j];
+                if (current.contains(attr)) return true;
+                // If we've reached the end of the opening tag, stop searching further
+                if (current.contains('>') || current.contains('/>')) {
+                  break;
+                }
               }
               return false;
             });
 
         if (!allAttributesMatch) continue;
+
+        // For text-based leaf elements, verify we have the right occurrence
+        if (elementText.isNotEmpty && attributes.isEmpty && !hasChildElements) {
+          // Check if this element's text content matches
+          bool textMatches = false;
+          for (var j = i; j < i + 20 && j < lines.length; j++) {
+            if (lines[j].contains(elementText)) {
+              textMatches = true;
+              break;
+            }
+          }
+          if (!textMatches) continue;
+
+          // Only use this if it's the right occurrence
+          if (occurrenceCount != elementIndex) {
+            occurrenceCount++;
+            continue;
+          }
+        }
 
         // Found the element, now find its end
         if (isSelfClosing || line.contains('/>')) {
@@ -534,6 +737,15 @@ class SurgicalXmlEditor {
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  /// Update the document instance after edits
+  void _updateDocument() {
+    try {
+      document = XmlDocument.parse(toXmlString());
+    } catch (e) {
+      // If parsing fails, keep the old document
     }
   }
 }
