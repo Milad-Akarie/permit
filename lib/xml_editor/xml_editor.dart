@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:xml/xml.dart';
+part 'plist_editor.dart';
+part 'manifest_editor.dart';
 
 /// A surgical XML editor that preserves the original file format
 class XmlEditor {
@@ -11,382 +13,7 @@ class XmlEditor {
     document = XmlDocument.parse(originalContent);
   }
 
-  /// Add a tag to an Android manifest file
-  ///
-  /// Example:
-  /// ```dart
-  /// editor.addManifestTag(
-  ///   path: 'manifest.application',
-  ///   tag: '<uses-permission android:name="android.permission.INTERNET" />',
-  ///   comments: ['@permit internet access', 'Required for API calls'],
-  /// );
-  /// ```
-  void addManifestTag({
-    required String path,
-    required String tag,
-    List<String>? comments,
-  }) {
-    final parent = _findElementByPath(path);
-    if (parent == null) {
-      throw Exception('Parent element not found: $path');
-    }
-
-    // Extract the tag name from the tag string
-    final tagNameMatch = RegExp(r'<(\w+[\w:-]*)').firstMatch(tag);
-    final tagName = tagNameMatch?.group(1) ?? '';
-
-    // Find insertion position based on siblings of the same type
-    final insertInfo = _findManifestInsertPosition(parent, tagName: tagName);
-    if (insertInfo == null) {
-      throw Exception('Could not find insertion point for: $path');
-    }
-
-    // Build the content to insert
-    final insertLines = <String>[];
-
-    // Add comments if provided
-    if (comments != null && comments.isNotEmpty) {
-      for (final comment in comments) {
-        insertLines.add('${insertInfo.indent}<!-- $comment -->');
-      }
-    }
-    insertLines.add('${insertInfo.indent}$tag');
-
-    // Insert at the appropriate position
-    lines.insertAll(insertInfo.lineIndex, insertLines);
-
-    // Reparse document so subsequent operations see the change
-    _updateDocument();
-  }
-
-  /// Add a manifest permission
-  void addManifestPermission({
-    required String permissionName,
-    List<String>? comments,
-  }) {
-    addManifestTag(
-      path: 'manifest',
-      tag: '<uses-permission android:name="$permissionName" />',
-      comments: comments,
-    );
-  }
-
-  /// Add a key-value pair to a plist file at a specific path
-  ///
-  /// The value parameter is optional. If null, only the key will be added.
-  /// The path parameter is required and specifies where to add the entry.
-  ///
-  /// Example with root dict:
-  /// ```dart
-  /// editor.addPlistEntry(
-  ///   path: 'plist.dict',
-  ///   key: 'NSCameraUsageDescription',
-  ///   value: '<string>We need camera access for photos</string>',
-  ///   keyComments: ['@permit camera'],
-  ///   valueComments: ['User-facing description'],
-  ///   anchorKeys: ['NSPhotoLibraryUsageDescription', 'NSMicrophoneUsageDescription'],
-  /// );
-  /// ```
-  ///
-  /// Example with nested path:
-  /// ```dart
-  /// editor.addPlistEntry(
-  ///   path: 'plist.dict.customDict',
-  ///   key: 'item1',
-  ///   value: '<string>value1</string>',
-  /// );
-  /// ```
-  void addPlistEntry({
-    required String path,
-    required String key,
-    String? value,
-    List<String>? keyComments,
-    List<String>? valueComments,
-    List<String>? anchorKeys,
-  }) {
-    // Find the target dict element at the specified path
-    final dict = _findElementByPath(path);
-
-    if (dict == null) {
-      throw Exception('Could not find <dict> element at path: $path');
-    }
-
-    // Find insertion position
-    final insertInfo = _findPlistInsertPosition(dict, anchorKeys: anchorKeys);
-    if (insertInfo == null) {
-      throw Exception('Could not find insertion point in plist');
-    }
-
-    // Build the content to insert
-    final insertLines = <String>[];
-
-    // Add key comments if provided
-    if (keyComments != null && keyComments.isNotEmpty) {
-      for (final comment in keyComments) {
-        insertLines.add('${insertInfo.indent}<!-- $comment -->');
-      }
-    }
-    insertLines.add('${insertInfo.indent}<key>$key</key>');
-
-    // Add value only if provided
-    if (value != null) {
-      // Add value comments if provided
-      if (valueComments != null && valueComments.isNotEmpty) {
-        for (final comment in valueComments) {
-          insertLines.add('${insertInfo.indent}<!-- $comment -->');
-        }
-      }
-      insertLines.add('${insertInfo.indent}$value');
-    }
-
-    // Insert at the appropriate position
-    lines.insertAll(insertInfo.lineIndex, insertLines);
-
-    // Reparse document so subsequent operations see the change
-    _updateDocument();
-  }
-
-  // add plistUsageDescription
-  void addPlistUsageDescription({
-    required String key,
-    required String description,
-    List<String>? keyComments,
-    List<String>? valueComments,
-    List<String>? anchorKeys,
-  }) {
-    addPlistEntry(
-      path: 'plist.dict',
-      key: key,
-      value: '<string>$description</string>',
-      keyComments: keyComments,
-      valueComments: valueComments,
-      anchorKeys: anchorKeys,
-    );
-  }
-
-  /// Remove a tag from manifest with its associated comments
-  ///
-  /// Example:
-  /// ```dart
-  /// editor.removeManifestTag(
-  ///   path: 'manifest.application.activity',
-  ///   tagName: 'activity',
-  ///   attribute: {'android:name': 'com.example.MainActivity'},
-  ///   comments: ['@permit'],
-  /// );
-  /// ```
-  void removeManifestTag({
-    required String path,
-    required String tagName,
-    required (String, String) attribute,
-    List<String>? comments,
-  }) {
-    final parent = _findElementByPath(path);
-    if (parent == null) {
-      throw Exception('Parent element not found: $path');
-    }
-
-    // Try to locate the element's line range directly in the file, searching within the parent
-    final elementInfo = _findElementLinesByTagAndAttribute(parent, tagName, attribute);
-    if (elementInfo == null) {
-      throw Exception('Element not found: $tagName with attribute $attribute');
-    }
-
-    // Compute start line including optional comment block
-    int startLine = elementInfo.startLine;
-    if (comments != null && comments.isNotEmpty) {
-      startLine = _findCommentBlockStart(elementInfo.startLine, comments);
-    }
-
-    // Remove from start of comments (if any) to end of element
-    lines.removeRange(startLine, elementInfo.endLine + 1);
-
-    // Reparse document after removal so subsequent operations see the change
-    _updateDocument();
-  }
-
-  /// Remove a manifest permission by name with its associated comments
-  void removeManifestPermission({
-    required String permissionName,
-    List<String>? comments,
-  }) {
-    removeManifestTag(
-      path: 'manifest',
-      tagName: 'uses-permission',
-      attribute: ('android:name', permissionName),
-      comments: comments,
-    );
-  }
-
-  /// Find the line range of a child element by tag name and attribute within a parent element
-  _ElementLines? _findElementLinesByTagAndAttribute(
-    XmlElement parent,
-    String tagName,
-    (String, String) attribute,
-  ) {
-    // Get the parent's line range so we only search within it
-    final parentInfo = _findElementLines(parent);
-    if (parentInfo == null) return null;
-
-    // Search for the opening tag of the child inside the parent's lines
-    for (var i = parentInfo.startLine; i <= parentInfo.endLine; i++) {
-      final line = lines[i];
-      if (!line.contains('<$tagName')) continue;
-
-      // Find end of opening tag (may span multiple lines)
-      int j = i;
-      for (; j < lines.length; j++) {
-        if (lines[j].contains('>')) break;
-      }
-      if (j >= lines.length) continue;
-
-      // Determine if self-closing
-      final openingSegment = lines.sublist(i, j + 1).join('\n');
-      final isSelfClosingOpening = openingSegment.contains('/>');
-
-      int endLine = j;
-      if (isSelfClosingOpening) {
-        // build snippet and parse to confirm attribute
-        final snippet = openingSegment;
-        try {
-          final doc = XmlDocument.parse(
-            snippet.contains('<?xml') ? snippet : '<?xml version="1.0"?>\n<root>$snippet</root>',
-          );
-          // Extract the element from the wrapper
-          final parsedEl = doc.findAllElements(tagName).firstOrNull;
-          if (parsedEl != null && parsedEl.getAttribute(attribute.$1) == attribute.$2) {
-            return _ElementLines(startLine: i, endLine: j, indent: _getLineIndent(i));
-          }
-        } catch (_) {
-          // ignore parse errors for snippet
-        }
-        continue;
-      }
-
-      // Not self-closing: find corresponding closing tag
-      int depth = 0;
-      bool inOpenTag = true;
-      for (var k = j; k < lines.length; k++) {
-        final currentLine = lines[k];
-        if (inOpenTag) {
-          if (currentLine.contains('>') && !currentLine.contains('/>')) {
-            inOpenTag = false;
-            depth = 1;
-            continue;
-          }
-        } else {
-          if (currentLine.contains('<$tagName')) depth++;
-          if (currentLine.contains('</$tagName>')) {
-            depth--;
-            if (depth == 0) {
-              endLine = k;
-              break;
-            }
-          }
-        }
-      }
-
-      // Build full element text and parse it to accurately check attributes
-      final elementText = lines.sublist(i, endLine + 1).join('\n');
-      try {
-        final wrapped = '<?xml version="1.0"?>\n<root>\n$elementText\n</root>';
-        final doc = XmlDocument.parse(wrapped);
-        final parsedEl = doc.findAllElements(tagName).firstOrNull;
-        if (parsedEl != null && parsedEl.getAttribute(attribute.$1) == attribute.$2) {
-          return _ElementLines(startLine: i, endLine: endLine, indent: _getLineIndent(i));
-        }
-      } catch (_) {
-        // ignore parse errors and continue
-      }
-    }
-
-    return null;
-  }
-
-  /// Remove a plist key-value pair with its associated comments
-  ///
-  /// Example:
-  /// ```dart
-  /// editor.removePlistEntry(
-  ///   path: 'plist.dict',
-  ///   key: 'NSCameraUsageDescription',
-  ///   commentMarkers: ['@permit'],
-  /// );
-  /// ```
-  void removePlistEntry({
-    required String path,
-    required String key,
-    List<String>? commentMarkers,
-  }) {
-    final dict = _findElementByPath(path);
-    if (dict == null) {
-      throw Exception('Could not find <dict> element at path: $path');
-    }
-
-    // Find the key element
-    final keyElement = _findPlistKey(dict, key);
-    if (keyElement == null) {
-      throw Exception('Key not found: $key');
-    }
-
-    // Find the key and its value in the lines
-    final keyInfo = _findElementLines(keyElement);
-    if (keyInfo == null) {
-      throw Exception('Could not locate key in file: $key');
-    }
-
-    // Find the value element (next element after key)
-    final valueElement = _getNextSiblingElement(keyElement);
-    if (valueElement == null) {
-      throw Exception('Could not find value for key: $key');
-    }
-
-    final valueInfo = _findElementLines(valueElement);
-    if (valueInfo == null) {
-      throw Exception('Could not locate value in file');
-    }
-
-    // Find all comments above the key
-    int startLine = keyInfo.startLine;
-    if (commentMarkers != null && commentMarkers.isNotEmpty) {
-      startLine = _findCommentBlockStart(keyInfo.startLine, commentMarkers);
-    }
-
-    // Remove from start of comments to end of value
-    lines.removeRange(startLine, valueInfo.endLine + 1);
-
-    // Reparse document after removal so subsequent operations see the change
-    _updateDocument();
-  }
-
-  /// Remove a plist usage description by key with its associated comments
-  ///
-  /// Example:
-  /// ```dart
-  /// editor.removePlistUsageDescription(
-  ///   key: 'NSCameraUsageDescription',
-  ///   commentMarkers: ['@permit'],
-  /// );
-  void removePlistUsageDescription({
-    required String key,
-    List<String>? commentMarkers,
-  }) {
-    removePlistEntry(
-      path: 'plist.dict',
-      key: key,
-      commentMarkers: commentMarkers,
-    );
-  }
-
   /// Find all tags by name within a specific path
-  ///
-  /// Example:
-  /// ```dart
-  /// final activities = editor.findTagsByNameInPath(
-  ///   path: 'manifest.application',
-  ///   tagName: 'activity',
-  /// );
-  /// ```
   List<XmlElement> findTags({
     required String path,
     required String name,
@@ -400,25 +27,11 @@ class XmlEditor {
   }
 
   /// Find all tags by tag name
-  ///
-  /// Example:
-  /// ```dart
-  /// final permissions = editor.findTagsByName('uses-permission');
-  /// ```
   List<XmlElement> findTagsByName(String tagName) {
     return document.findAllElements(tagName).toList();
   }
 
   /// Find tags by name and attribute value
-  ///
-  /// Example:
-  /// ```dart
-  /// final internetPerm = editor.findTagsByAttribute(
-  ///   tagName: 'uses-permission',
-  ///   attributeName: 'android:name',
-  ///   attributeValue: 'android.permission.INTERNET',
-  /// );
-  /// ```
   List<XmlElement> findTagsByAttribute({
     String? tagName,
     required String attributeName,
@@ -430,21 +43,6 @@ class XmlEditor {
   }
 
   /// Get comments associated with an XML element
-  ///
-  /// This searches backward from the element's position to find any
-  /// comment lines that immediately precede it.
-  ///
-  /// Example:
-  /// ```dart
-  /// final permission = editor.findTagsByAttribute(
-  ///   tagName: 'uses-permission',
-  ///   attributeName: 'android:name',
-  ///   attributeValue: 'android.permission.INTERNET',
-  /// ).first;
-  ///
-  /// final comments = editor.getCommentsOf(permission);
-  /// // Returns: ['@permit internet access', 'Required for API calls']
-  /// ```
   List<String> getCommentsOf(XmlElement element) {
     final elementInfo = _findElementLines(element);
     if (elementInfo == null) {
@@ -472,6 +70,36 @@ class XmlEditor {
 
     return comments;
   }
+
+  /// Get the modified content as a string
+  String toXmlString() => lines.join('\n');
+
+  /// Save to file
+  Future<void> saveToFile(String path) async {
+    final file = File(path);
+    await file.writeAsString(toXmlString());
+  }
+
+  /// Validate that the modified content is still valid XML
+  bool validate() {
+    try {
+      XmlDocument.parse(toXmlString());
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Update the document instance after edits
+  void _updateDocument() {
+    try {
+      document = XmlDocument.parse(toXmlString());
+    } catch (e) {
+      // If parsing fails, keep the old document
+    }
+  }
+
+  // --- Private helper methods used by subclasses ---
 
   /// Find an element by dot-separated path
   XmlElement? _findElementByPath(String path) {
@@ -797,34 +425,6 @@ class XmlEditor {
     final line = lines[lineIndex];
     final match = RegExp(r'^(\s*)').firstMatch(line);
     return match?.group(1) ?? '';
-  }
-
-  /// Get the modified content as a string
-  String toXmlString() => lines.join('\n');
-
-  /// Save to file
-  Future<void> saveToFile(String path) async {
-    final file = File(path);
-    await file.writeAsString(toXmlString());
-  }
-
-  /// Validate that the modified content is still valid XML
-  bool validate() {
-    try {
-      XmlDocument.parse(toXmlString());
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// Update the document instance after edits
-  void _updateDocument() {
-    try {
-      document = XmlDocument.parse(toXmlString());
-    } catch (e) {
-      // If parsing fails, keep the old document
-    }
   }
 }
 

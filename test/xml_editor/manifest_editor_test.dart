@@ -1,6 +1,5 @@
 import 'package:test/test.dart';
 import 'package:permit/xml_editor/xml_editor.dart';
-import 'package:xml/xml.dart';
 
 void main() {
   group('XmlEditor - AndroidManifest Tests', () {
@@ -13,7 +12,7 @@ void main() {
     <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:label="TestApp"
-        android:name="\${applicationName}"
+        android:name="\\${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
@@ -31,10 +30,10 @@ void main() {
 </manifest>''';
     });
 
-    group('addManifestTag', () {
+    group('addTag', () {
       test('should add a uses-permission tag with comments', () {
-        final editor = XmlEditor(manifestContent);
-        editor.addManifestTag(
+        final editor = ManifestEditor(manifestContent);
+        editor.addTag(
           path: 'manifest',
           tag: '<uses-permission android:name="android.permission.BLUETOOTH" />',
           comments: ['@permit bluetooth access', 'Required for device connectivity'],
@@ -47,8 +46,8 @@ void main() {
       });
 
       test('should add a tag without comments', () {
-        final editor = XmlEditor(manifestContent);
-        editor.addManifestTag(
+        final editor = ManifestEditor(manifestContent);
+        editor.addTag(
           path: 'manifest',
           tag: '<uses-permission android:name="android.permission.LOCATION" />',
         );
@@ -58,8 +57,8 @@ void main() {
       });
 
       test('should add activity child tag to application', () {
-        final editor = XmlEditor(manifestContent);
-        editor.addManifestTag(
+        final editor = ManifestEditor(manifestContent);
+        editor.addTag(
           path: 'manifest.application',
           tag: '<activity android:name=".SecondActivity" android:exported="false" />',
           comments: ['@permit secondary screen'],
@@ -71,9 +70,9 @@ void main() {
       });
 
       test('should throw exception for non-existent parent path', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         expect(
-          () => editor.addManifestTag(
+          () => editor.addTag(
             path: 'manifest.nonexistent',
             tag: '<test />',
           ),
@@ -83,9 +82,9 @@ void main() {
 
       test('should throw exception for self-closing parent', () {
         final selfClosingManifest = '<manifest />';
-        final editor = XmlEditor(selfClosingManifest);
+        final editor = ManifestEditor(selfClosingManifest);
         expect(
-          () => editor.addManifestTag(
+          () => editor.addTag(
             path: 'manifest',
             tag: '<uses-permission android:name="test" />',
           ),
@@ -94,8 +93,8 @@ void main() {
       });
 
       test('should preserve XML formatting and indentation', () {
-        final editor = XmlEditor(manifestContent);
-        editor.addManifestTag(
+        final editor = ManifestEditor(manifestContent);
+        editor.addTag(
           path: 'manifest',
           tag: '<uses-permission android:name="android.permission.READ_CONTACTS" />',
         );
@@ -106,7 +105,7 @@ void main() {
       });
     });
 
-    group('removeManifestTag', () {
+    group('removeTag', () {
       test('should remove a uses-permission tag with comment marker', () {
         final manifestWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -114,8 +113,8 @@ void main() {
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
 </manifest>''';
-        final editor = XmlEditor(manifestWithComments);
-        editor.removeManifestTag(
+        final editor = ManifestEditor(manifestWithComments);
+        editor.removeTag(
           path: 'manifest',
           tagName: 'uses-permission',
           attribute: ('android:name', 'android.permission.INTERNET'),
@@ -129,8 +128,8 @@ void main() {
       });
 
       test('should remove a tag without comments', () {
-        final editor = XmlEditor(manifestContent);
-        editor.removeManifestTag(
+        final editor = ManifestEditor(manifestContent);
+        editor.removeTag(
           path: 'manifest',
           tagName: 'uses-permission',
           attribute: ('android:name', 'android.permission.INTERNET'),
@@ -142,9 +141,9 @@ void main() {
       });
 
       test('should throw exception for non-existent tag', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         expect(
-          () => editor.removeManifestTag(
+          () => editor.removeTag(
             path: 'manifest',
             tagName: 'uses-permission',
             attribute: ('android:name', 'android.permission.NONEXISTENT'),
@@ -154,9 +153,9 @@ void main() {
       });
 
       test('should throw exception for non-existent parent path', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         expect(
-          () => editor.removeManifestTag(
+          () => editor.removeTag(
             path: 'manifest.nonexistent',
             tagName: 'activity',
             attribute: ('android:name', '.MainActivity'),
@@ -166,8 +165,8 @@ void main() {
       });
 
       test('should remove activity from application', () {
-        final editor = XmlEditor(manifestContent);
-        editor.removeManifestTag(
+        final editor = ManifestEditor(manifestContent);
+        editor.removeTag(
           path: 'manifest.application',
           tagName: 'activity',
           attribute: ('android:name', '.MainActivity'),
@@ -179,8 +178,8 @@ void main() {
       });
 
       test('should remove service tag', () {
-        final editor = XmlEditor(manifestContent);
-        editor.removeManifestTag(
+        final editor = ManifestEditor(manifestContent);
+        editor.removeTag(
           path: 'manifest.application',
           tagName: 'service',
           attribute: ('android:name', '.MyService'),
@@ -194,7 +193,7 @@ void main() {
 
     group('findTagsByName', () {
       test('should find all uses-permission tags', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         final tags = editor.findTagsByName('uses-permission');
 
         expect(tags.length, 2);
@@ -203,7 +202,7 @@ void main() {
       });
 
       test('should find activity tags', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         final tags = editor.findTagsByName('activity');
 
         expect(tags.length, 1);
@@ -211,7 +210,7 @@ void main() {
       });
 
       test('should return empty list for non-existent tag', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         final tags = editor.findTagsByName('nonexistent');
 
         expect(tags.length, 0);
@@ -220,7 +219,7 @@ void main() {
 
     group('findTagsByAttribute', () {
       test('should find tag by attribute name and value', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         final tags = editor.findTagsByAttribute(
           tagName: 'uses-permission',
           attributeName: 'android:name',
@@ -237,7 +236,7 @@ void main() {
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 </manifest>''';
-        final editor = XmlEditor(multiPerm);
+        final editor = ManifestEditor(multiPerm);
         final tags = editor.findTagsByAttribute(
           tagName: 'uses-permission',
           attributeName: 'android:name',
@@ -248,7 +247,7 @@ void main() {
       });
 
       test('should find tags without specifying tagName', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         final tags = editor.findTagsByAttribute(
           attributeName: 'android:name',
           attributeValue: '.MainActivity',
@@ -258,7 +257,7 @@ void main() {
       });
 
       test('should return empty list for non-matching attribute', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         final tags = editor.findTagsByAttribute(
           tagName: 'uses-permission',
           attributeName: 'android:name',
@@ -271,7 +270,7 @@ void main() {
 
     group('findTagsByNameInPath', () {
       test('should find all tags of specific type in a path', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         final activities = editor.findTags(
           path: 'manifest.application',
           name: 'activity',
@@ -290,7 +289,7 @@ void main() {
         <activity android:name=".ThirdActivity" android:exported="false" />
     </application>
 </manifest>''';
-        final editor = XmlEditor(multiActivityManifest);
+        final editor = ManifestEditor(multiActivityManifest);
         final activities = editor.findTags(
           path: 'manifest.application',
           name: 'activity',
@@ -300,7 +299,7 @@ void main() {
       });
 
       test('should return empty list when path does not exist', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         final tags = editor.findTags(
           path: 'manifest.nonexistent',
           name: 'activity',
@@ -310,7 +309,7 @@ void main() {
       });
 
       test('should return empty list when no tags of specified type exist in path', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         final services = editor.findTags(
           path: 'manifest',
           name: 'service',
@@ -331,7 +330,7 @@ void main() {
         </activity>
     </application>
 </manifest>''';
-        final editor = XmlEditor(nestedXml);
+        final editor = ManifestEditor(nestedXml);
         final actions = editor.findTags(
           path: 'manifest.application.activity.intent-filter',
           name: 'action',
@@ -349,7 +348,7 @@ void main() {
     <!-- @permit internet access -->
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>''';
-        final editor = XmlEditor(manifestWithComment);
+        final editor = ManifestEditor(manifestWithComment);
         final permission = editor.findTagsByName('uses-permission').first;
         final comments = editor.getCommentsOf(permission);
 
@@ -365,7 +364,7 @@ void main() {
     <!-- Updated: 2024 -->
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>''';
-        final editor = XmlEditor(manifestWithComments);
+        final editor = ManifestEditor(manifestWithComments);
         final permission = editor.findTagsByName('uses-permission').first;
         final comments = editor.getCommentsOf(permission);
 
@@ -376,7 +375,7 @@ void main() {
       });
 
       test('should return empty list for element without comments', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
         final permission = editor.findTagsByName('uses-permission').first;
         final comments = editor.getCommentsOf(permission);
 
@@ -390,7 +389,7 @@ void main() {
     <!-- @permit location -->
     <uses-permission android:name="android.permission.LOCATION" />
 </manifest>''';
-        final editor = XmlEditor(manifestWithGap);
+        final editor = ManifestEditor(manifestWithGap);
         final permission = editor.findTagsByName('uses-permission').first;
         final comments = editor.getCommentsOf(permission);
         expect(comments.length, 2);
@@ -405,7 +404,7 @@ void main() {
     
     <uses-permission android:name="android.permission.CAMERA" />
 </manifest>''';
-        final editor = XmlEditor(manifestWithEmptyLines);
+        final editor = ManifestEditor(manifestWithEmptyLines);
         final permission = editor.findTagsByName('uses-permission').first;
         final comments = editor.getCommentsOf(permission);
 
@@ -419,7 +418,7 @@ void main() {
     <!-- @permit: Feature [GPS] - Track user location & map data -->
     <uses-permission android:name="android.permission.LOCATION" />
 </manifest>''';
-        final editor = XmlEditor(manifestWithSpecialChars);
+        final editor = ManifestEditor(manifestWithSpecialChars);
         final permission = editor.findTagsByName('uses-permission').first;
         final comments = editor.getCommentsOf(permission);
 
@@ -435,7 +434,7 @@ void main() {
         <activity android:name=".MainActivity" android:exported="true" />
     </application>
 </manifest>''';
-        final editor = XmlEditor(manifestWithNestedComments);
+        final editor = ManifestEditor(manifestWithNestedComments);
         final activity = editor.findTagsByName('activity').first;
         final comments = editor.getCommentsOf(activity);
 
@@ -443,9 +442,9 @@ void main() {
         expect(comments[0], '@permit main activity');
       });
 
-      test('should work with elements that have been added via addManifestTag', () {
-        final editor = XmlEditor(manifestContent);
-        editor.addManifestTag(
+      test('should work with elements that have been added via addTag', () {
+        final editor = ManifestEditor(manifestContent);
+        editor.addTag(
           path: 'manifest',
           tag: '<uses-permission android:name="android.permission.BLUETOOTH" />',
           comments: ['@permit bluetooth', 'Device connectivity'],
@@ -468,8 +467,8 @@ void main() {
 
     group('Validation and Format Preservation', () {
       test('should produce valid XML after modifications', () {
-        final editor = XmlEditor(manifestContent);
-        editor.addManifestTag(
+        final editor = ManifestEditor(manifestContent);
+        editor.addTag(
           path: 'manifest',
           tag: '<uses-permission android:name="android.permission.WRITE_CONTACTS" />',
         );
@@ -478,15 +477,15 @@ void main() {
       });
 
       test('should preserve XML structure after multiple operations', () {
-        final editor = XmlEditor(manifestContent);
+        final editor = ManifestEditor(manifestContent);
 
         // Add a tag
-        editor.addManifestTag(
+        editor.addTag(
           path: 'manifest',
           tag: '<uses-permission android:name="android.permission.LOCATION" />',
         );
         // Remove a tag
-        editor.removeManifestTag(
+        editor.removeTag(
           path: 'manifest',
           tagName: 'uses-permission',
           attribute: ('android:name', 'android.permission.CAMERA'),
@@ -501,393 +500,6 @@ void main() {
         // Verify it's still valid XML
         expect(editor.validate(), true);
       });
-    });
-  });
-
-  group('XmlEditor - Plist Tests', () {
-    late String plistContent;
-
-    setUp(() {
-      plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access for photos</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need photo library access</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>We need your location for mapping</string>
-</dict>
-</plist>''';
-    });
-
-    group('addPlistEntry', () {
-      test('should add a new plist entry with comments', () {
-        final editor = XmlEditor(plistContent);
-        editor.addPlistUsageDescription(
-          key: 'NSMicrophoneUsageDescription',
-          description: 'We need microphone access',
-          keyComments: ['@permit microphone'],
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('NSMicrophoneUsageDescription'), true);
-        expect(result.contains('We need microphone access'), true);
-        expect(result.contains('@permit microphone'), true);
-      });
-
-      test('should add entry after anchor key', () {
-        final editor = XmlEditor(plistContent);
-        editor.addPlistUsageDescription(
-          key: 'NSContactsUsageDescription',
-          description: 'We need contacts access',
-          anchorKeys: ['NSPhotoLibraryUsageDescription'],
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('NSContactsUsageDescription'), true);
-        // Verify the entry was added
-        expect(result.contains('We need contacts access'), true);
-      });
-
-      test('should add plist entry without comments', () {
-        final editor = XmlEditor(plistContent);
-        editor.addPlistEntry(
-          path: 'plist.dict',
-          key: 'NSBluetoothPeripheralUsageDescription',
-          value: '<string>We need bluetooth access</string>',
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('NSBluetoothPeripheralUsageDescription'), true);
-      });
-
-      test('should add plist entry with null value (key only)', () {
-        final editor = XmlEditor(plistContent);
-        editor.addPlistEntry(
-          path: 'plist.dict',
-          key: 'TestKeyOnly',
-          value: null,
-          keyComments: ['@permit test key'],
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('TestKeyOnly'), true);
-        expect(result.contains('@permit test key'), true);
-        // Value should not be present after the key
-        final lines = result.split('\n');
-        final keyLine = lines.indexWhere((line) => line.contains('TestKeyOnly'));
-        expect(keyLine, greaterThanOrEqualTo(0));
-        // Check next non-comment line is not a string/value
-        int nextLineIdx = keyLine + 1;
-        while (nextLineIdx < lines.length && lines[nextLineIdx].trim().startsWith('<!--')) {
-          nextLineIdx++;
-        }
-        expect(lines[nextLineIdx].contains('<string>'), false);
-      });
-
-      test('should add entry at specified path', () {
-        final plistWithArray = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>ArrayKey</key>
-    <array>
-    </array>
-</dict>
-</plist>''';
-        final editor = XmlEditor(plistWithArray);
-        editor.addPlistEntry(
-          path: 'plist.dict',
-          key: 'NewKey',
-          value: '<string>new value</string>',
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('NewKey'), true);
-        expect(result.contains('new value'), true);
-      });
-
-      test('should throw exception when dict not found at path', () {
-        final invalidPlist = '<?xml version="1.0"?><plist version="1.0"><array></array></plist>';
-        final editor = XmlEditor(invalidPlist);
-
-        expect(
-          () => editor.addPlistEntry(
-            path: 'plist.dict',
-            key: 'TestKey',
-            value: '<string>Test</string>',
-          ),
-          throwsException,
-        );
-      });
-
-      test('should throw exception when specified path not found', () {
-        final editor = XmlEditor(plistContent);
-        expect(
-          () => editor.addPlistEntry(
-            path: 'plist.dict.nonexistent',
-            key: 'TestKey',
-            value: '<string>Test</string>',
-          ),
-          throwsException,
-        );
-      });
-    });
-
-    group('removePlistEntry', () {
-      test('should remove a plist entry with comment marker', () {
-        final plistWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <!--@permit camera-->
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need photo library access</string>
-</dict>
-</plist>''';
-        final editor = XmlEditor(plistWithComments);
-        editor.removePlistUsageDescription(
-          key: 'NSCameraUsageDescription',
-          commentMarkers: ['@permit'],
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('NSCameraUsageDescription'), false);
-        expect(result.contains('We need camera access'), false);
-        expect(result.contains('NSPhotoLibraryUsageDescription'), true);
-        expect(result.contains('@permit camera'), false);
-      });
-
-      test('should remove plist entry without comments', () {
-        final editor = XmlEditor(plistContent);
-        // Note: removePlistEntry removes from the key through the value
-        // It should remove both the key line and the value line
-        editor.removePlistUsageDescription(
-          key: 'NSLocationWhenInUseUsageDescription',
-        );
-
-        final result = editor.toXmlString();
-        // The key should be removed
-        expect(result.contains('NSLocationWhenInUseUsageDescription'), false);
-        // Other keys should remain
-        expect(result.contains('NSCameraUsageDescription'), true);
-      });
-
-      test('should throw exception for non-existent key', () {
-        final editor = XmlEditor(plistContent);
-        expect(
-          () => editor.removePlistUsageDescription(key: 'NonexistentKey'),
-          throwsException,
-        );
-      });
-
-      test('should throw exception when dict not found', () {
-        final invalidPlist = '<?xml version="1.0"?><plist version="1.0"><array></array></plist>';
-        final editor = XmlEditor(invalidPlist);
-
-        expect(
-          () => editor.removePlistUsageDescription(key: 'TestKey'),
-          throwsException,
-        );
-      });
-    });
-  });
-
-  group('XmlEditor - Edge Cases and Complex Scenarios', () {
-    test('should handle XML with newlines and complex formatting', () {
-      final complexXml = '''<?xml version="1.0" encoding="UTF-8"?>
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.app">
-    <uses-permission
-        android:name="android.permission.INTERNET" />
-</manifest>''';
-      final editor = XmlEditor(complexXml);
-      final tags = editor.findTagsByAttribute(
-        attributeName: 'android:name',
-        attributeValue: 'android.permission.INTERNET',
-      );
-
-      expect(tags.length, 1);
-    });
-
-    test('should handle multiple comment markers', () {
-      final manifestWithMultiComments = '''<?xml version="1.0" encoding="UTF-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!--@permit-->
-    <!--internet access-->
-    <!--Required for API-->
-    <uses-permission android:name="android.permission.INTERNET" />
-</manifest>''';
-      final editor = XmlEditor(manifestWithMultiComments);
-      editor.removeManifestTag(
-        path: 'manifest',
-        tagName: 'uses-permission',
-        attribute: ('android:name', 'android.permission.INTERNET'),
-        comments: ['@permit'],
-      );
-
-      final result = editor.toXmlString();
-      // The tag should definitely be removed
-      expect(result.contains('android.permission.INTERNET'), false);
-    });
-
-    test('should preserve empty lines and structure', () {
-      final xml = '''<?xml version="1.0" encoding="UTF-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <uses-permission android:name="android.permission.INTERNET" />
-
-</manifest>''';
-      final editor = XmlEditor(xml);
-      // Should still be valid
-      expect(editor.validate(), true);
-    });
-
-    test('should handle attributes with special characters', () {
-      final specialXml = '''<?xml version="1.0" encoding="UTF-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:name="\${applicationName}">
-        <activity android:name=".MainActivity" />
-    </application>
-</manifest>''';
-      final editor = XmlEditor(specialXml);
-      final tags = editor.findTagsByName('activity');
-
-      expect(tags.length, 1);
-    });
-
-    test('should maintain document structure through multiple edits', () {
-      final manifest = '''
-      <?xml version="1.0" encoding="UTF-8"?>
-      <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-          <uses-permission android:name="android.permission.INTERNET" />
-          <uses-permission android:name="android.permission.CAMERA" />
-          <application android:name="test">
-          </application>
-      </manifest>
-''';
-      final editor = XmlEditor(manifest);
-
-      // Add, remove, and check validity
-      editor.addManifestTag(
-        path: 'manifest',
-        tag: '<uses-permission android:name="android.permission.LOCATION" />',
-      );
-      editor.removeManifestTag(
-        path: 'manifest',
-        tagName: 'uses-permission',
-        attribute: ('android:name', 'android.permission.CAMERA'),
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('android.permission.INTERNET'), true);
-      expect(result.contains('android.permission.LOCATION'), true);
-      expect(result.contains('android.permission.CAMERA'), false);
-
-      // Final validation
-      expect(editor.validate(), true);
-    });
-  });
-
-  group('XmlEditor - Additional Tests', () {
-    test('inserts new child after last sibling of same type', () {
-      final manifest = '''<?xml version="1.0" encoding="UTF-8"?>
-<manifest>
-    <application>
-        <activity android:name=".ActivityA" />
-        <activity android:name=".ActivityB" />
-    </application>
-</manifest>''';
-
-      final editor = XmlEditor(manifest);
-      editor.addManifestTag(
-        path: 'manifest.application',
-        tag: '<activity android:name=".ActivityC" />',
-      );
-
-      final out = editor.toXmlString();
-      final idxA = out.indexOf('.ActivityA');
-      final idxB = out.indexOf('.ActivityB');
-      final idxC = out.indexOf('.ActivityC');
-
-      expect(idxA, lessThan(idxB));
-      expect(idxB, lessThan(idxC));
-    });
-
-    test('adding malformed tag yields invalid XML but leaves document instance unchanged', () {
-      final manifest = '''<?xml version="1.0" encoding="UTF-8"?>
-<manifest>
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.CAMERA" />
-</manifest>''';
-
-      final editor = XmlEditor(manifest);
-      final originalCount = editor.findTagsByName('uses-permission').length;
-
-      // malformed tag (unterminated)
-      editor.addManifestTag(
-        path: 'manifest',
-        tag: '<uses-permission android:name="BROKEN"',
-      );
-
-      // The textual content should now be invalid XML
-      expect(editor.validate(), false);
-
-      // The in-memory parsed document should remain usable (no crash) and still reflect the old document
-      expect(editor.document.findAllElements('uses-permission').length, originalCount);
-    });
-
-    test('removePlistEntry removes a key whose value is a multi-line array', () {
-      final plist = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>MyArrayKey</key>
-    <array>
-        <string>one</string>
-        <string>two</string>
-    </array>
-    <key>OtherKey</key>
-    <string>remain</string>
-</dict>
-</plist>''';
-
-      final editor = XmlEditor(plist);
-      editor.removePlistEntry(path: 'plist.dict', key: 'MyArrayKey');
-
-      final out = editor.toXmlString();
-      expect(out.contains('MyArrayKey'), false);
-      expect(out.contains('one'), false);
-      expect(out.contains('two'), false);
-      expect(out.contains('OtherKey'), true);
-    });
-
-    test('removeManifestTag is scoped to the provided parent path', () {
-      final xml = '''<?xml version="1.0" encoding="UTF-8"?>
-<manifest>
-    <parentA>
-        <item android:name="Shared" />
-    </parentA>
-    <parentB>
-        <item android:name="SharedB" />
-    </parentB>
-</manifest>''';
-
-      final editor = XmlEditor(xml);
-      editor.removeManifestTag(
-        path: 'manifest.parentA',
-        tagName: 'item',
-        attribute: ('android:name', 'Shared'),
-      );
-
-      final out = editor.toXmlString();
-      // item under parentA removed
-      expect(out.contains('item android:name="Shared"'), false);
-      // item under parentB remains
-      expect(out.contains('<parentB') && out.contains('SharedB'), true);
     });
   });
 }

@@ -8,6 +8,7 @@
       "version": "0.0.1",
       "dependencies": [
         "args",
+        "path",
         "xml"
       ],
       "devDependencies": [
@@ -49,6 +50,11 @@
     {
       "name": "lints",
       "version": "6.0.0",
+      "dependencies": []
+    },
+    {
+      "name": "path",
+      "version": "1.9.1",
       "dependencies": []
     },
     {
@@ -212,11 +218,6 @@
         "async",
         "stack_trace"
       ]
-    },
-    {
-      "name": "path",
-      "version": "1.9.1",
-      "dependencies": []
     },
     {
       "name": "package_config",
