@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- @permit.gen: Needed to take photos22222 -->
+    <!-- @permit: Needed to take photos -->
     <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:label="flutter_playground"

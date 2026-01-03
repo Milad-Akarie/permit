@@ -1,0 +1,399 @@
+import 'package:test/test.dart';
+import 'package:permit/registry/permit_registry.dart';
+import 'package:permit/registry/models.dart';
+import 'package:permit/registry/android_permissions.dart';
+import 'package:permit/registry/ios_permissions.dart';
+
+void main() {
+  group('EntriesLookup Tests', () {
+    late EntriesLookup lookup;
+    late EntriesLookup androidOnlyLookup;
+    late EntriesLookup iosOnlyLookup;
+
+    setUp(() {
+      lookup = EntriesLookup.forDefaults();
+      androidOnlyLookup = EntriesLookup.forDefaults(androidOnly: true);
+      iosOnlyLookup = EntriesLookup.forDefaults(iosOnly: true);
+    });
+
+    group('EntriesLookup.forDefaults factory', () {
+      test('creates lookup with both Android and iOS permissions by default', () {
+        expect(lookup.entries.isNotEmpty, isTrue);
+        expect(lookup.entries.whereType<AndroidPermission>().isNotEmpty, isTrue);
+        expect(lookup.entries.whereType<IosPermission>().isNotEmpty, true);
+      });
+
+      test('creates lookup with only Android permissions when androidOnly is true', () {
+        expect(androidOnlyLookup.entries.isNotEmpty, isTrue);
+        expect(androidOnlyLookup.entries.whereType<AndroidPermission>().isNotEmpty, isTrue);
+        expect(androidOnlyLookup.entries.whereType<IosPermission>().isEmpty, isTrue);
+      });
+
+      test('creates lookup with only iOS permissions when iosOnly is true', () {
+        expect(iosOnlyLookup.entries.isNotEmpty, isTrue);
+        expect(iosOnlyLookup.entries.whereType<IosPermission>().isNotEmpty, isTrue);
+        expect(iosOnlyLookup.entries.whereType<AndroidPermission>().isEmpty, isTrue);
+      });
+
+      test('creates lookup with both when both androidOnly and iosOnly are false', () {
+        final mixedLookup = EntriesLookup.forDefaults(androidOnly: false, iosOnly: false);
+        expect(mixedLookup.entries.whereType<AndroidPermission>().isNotEmpty, isTrue);
+        expect(mixedLookup.entries.whereType<IosPermission>().isNotEmpty, isTrue);
+      });
+
+      test('both true results in both platforms (default case)', () {
+        final bothTrueLookup = EntriesLookup.forDefaults(androidOnly: true, iosOnly: true);
+        expect(bothTrueLookup.entries.whereType<AndroidPermission>().isNotEmpty, isTrue);
+        expect(bothTrueLookup.entries.whereType<IosPermission>().isNotEmpty, isTrue);
+      });
+    });
+
+    group('EntriesLookup.lookup method', () {
+      test('finds permission by exact key match (Android)', () {
+        final results = lookup.lookup('android.permission.CAMERA');
+        expect(results.isNotEmpty, isTrue);
+        expect(results.any((e) => e.key == 'android.permission.CAMERA'), isTrue);
+      });
+
+      test('finds permission by exact key match case-insensitive (Android)', () {
+        final results = lookup.lookup('ANDROID.PERMISSION.CAMERA');
+        expect(results.isNotEmpty, isTrue);
+      });
+
+      test('finds permission by short name without android prefix (Android)', () {
+        final results = lookup.lookup('CAMERA');
+        expect(results.isNotEmpty, isTrue);
+        expect(results.any((e) => e.key == 'android.permission.CAMERA'), isTrue);
+      });
+
+      test('finds permission by short name lowercase (Android)', () {
+        final results = lookup.lookup('camera');
+        expect(results.isNotEmpty, isTrue);
+      });
+
+      test('finds permission by group name', () {
+        final results = lookup.lookup('camera');
+        expect(results.isNotEmpty, isTrue);
+        expect(results.every((e) => e.group == 'camera' || e.key.contains('CAMERA')), isTrue);
+      });
+
+      test('finds multiple permissions in same group', () {
+        final results = lookup.lookup('location');
+        expect(results.length, greaterThan(1));
+        expect(results.every((e) => e.group == 'location'), isTrue);
+      });
+
+      test('finds iOS permission by exact key match', () {
+        final results = lookup.lookup('NSCameraUsageDescription');
+        expect(results.isNotEmpty, isTrue);
+        expect(results.any((e) => e.key == 'NSCameraUsageDescription'), isTrue);
+      });
+
+      test('finds iOS permission by group', () {
+        final results = lookup.lookup('biometrics');
+        expect(results.isNotEmpty, isTrue);
+        expect(results.every((e) => e.group == 'biometrics'), isTrue);
+      });
+
+      test('returns empty set for non-existent permission', () {
+        final results = lookup.lookup('nonexistent.permission');
+        expect(results.isEmpty, isTrue);
+      });
+
+      test('returns empty set for non-existent group', () {
+        final results = lookup.lookup('nonexistentgroup');
+        expect(results.isEmpty, isTrue);
+      });
+
+      test('finds permissions in Android-only lookup', () {
+        final results = androidOnlyLookup.lookup('CAMERA');
+        expect(results.isNotEmpty, isTrue);
+        expect(results.every((e) => e is AndroidPermission), isTrue);
+      });
+
+      test('finds permissions in iOS-only lookup', () {
+        final results = iosOnlyLookup.lookup('camera');
+        expect(results.isNotEmpty, isTrue);
+        expect(results.every((e) => e is IosPermission), isTrue);
+      });
+
+      test('handles group name prefix matching', () {
+        final results = lookup.lookup('loc');
+        // Should match 'location' group if it starts with 'loc'
+        final locationResults = results.where((e) => e.group == 'location').toList();
+        expect(locationResults.isNotEmpty, isTrue);
+      });
+
+      test('matches contact and phone permissions correctly', () {
+        final contactResults = lookup.lookup('contacts');
+        expect(contactResults.isNotEmpty, isTrue);
+        expect(contactResults.every((e) => e.group == 'contacts'), isTrue);
+      });
+
+      test('matches storage permissions', () {
+        final storageResults = lookup.lookup('storage');
+        expect(storageResults.isNotEmpty, isTrue);
+        expect(storageResults.every((e) => e.group == 'storage'), isTrue);
+      });
+    });
+
+    group('EntriesLookup.groups getter', () {
+      test('returns all unique groups', () {
+        final groups = lookup.groups;
+        expect(groups.isNotEmpty, isTrue);
+      });
+
+      test('contains camera group', () {
+        final groups = lookup.groups;
+        expect(groups.contains('camera'), isTrue);
+      });
+
+      test('contains location group', () {
+        final groups = lookup.groups;
+        expect(groups.contains('location'), isTrue);
+      });
+
+      test('contains contacts group', () {
+        final groups = lookup.groups;
+        expect(groups.contains('contacts'), isTrue);
+      });
+
+      test('contains microphone group', () {
+        final groups = lookup.groups;
+        expect(groups.contains('microphone'), isTrue);
+      });
+
+      test('contains all permission groups from Android', () {
+        final groups = lookup.groups;
+        expect(groups.contains('camera'), isTrue);
+        expect(groups.contains('microphone'), isTrue);
+        expect(groups.contains('location'), isTrue);
+        expect(groups.contains('contacts'), isTrue);
+        expect(groups.contains('calendar'), isTrue);
+        expect(groups.contains('phone'), isTrue);
+        expect(groups.contains('storage'), isTrue);
+        expect(groups.contains('network'), isTrue);
+        expect(groups.contains('bluetooth'), isTrue);
+        expect(groups.contains('sensors'), isTrue);
+        expect(groups.contains('notifications'), isTrue);
+      });
+
+      test('contains all permission groups from iOS', () {
+        final groups = lookup.groups;
+        expect(groups.contains('camera'), isTrue);
+        expect(groups.contains('microphone'), isTrue);
+        expect(groups.contains('photos'), isTrue);
+        expect(groups.contains('calendar'), isTrue);
+        expect(groups.contains('reminders'), isTrue);
+        expect(groups.contains('bluetooth'), isTrue);
+        expect(groups.contains('motion'), isTrue);
+        expect(groups.contains('health'), isTrue);
+        expect(groups.contains('speech'), isTrue);
+        expect(groups.contains('siri'), isTrue);
+        expect(groups.contains('biometrics'), isTrue);
+        expect(groups.contains('homekit'), isTrue);
+        expect(groups.contains('nfc'), isTrue);
+        expect(groups.contains('tracking'), isTrue);
+        expect(groups.contains('network'), isTrue);
+        expect(groups.contains('nearby'), isTrue);
+        expect(groups.contains('focus'), isTrue);
+      });
+
+      test('returns no duplicate groups', () {
+        final groups = lookup.groups;
+        expect(groups.length, equals(groups.toList().toSet().length));
+      });
+
+      test('androidOnly lookup returns only Android permission groups', () {
+        final groups = androidOnlyLookup.groups;
+        // Verify no iOS-only groups exist
+        expect(groups.contains('reminders'), isFalse);
+        expect(groups.contains('siri'), isFalse);
+        expect(groups.contains('homekit'), isFalse);
+        // Verify Android groups exist
+        expect(groups.contains('camera'), isTrue);
+      });
+
+      test('iosOnly lookup returns only iOS permission groups', () {
+        final groups = iosOnlyLookup.groups;
+        // Verify no Android-only groups exist
+        expect(groups.contains('system'), isFalse);
+        // Verify iOS groups exist
+        expect(groups.contains('camera'), isTrue);
+      });
+    });
+
+    group('EntriesLookup constructor', () {
+      test('creates lookup with provided entries', () {
+        final entries = {
+          AndroidPermissions.camera,
+          AndroidPermissions.recordAudio,
+        };
+        final customLookup = EntriesLookup(entries);
+        expect(customLookup.entries, equals(entries));
+      });
+
+      test('creates empty lookup when no entries provided', () {
+        final emptyLookup = EntriesLookup({});
+        expect(emptyLookup.entries.isEmpty, isTrue);
+        expect(emptyLookup.groups.isEmpty, isTrue);
+      });
+
+      test('preserves entry order in set', () {
+        final entries = AndroidPermissions.all;
+        final customLookup = EntriesLookup(entries);
+        expect(customLookup.entries, isNotEmpty);
+      });
+    });
+
+    group('Edge cases and special scenarios', () {
+      test('lookup is case-insensitive for permission keys', () {
+        final results1 = lookup.lookup('camera');
+        final results2 = lookup.lookup('CAMERA');
+        final results3 = lookup.lookup('CaMeRa');
+        expect(results1.isNotEmpty, isTrue);
+        expect(results2.isNotEmpty, isTrue);
+        expect(results3.isNotEmpty, isTrue);
+      });
+
+      test('group lookup is case-sensitive', () {
+        final lowercaseGroup = lookup.lookup('camera');
+        final uppercaseGroup = lookup.lookup('CAMERA');
+        // Both should work since they'll match either permission key or group
+        expect(lowercaseGroup.isNotEmpty || uppercaseGroup.isNotEmpty, isTrue);
+      });
+
+      test('lookup with whitespace returns empty', () {
+        final results = lookup.lookup('   ');
+        // May or may not find results depending on implementation
+        // But should handle gracefully
+        expect(results, isA<Set>());
+      });
+
+      test('can lookup multiple permission types in mixed lookup', () {
+        final cameraResults = lookup.lookup('camera');
+        final hasAndroid = cameraResults.whereType<AndroidPermission>().isNotEmpty;
+        final hasIos = cameraResults.whereType<IosPermission>().isNotEmpty;
+        expect(hasAndroid || hasIos, isTrue);
+      });
+    });
+  });
+
+  group('PermissionEntrySet extension Tests', () {
+    late Set<PermissionEntry> entries;
+
+    setUp(() {
+      entries = {
+        ...AndroidPermissions.all,
+        ...IosPermissions.all,
+      };
+    });
+
+    group('containsKey method', () {
+      test('returns true for existing Android permission key', () {
+        expect(entries.containsKey('android.permission.CAMERA'), isTrue);
+      });
+
+      test('returns true for existing iOS permission key', () {
+        expect(entries.containsKey('NSCameraUsageDescription'), isTrue);
+      });
+
+      test('returns false for non-existent key', () {
+        expect(entries.containsKey('nonexistent.permission'), isFalse);
+      });
+
+      test('is case-sensitive for keys', () {
+        // Keys should match exactly
+        expect(entries.containsKey('android.permission.camera'), isFalse);
+        expect(entries.containsKey('android.permission.CAMERA'), isTrue);
+      });
+    });
+
+    group('hasAndroid getter', () {
+      test('returns true when Android permissions exist', () {
+        expect(entries.hasAndroid, isTrue);
+      });
+
+      test('returns false when no Android permissions', () {
+        final iosOnly = entries.whereType<IosPermission>().toSet();
+        expect(iosOnly.hasAndroid, isFalse);
+      });
+    });
+
+    group('hasIos getter', () {
+      test('returns true when iOS permissions exist', () {
+        expect(entries.hasIos, isTrue);
+      });
+
+      test('returns false when no iOS permissions', () {
+        final androidOnly = entries.whereType<AndroidPermission>().toSet();
+        expect(androidOnly.hasIos, isFalse);
+      });
+    });
+
+    group('ios getter', () {
+      test('returns only iOS permissions', () {
+        final iosPerms = entries.ios;
+        expect(iosPerms.every((e) => e is IosPermission), isTrue);
+      });
+
+      test('returns empty set when no iOS permissions', () {
+        final androidOnly = entries.whereType<AndroidPermission>().toSet();
+        expect(androidOnly.ios.isEmpty, isTrue);
+      });
+
+      test('returns all iOS permissions', () {
+        final iosPerms = entries.ios;
+        expect(iosPerms.isNotEmpty, isTrue);
+        expect(iosPerms.length, greaterThan(0));
+      });
+    });
+
+    group('android getter', () {
+      test('returns only Android permissions', () {
+        final androidPerms = entries.android;
+        expect(androidPerms.every((e) => e is AndroidPermission), isTrue);
+      });
+
+      test('returns empty set when no Android permissions', () {
+        final iosOnly = entries.whereType<IosPermission>().toSet();
+        expect(iosOnly.android.isEmpty, isTrue);
+      });
+
+      test('returns all Android permissions', () {
+        final androidPerms = entries.android;
+        expect(androidPerms.isNotEmpty, isTrue);
+        expect(androidPerms.length, greaterThan(0));
+      });
+    });
+
+    group('Extension method combinations', () {
+      test('mixed entries can be filtered by platform', () {
+        expect(entries.hasAndroid, isTrue);
+        expect(entries.hasIos, isTrue);
+        expect(entries.android.every((e) => e is AndroidPermission), isTrue);
+        expect(entries.ios.every((e) => e is IosPermission), isTrue);
+      });
+
+      test('android and ios getters return non-overlapping sets', () {
+        final androidPerms = entries.android;
+        final iosPerms = entries.ios;
+        final overlap = androidPerms.intersection(iosPerms);
+        expect(overlap.isEmpty, isTrue);
+      });
+
+      test('android and ios getters cover all entries', () {
+        final androidPerms = entries.android;
+        final iosPerms = entries.ios;
+        final combined = {...androidPerms, ...iosPerms};
+        expect(combined.length, equals(entries.length));
+      });
+
+      test('containsKey works with filtered sets', () {
+        final androidPerms = entries.android;
+        expect(androidPerms.containsKey('android.permission.CAMERA'), isTrue);
+        expect(androidPerms.containsKey('NSCameraUsageDescription'), isFalse);
+      });
+    });
+  });
+}

@@ -1,31 +1,12 @@
-import 'dart:io';
-import 'package:permit/xml_editor/xml_editor.dart';
+import 'package:args/command_runner.dart';
+import 'package:permit/commands/add_permission_command.dart';
 
-void main(List<String> ags) {
-  final xmlFile = File('bin/AndroidManifest.xml');
-  final editor = ManifestEditor(xmlFile.readAsStringSync());
-  editor.addPermission(
-    name: 'android.permission.CAMERA',
-    comments: ['@permit.gen: Needed to take photos22222'],
-    shouldRemoveComment: (comment) => comment.startsWith('@permit'),
-  );
+Future<void> main(List<String> args) async {
+  final runner = CommandRunner('permit', 'A small permission helper')..addCommand(AddPermissionCommand());
 
-  // editor.removePlistEntry(key: 'NSLocationWhenInUseUsageDescription', commentMarkers: ['@permit.gen']);
-
-  // editor.addPlistEntry(
-  //   key: 'NSLocationWhenInUseUsageDescription',
-  //   value: '<String>Needed for tracking bus location</String>',
-  //   keyComments: ['@permit.gen'],
-  // );
-
-  // final existingKeys = editor.findTags(path: 'plist.dict', name: 'key');
-  // for (final keyTag in existingKeys) {
-  //   print(editor.getCommentsOf(keyTag));
-  //   if (keyTag.innerText == 'NSLocationWhenInUseUsageDescription') {
-  //     print('Found existing key NSLocationWhenInUseUsageDescription, skipping addition.');
-  //     return;
-  //   }
-  // }
-
-  xmlFile.writeAsString(editor.toXmlString());
+  try {
+    await runner.run(args);
+  } on UsageException catch (e) {
+    print(e);
+  }
 }
