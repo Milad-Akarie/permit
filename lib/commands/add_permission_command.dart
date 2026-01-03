@@ -1,7 +1,13 @@
+import 'dart:io';
+
 import 'package:args/command_runner.dart';
-import 'package:interact/interact.dart';
+import 'package:permit/path/path_finder.dart';
 import 'package:permit/registry/models.dart';
 import 'package:permit/registry/permit_registry.dart';
+import 'package:permit/utils/logger.dart';
+import 'package:permit/utils/utils.dart';
+import 'package:permit/xml_editor/models.dart';
+import 'package:permit/xml_editor/xml_editor.dart';
 
 class AddPermissionCommand extends Command {
   @override
@@ -17,70 +23,140 @@ class AddPermissionCommand extends Command {
       help: 'Usage description',
       defaultsTo: '',
     );
+    argParser.addFlag('code', abbr: 'c', help: 'Generate code for permission handling', defaultsTo: false);
     argParser.addFlag('android', abbr: 'a', help: 'Add permission for Android platform', defaultsTo: false);
     argParser.addFlag('ios', abbr: 'i', help: 'Add permission for iOS platform', defaultsTo: false);
   }
 
   @override
   Future<void> run() async {
-    // validate key
-    // permit add <key> --desc "description"
-    final key = argResults?.rest.isNotEmpty == true ? argResults!.rest[0] : '';
+    var key = argResults?.rest.isNotEmpty == true ? argResults!.rest[0] : '';
     final entriesLookup = EntriesLookup.forDefaults(
       androidOnly: argResults?['android'] == true,
       iosOnly: argResults?['ios'] == true,
     );
 
     if (key.isEmpty) {
-      // print('Error: Permission key is required.');
-
-      final selected = Select(
-        prompt: 'Select a permission group to add',
-        options: entriesLookup.groups.toList(),
-      ).interact();
-
-      final selectedGroup = entriesLookup.groups.elementAt(selected);
-
-      // final entries = entriesLookup.lookup(selectedGroup);
+      key = singleSelect(
+        'Select a permission group',
+        options: List.of(entriesLookup.groups),
+        display: (group) => group,
+      );
+    }
+    if (key.isEmpty) {
+      Logger.info('No permission key provided.');
       return;
     }
 
     final entries = entriesLookup.lookup(key);
 
     if (entries.isNotEmpty) {
-      // for (var entry in entries) {
-      //   print('Found matching permission: ${entry.key} (group: ${entry.group})');
-      // }
-
-      var selectedEntries = entries;
-      if (entries.length > 1) {
-        final selected = MultiSelect(
-          prompt: 'Select the permission to add',
-          options: [
-            for (var entry in entries) '[${entry is AndroidPermission ? 'Android' : 'iOS'}]: ${entry.key}',
-          ],
-        ).interact();
-        selectedEntries = Set.of(selected.map((index) => entries.elementAt(index)));
-      }
-      final descriptions = <String, String>{};
-      if (selectedEntries.hasIos) {
-        final iosEntries = selectedEntries.whereType<IosPermission>();
-        for (var entry in iosEntries) {
-          final desc = Input(prompt: 'Enter usage description for "${entry.key}"').interact();
-          descriptions[entry.key] = desc;
-        }
-      }
+      final resolved = _resolveEntries(List.of(entries));
+      onEntriesResolved(resolved);
     } else {
-      print('No matching permission found for key: $key');
+      Logger.info('No permission entries found for key: $key');
       return;
     }
+  }
 
-    // var desc = (argResults?['desc'] as String?) ?? '';
-    //
-    // if (entries.hasIos) {
-    //   desc = Input(prompt: 'Enter usage description').interact();
-    // }
+  void onEntriesResolved(List<XmlEntry> entries) {
+    final androidEntries = entries.whereType<ManifestPermissionEntry>();
+    final iosEntries = entries.whereType<PListUsageDescription>();
+    if (androidEntries.isNotEmpty) {
+      addAndroidPermissions(androidEntries.toList());
+    }
+    if (iosEntries.isNotEmpty) {
+      addIosPermissions(iosEntries.toList());
+    }
+  }
 
-    // print('Description: $desc');
+  void addAndroidPermissions(List<ManifestPermissionEntry> entries) {
+    final file = PathFinder.getManifest(Directory.current);
+    if (file == null) {
+      Logger.error('Could not locate AndroidManifest.xml');
+      return;
+    }
+    final manifestEditor = ManifestEditor(file.readAsStringSync());
+
+    for (var entry in entries) {
+      manifestEditor.addPermission(
+        name: entry.key,
+        comments: entry.comments,
+        shouldRemoveComment: (c) => c.startsWith('@permit'),
+      );
+    }
+    manifestEditor.save(file);
+  }
+
+  void addIosPermissions(List<PListUsageDescription> entries) {
+    final file = PathFinder.getInfoPlist(Directory.current);
+    if (file == null) {
+      Logger.error('Could not locate Info.plist');
+      return;
+    }
+    final plistEditor = PListEditor(file.readAsStringSync());
+    for (var entry in entries) {
+      plistEditor.addUsageDescription(
+        key: entry.key,
+        description: entry.description,
+        keyComments: entry.comments,
+        shouldRemoveComment: (c) => c.startsWith('@permit'),
+      );
+    }
+    plistEditor.save(file);
+  }
+
+  List<XmlEntry> _resolveEntries(List<PermissionDef> entries) {
+    final generateCode = argResults?['code'] == true;
+    final desc = argResults?['desc'] as String?;
+    var selectedEntries = entries;
+    if (entries.length > 1) {
+      selectedEntries = multiSelect(
+        'Select the permission to add',
+        options: entries,
+        display: (entry) {
+          return '[${entry is AndroidPermissionDef ? 'Android' : 'iOS'}]: ${entry.key}';
+        },
+      );
+    }
+
+    final resolvedEntries = <XmlEntry>[];
+    for (final androidEntry in selectedEntries.android) {
+      resolvedEntries.add(
+        ManifestPermissionEntry(
+          key: androidEntry.key,
+          comments: [generateCode ? '@permit:code' : '@permit'],
+        ),
+      );
+    }
+
+    final iosEntries = selectedEntries.ios;
+
+    if (iosEntries.length == 1 && desc != null && desc.isNotEmpty) {
+      final entry = iosEntries.first;
+      resolvedEntries.add(
+        PListUsageDescription(
+          key: entry.key,
+          description: desc,
+          comments: [generateCode ? '@permit:code' : '@permit'],
+        ),
+      );
+      return resolvedEntries;
+    }
+
+    for (var entry in iosEntries) {
+      final desc = prompt(
+        'Enter usage description for "${entry.key}"',
+        defaultValue: argResults?['desc'] ?? '',
+      );
+      resolvedEntries.add(
+        PListUsageDescription(
+          key: entry.key,
+          description: desc,
+          comments: [generateCode ? '@permit:code' : '@permit'],
+        ),
+      );
+    }
+    return resolvedEntries;
   }
 }

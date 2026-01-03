@@ -1,8 +1,8 @@
 part of 'xml_editor.dart';
 
 /// // Plist-specific editor
-class PlistEditor extends XmlEditor {
-  PlistEditor(super.originalContent);
+class PListEditor extends XmlEditor {
+  PListEditor(super.originalContent);
 
   /// Add a key-value pair to a plist file at a specific path
   ///
@@ -92,7 +92,7 @@ class PlistEditor extends XmlEditor {
     // Add key comments if provided
     if (keyComments != null && keyComments.isNotEmpty) {
       for (final comment in keyComments) {
-        insertLines.add('${insertInfo.indent}<!-- $comment -->');
+        insertLines.add('${insertInfo.indent}<!--$comment-->');
       }
     }
     insertLines.add('${insertInfo.indent}<key>$key</key>');
@@ -102,7 +102,7 @@ class PlistEditor extends XmlEditor {
       // Add value comments if provided
       if (valueComments != null && valueComments.isNotEmpty) {
         for (final comment in valueComments) {
-          insertLines.add('${insertInfo.indent}<!-- $comment -->');
+          insertLines.add('${insertInfo.indent}<!--$comment-->');
         }
       }
       insertLines.add('${insertInfo.indent}$value');
@@ -213,6 +213,36 @@ class PlistEditor extends XmlEditor {
     );
   }
 
+  List<PListUsageDescription> getUsageDescriptions() {
+    final descriptions = <PListUsageDescription>[];
+
+    final dict = _findElementByPath('plist.dict');
+    if (dict == null) {
+      throw Exception('Could not find <dict> element at path: plist.dict');
+    }
+
+    final children = dict.children.whereType<XmlElement>().toList();
+    for (int i = 0; i < children.length; i++) {
+      final child = children[i];
+      if (child.name.qualified == 'key') {
+        final keyName = child.innerText.trim();
+        final valueElement = _getNextSiblingElement(child);
+        if (valueElement != null && valueElement.name.qualified == 'string') {
+          final description = valueElement.innerText.trim();
+          descriptions.add(
+            PListUsageDescription(
+              key: keyName,
+              description: description,
+              comments: getCommentsOf(child),
+            ),
+          );
+        }
+      }
+    }
+
+    return descriptions;
+  }
+
   /// Add an entry to an array at a specific path
   ///
   /// If the array does not exist at the path, creates a new key-array pair.
@@ -251,7 +281,7 @@ class PlistEditor extends XmlEditor {
 
         // Insert before the closing </array> tag
         final insertIdx = arrayInfo.endLine;
-        final childIndent = arrayInfo.indent + '    ';
+        final childIndent = '${arrayInfo.indent}    ';
         lines.insert(insertIdx, '$childIndent$entry');
 
         _updateDocument();

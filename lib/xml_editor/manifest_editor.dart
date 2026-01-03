@@ -76,7 +76,7 @@ class ManifestEditor extends XmlEditor {
     // Add comments if provided
     if (comments != null && comments.isNotEmpty) {
       for (final comment in comments) {
-        insertLines.add('${insertInfo.indent}<!-- $comment -->');
+        insertLines.add('${insertInfo.indent}<!--$comment-->');
       }
     }
     insertLines.add('${insertInfo.indent}$tag');
@@ -118,6 +118,29 @@ class ManifestEditor extends XmlEditor {
     );
   }
 
+  List<ManifestPermissionEntry> getPermissions() {
+    final manifest = _findElementByPath('manifest');
+    if (manifest == null) {
+      throw Exception('Manifest element not found');
+    }
+
+    final permissionEntries = <ManifestPermissionEntry>[];
+
+    for (final permission in manifest.findElements('uses-permission')) {
+      final name = permission.getAttribute('android:name');
+      if (name != null) {
+        permissionEntries.add(
+          ManifestPermissionEntry(
+            key: name,
+            comments: getCommentsOf(permission),
+          ),
+        );
+      }
+    }
+
+    return permissionEntries;
+  }
+
   /// Adds a permission to the manifest
   void addPermission({
     required String name,
@@ -150,17 +173,13 @@ class ManifestEditor extends XmlEditor {
       throw Exception('Element not found: $tagName with attribute $attribute');
     }
 
-    int startLine = elementInfo.startLine;
     if (comments != null && comments.isNotEmpty) {
-      final predicate = (String c) => comments.any((marker) => c.contains(marker));
+      bool predicate(String c) => comments.any((marker) => c.contains(marker));
       _removeElementAndMatchingComments(elementInfo, predicate);
       return;
     }
-
-    // Default behavior: remove @permit comments and the element
-    int defaultStart = _findCommentBlockStart(elementInfo.startLine, shouldRemoveComment: (c) => c.contains('@permit'));
-    lines.removeRange(defaultStart, elementInfo.endLine + 1);
-    _updateDocument();
+    // No comment markers provided: remove the element itself (but keep existing comments)
+    _removeElementAndMatchingComments(elementInfo, null);
   }
 
   void removePermission({

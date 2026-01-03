@@ -1,5 +1,9 @@
 import 'dart:io';
+import 'package:collection/collection.dart';
+import 'package:permit/path/path_finder.dart';
 import 'package:xml/xml.dart';
+
+import 'models.dart';
 part 'plist_editor.dart';
 part 'manifest_editor.dart';
 
@@ -486,6 +490,15 @@ class XmlEditor {
     }
 
     _updateDocument();
+  }
+
+  bool save(File file) {
+    try {
+      file.writeAsStringSync(toXmlString());
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }
 

@@ -1,3 +1,4 @@
+import 'package:permit/xml_editor/models.dart';
 import 'package:test/test.dart';
 import 'package:permit/xml_editor/xml_editor.dart';
 
@@ -12,7 +13,7 @@ void main() {
     <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:label="TestApp"
-        android:name="\\${applicationName}"
+        android:name="\${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
@@ -806,6 +807,73 @@ void main() {
         expect(result.contains('@permit camera'), true);
         expect(result.contains('@internal internal-only'), false);
         expect(result.contains('@permit camera v2'), true);
+      });
+    });
+
+    group('getPermissions', () {
+      test('should retrieve all permissions as full objects', () {
+        final editor = ManifestEditor(manifestContent);
+
+        final permissions = editor.getPermissions();
+
+        expect(
+          permissions,
+          equals([
+            ManifestPermissionEntry(key: 'android.permission.INTERNET', comments: []),
+            ManifestPermissionEntry(key: 'android.permission.CAMERA', comments: []),
+          ]),
+        );
+      });
+
+      test('should retrieve permissions with associated comments as full objects', () {
+        final manifestWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- @permit internet -->
+    <!-- Required for API calls -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- @permit camera -->
+    <uses-permission android:name="android.permission.CAMERA" />
+</manifest>''';
+
+        final editor = ManifestEditor(manifestWithComments);
+        final permissions = editor.getPermissions();
+
+        expect(
+          permissions,
+          equals([
+            ManifestPermissionEntry(
+              key: 'android.permission.INTERNET',
+              comments: ['@permit internet', 'Required for API calls'],
+            ),
+            ManifestPermissionEntry(
+              key: 'android.permission.CAMERA',
+              comments: ['@permit camera'],
+            ),
+          ]),
+        );
+      });
+
+      test('should reflect added and removed permissions as full objects', () {
+        final editor = ManifestEditor(manifestContent);
+
+        // Add a permission
+        editor.addPermission(
+          name: 'android.permission.ACCESS_FINE_LOCATION',
+          comments: ['@permit location'],
+        );
+
+        // Remove the CAMERA permission
+        editor.removePermission(permissionName: 'android.permission.CAMERA');
+
+        final permissions = editor.getPermissions();
+
+        expect(
+          permissions,
+          equals([
+            ManifestPermissionEntry(key: 'android.permission.INTERNET', comments: []),
+            ManifestPermissionEntry(key: 'android.permission.ACCESS_FINE_LOCATION', comments: ['@permit location']),
+          ]),
+        );
       });
     });
   });

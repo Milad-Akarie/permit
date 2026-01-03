@@ -1,17 +1,17 @@
-abstract class PermissionEntry {
+abstract class PermissionDef {
   final String key;
   final String group;
 
-  const PermissionEntry(this.key, {required this.group});
+  const PermissionDef(this.key, {required this.group});
 
   bool matches(String input);
 }
 
-class AndroidPermission extends PermissionEntry {
+class AndroidPermissionDef extends PermissionDef {
   final bool runtime;
   final String? minimumSdkVersion;
 
-  const AndroidPermission(
+  const AndroidPermissionDef(
     super.key, {
     this.runtime = false,
     required super.group,
@@ -21,9 +21,10 @@ class AndroidPermission extends PermissionEntry {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is AndroidPermission &&
+      other is AndroidPermissionDef &&
+          key == other.key &&
+          group == other.group &&
           runtimeType == other.runtimeType &&
-          runtime == other.runtime &&
           minimumSdkVersion == other.minimumSdkVersion;
 
   @override
@@ -43,12 +44,12 @@ class AndroidPermission extends PermissionEntry {
 }
 
 /// iOS Permission class
-class IosPermission extends PermissionEntry {
+class IosPermissionDef extends PermissionDef {
   final String? minimumIosVersion;
   final String? successorOf;
   final AccessScope scope;
 
-  const IosPermission(
+  const IosPermissionDef(
     super.key, {
     required super.group,
     this.scope = .standardOrFull,
@@ -62,8 +63,9 @@ class IosPermission extends PermissionEntry {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is IosPermission &&
-          runtimeType == other.runtimeType &&
+      other is IosPermissionDef &&
+          key == other.key &&
+          group == other.group &&
           minimumIosVersion == other.minimumIosVersion &&
           successorOf == other.successorOf &&
           scope == other.scope;

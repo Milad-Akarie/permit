@@ -23,7 +23,11 @@ class PathFinder {
       final content = gradle.readAsStringSync();
 
       final match = RegExp(
-        r'manifest\.srcFile\s*[=(]\s*["' + "'" + r'](.+AndroidManifest\.xml)["' + "'" + r']',
+        r'manifest\.srcFile\s*[=(]\s*["'
+        "'"
+        r'](.+AndroidManifest\.xml)["'
+        "'"
+        r']',
       ).firstMatch(content);
       if (match != null) {
         final customPath = match.group(1)!;

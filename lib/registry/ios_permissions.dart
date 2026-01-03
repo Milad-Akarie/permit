@@ -3,65 +3,65 @@ import 'models.dart';
 /// Complete iOS Permissions
 abstract class IosPermissions {
   // CAMERA
-  static const camera = IosPermission(
+  static const camera = IosPermissionDef(
     'NSCameraUsageDescription',
     group: 'camera',
   );
 
   // MICROPHONE
-  static const microphone = IosPermission(
+  static const microphone = IosPermissionDef(
     'NSMicrophoneUsageDescription',
     group: 'microphone',
   );
 
   // CONTACTS
-  static const contacts = IosPermission(
+  static const contacts = IosPermissionDef(
     'NSContactsUsageDescription',
     group: 'contacts',
   );
 
   // LOCATION
-  static const locationWhenInUse = IosPermission(
+  static const locationWhenInUse = IosPermissionDef(
     'NSLocationWhenInUseUsageDescription',
     group: 'location',
   );
 
-  static const locationAlways = IosPermission(
+  static const locationAlways = IosPermissionDef(
     'NSLocationAlwaysUsageDescription',
     group: 'location',
   );
 
-  static const locationAlwaysAndWhenInUse = IosPermission(
+  static const locationAlwaysAndWhenInUse = IosPermissionDef(
     'NSLocationAlwaysAndWhenInUseUsageDescription',
     group: 'location',
   );
 
   // MEDIA LIBRARY & MUSIC
-  static const mediaLibrary = IosPermission(
+  static const mediaLibrary = IosPermissionDef(
     'NSAppleMusicUsageDescription',
     group: 'media',
   );
 
   // PHOTOS & MEDIA
-  static const photoLibrary = IosPermission(
+  static const photoLibrary = IosPermissionDef(
     'NSPhotoLibraryUsageDescription',
     group: 'photos',
   );
 
-  static const photoLibraryAdd = IosPermission(
+  static const photoLibraryAdd = IosPermissionDef(
     'NSPhotoLibraryAddUsageDescription',
     minimumIosVersion: '11.0',
     group: 'photos',
   );
 
   // CALENDARS & EVENTS
-  static const calendars = IosPermission(
+  static const calendars = IosPermissionDef(
     'NSCalendarsFullAccessUsageDescription',
     minimumIosVersion: '17.0',
     successorOf: 'NSCalendarsUsageDescription',
     group: 'calendar',
   );
-  static const calendarsWriteOnly = IosPermission(
+  static const calendarsWriteOnly = IosPermissionDef(
     'NSCalendarsWriteOnlyAccessUsageDescription',
     scope: AccessScope.writeOnly,
     minimumIosVersion: '17.0',
@@ -69,7 +69,7 @@ abstract class IosPermissions {
   );
 
   // REMINDERS
-  static const reminders = IosPermission(
+  static const reminders = IosPermissionDef(
     'NSRemindersFullAccessUsageDescription',
     minimumIosVersion: '17.0',
     successorOf: 'NSRemindersUsageDescription',
@@ -77,7 +77,7 @@ abstract class IosPermissions {
   );
 
   // BLUETOOTH
-  static const bluetoothAlways = IosPermission(
+  static const bluetoothAlways = IosPermissionDef(
     'NSBluetoothAlwaysUsageDescription',
     minimumIosVersion: '13.0',
     successorOf: 'NSBluetoothPeripheralUsageDescription',
@@ -85,69 +85,69 @@ abstract class IosPermissions {
   );
 
   // MOTION & FITNESS
-  static const motion = IosPermission(
+  static const motion = IosPermissionDef(
     'NSMotionUsageDescription',
     group: 'motion',
   );
 
   // HEALTH
-  static const healthShare = IosPermission(
+  static const healthShare = IosPermissionDef(
     'NSHealthShareUsageDescription',
     group: 'health',
   );
-  static const healthUpdate = IosPermission(
+  static const healthUpdate = IosPermissionDef(
     'NSHealthUpdateUsageDescription',
     group: 'health',
   );
-  static const healthClinicalRecords = IosPermission(
+  static const healthClinicalRecords = IosPermissionDef(
     'NSHealthClinicalHealthRecordsShareUsageDescription',
     group: 'health',
   );
 
   // SPEECH & SIRI
-  static const speechRecognition = IosPermission('NSSpeechRecognitionUsageDescription', group: 'speech');
+  static const speechRecognition = IosPermissionDef('NSSpeechRecognitionUsageDescription', group: 'speech');
 
-  static const siri = IosPermission('NSSiriUsageDescription', group: 'siri');
+  static const siri = IosPermissionDef('NSSiriUsageDescription', group: 'siri');
 
   // FACE ID & BIOMETRICS
-  static const faceId = IosPermission('NSFaceIDUsageDescription', group: 'biometrics');
+  static const faceId = IosPermissionDef('NSFaceIDUsageDescription', group: 'biometrics');
 
   // HOMEKIT
-  static const homeKit = IosPermission('NSHomeKitUsageDescription', group: 'homekit');
+  static const homeKit = IosPermissionDef('NSHomeKitUsageDescription', group: 'homekit');
 
   // NFC
-  static const nfcReader = IosPermission('NFCReaderUsageDescription', group: 'nfc');
+  static const nfcReader = IosPermissionDef('NFCReaderUsageDescription', group: 'nfc');
 
   // TRACKING
-  static const userTracking = IosPermission(
+  static const userTracking = IosPermissionDef(
     'NSUserTrackingUsageDescription',
     minimumIosVersion: '14.5',
     group: 'tracking',
   );
 
   // LOCAL NETWORK
-  static const localNetwork = IosPermission(
+  static const localNetwork = IosPermissionDef(
     'NSLocalNetworkUsageDescription',
     minimumIosVersion: '14.0',
     group: 'network',
   );
 
   // NEARBY INTERACTION
-  static const nearbyInteraction = IosPermission(
+  static const nearbyInteraction = IosPermissionDef(
     'NSNearbyInteractionUsageDescription',
     minimumIosVersion: '14.0',
     group: 'nearby',
   );
 
   // SENSORS & FOCUS
-  static const focusStatus = IosPermission(
+  static const focusStatus = IosPermissionDef(
     'NSFocusStatusUsageDescription',
     minimumIosVersion: '15.0',
     group: 'focus',
   );
 
   /// Get all permissions
-  static Set<IosPermission> get all => {
+  static Set<IosPermissionDef> get all => {
     camera,
     microphone,
     photoLibrary,
@@ -181,7 +181,7 @@ abstract class IosPermissions {
   }
 
   /// Get permission by Info.plist key
-  static IosPermission? getByKey(String key) {
+  static IosPermissionDef? getByKey(String key) {
     try {
       return all.firstWhere((permission) => permission.key == key);
     } catch (e) {
@@ -190,7 +190,7 @@ abstract class IosPermissions {
   }
 
   /// Get permissions that require specific iOS version or higher
-  static List<IosPermission> getByMinimumVersion(String version) {
+  static List<IosPermissionDef> getByMinimumVersion(String version) {
     return all.where((p) => p.minimumIosVersion == version).toList();
   }
 }

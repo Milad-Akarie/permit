@@ -3,7 +3,7 @@ import 'ios_permissions.dart';
 import 'models.dart';
 
 class EntriesLookup {
-  final Set<PermissionEntry> entries;
+  final Set<PermissionDef> entries;
 
   const EntriesLookup(this.entries);
 
@@ -16,8 +16,8 @@ class EntriesLookup {
     return EntriesLookup(allEntries);
   }
 
-  Set<PermissionEntry> lookup(String input) {
-    final matches = <PermissionEntry>{};
+  Set<PermissionDef> lookup(String input) {
+    final matches = <PermissionDef>{};
     for (var entry in entries) {
       if (entry.matches(input)) {
         matches.add(entry);
@@ -38,14 +38,14 @@ class EntriesLookup {
   }
 }
 
-extension PermissionEntrySet on Iterable<PermissionEntry> {
+extension PermissionEntrySet on Iterable<PermissionDef> {
   bool containsKey(String key) {
     return any((entry) => entry.key == key);
   }
 
-  bool get hasAndroid => any((entry) => entry is AndroidPermission);
-  bool get hasIos => any((entry) => entry is IosPermission);
-  Set<PermissionEntry> get ios => whereType<IosPermission>().toSet();
+  bool get hasAndroid => any((entry) => entry is AndroidPermissionDef);
+  bool get hasIos => any((entry) => entry is IosPermissionDef);
+  Set<PermissionDef> get ios => whereType<IosPermissionDef>().toSet();
 
-  Set<PermissionEntry> get android => whereType<AndroidPermission>().toSet();
+  Set<PermissionDef> get android => whereType<AndroidPermissionDef>().toSet();
 }

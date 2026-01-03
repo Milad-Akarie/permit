@@ -19,32 +19,32 @@ void main() {
     group('EntriesLookup.forDefaults factory', () {
       test('creates lookup with both Android and iOS permissions by default', () {
         expect(lookup.entries.isNotEmpty, isTrue);
-        expect(lookup.entries.whereType<AndroidPermission>().isNotEmpty, isTrue);
-        expect(lookup.entries.whereType<IosPermission>().isNotEmpty, true);
+        expect(lookup.entries.whereType<AndroidPermissionDef>().isNotEmpty, isTrue);
+        expect(lookup.entries.whereType<IosPermissionDef>().isNotEmpty, true);
       });
 
       test('creates lookup with only Android permissions when androidOnly is true', () {
         expect(androidOnlyLookup.entries.isNotEmpty, isTrue);
-        expect(androidOnlyLookup.entries.whereType<AndroidPermission>().isNotEmpty, isTrue);
-        expect(androidOnlyLookup.entries.whereType<IosPermission>().isEmpty, isTrue);
+        expect(androidOnlyLookup.entries.whereType<AndroidPermissionDef>().isNotEmpty, isTrue);
+        expect(androidOnlyLookup.entries.whereType<IosPermissionDef>().isEmpty, isTrue);
       });
 
       test('creates lookup with only iOS permissions when iosOnly is true', () {
         expect(iosOnlyLookup.entries.isNotEmpty, isTrue);
-        expect(iosOnlyLookup.entries.whereType<IosPermission>().isNotEmpty, isTrue);
-        expect(iosOnlyLookup.entries.whereType<AndroidPermission>().isEmpty, isTrue);
+        expect(iosOnlyLookup.entries.whereType<IosPermissionDef>().isNotEmpty, isTrue);
+        expect(iosOnlyLookup.entries.whereType<AndroidPermissionDef>().isEmpty, isTrue);
       });
 
       test('creates lookup with both when both androidOnly and iosOnly are false', () {
         final mixedLookup = EntriesLookup.forDefaults(androidOnly: false, iosOnly: false);
-        expect(mixedLookup.entries.whereType<AndroidPermission>().isNotEmpty, isTrue);
-        expect(mixedLookup.entries.whereType<IosPermission>().isNotEmpty, isTrue);
+        expect(mixedLookup.entries.whereType<AndroidPermissionDef>().isNotEmpty, isTrue);
+        expect(mixedLookup.entries.whereType<IosPermissionDef>().isNotEmpty, isTrue);
       });
 
       test('both true results in both platforms (default case)', () {
         final bothTrueLookup = EntriesLookup.forDefaults(androidOnly: true, iosOnly: true);
-        expect(bothTrueLookup.entries.whereType<AndroidPermission>().isNotEmpty, isTrue);
-        expect(bothTrueLookup.entries.whereType<IosPermission>().isNotEmpty, isTrue);
+        expect(bothTrueLookup.entries.whereType<AndroidPermissionDef>().isNotEmpty, isTrue);
+        expect(bothTrueLookup.entries.whereType<IosPermissionDef>().isNotEmpty, isTrue);
       });
     });
 
@@ -108,13 +108,13 @@ void main() {
       test('finds permissions in Android-only lookup', () {
         final results = androidOnlyLookup.lookup('CAMERA');
         expect(results.isNotEmpty, isTrue);
-        expect(results.every((e) => e is AndroidPermission), isTrue);
+        expect(results.every((e) => e is AndroidPermissionDef), isTrue);
       });
 
       test('finds permissions in iOS-only lookup', () {
         final results = iosOnlyLookup.lookup('camera');
         expect(results.isNotEmpty, isTrue);
-        expect(results.every((e) => e is IosPermission), isTrue);
+        expect(results.every((e) => e is IosPermissionDef), isTrue);
       });
 
       test('handles group name prefix matching', () {
@@ -272,15 +272,15 @@ void main() {
 
       test('can lookup multiple permission types in mixed lookup', () {
         final cameraResults = lookup.lookup('camera');
-        final hasAndroid = cameraResults.whereType<AndroidPermission>().isNotEmpty;
-        final hasIos = cameraResults.whereType<IosPermission>().isNotEmpty;
+        final hasAndroid = cameraResults.whereType<AndroidPermissionDef>().isNotEmpty;
+        final hasIos = cameraResults.whereType<IosPermissionDef>().isNotEmpty;
         expect(hasAndroid || hasIos, isTrue);
       });
     });
   });
 
   group('PermissionEntrySet extension Tests', () {
-    late Set<PermissionEntry> entries;
+    late Set<PermissionDef> entries;
 
     setUp(() {
       entries = {
@@ -315,7 +315,7 @@ void main() {
       });
 
       test('returns false when no Android permissions', () {
-        final iosOnly = entries.whereType<IosPermission>().toSet();
+        final iosOnly = entries.whereType<IosPermissionDef>().toSet();
         expect(iosOnly.hasAndroid, isFalse);
       });
     });
@@ -326,7 +326,7 @@ void main() {
       });
 
       test('returns false when no iOS permissions', () {
-        final androidOnly = entries.whereType<AndroidPermission>().toSet();
+        final androidOnly = entries.whereType<AndroidPermissionDef>().toSet();
         expect(androidOnly.hasIos, isFalse);
       });
     });
@@ -334,11 +334,11 @@ void main() {
     group('ios getter', () {
       test('returns only iOS permissions', () {
         final iosPerms = entries.ios;
-        expect(iosPerms.every((e) => e is IosPermission), isTrue);
+        expect(iosPerms.every((e) => e is IosPermissionDef), isTrue);
       });
 
       test('returns empty set when no iOS permissions', () {
-        final androidOnly = entries.whereType<AndroidPermission>().toSet();
+        final androidOnly = entries.whereType<AndroidPermissionDef>().toSet();
         expect(androidOnly.ios.isEmpty, isTrue);
       });
 
@@ -352,11 +352,11 @@ void main() {
     group('android getter', () {
       test('returns only Android permissions', () {
         final androidPerms = entries.android;
-        expect(androidPerms.every((e) => e is AndroidPermission), isTrue);
+        expect(androidPerms.every((e) => e is AndroidPermissionDef), isTrue);
       });
 
       test('returns empty set when no Android permissions', () {
-        final iosOnly = entries.whereType<IosPermission>().toSet();
+        final iosOnly = entries.whereType<IosPermissionDef>().toSet();
         expect(iosOnly.android.isEmpty, isTrue);
       });
 
@@ -371,8 +371,8 @@ void main() {
       test('mixed entries can be filtered by platform', () {
         expect(entries.hasAndroid, isTrue);
         expect(entries.hasIos, isTrue);
-        expect(entries.android.every((e) => e is AndroidPermission), isTrue);
-        expect(entries.ios.every((e) => e is IosPermission), isTrue);
+        expect(entries.android.every((e) => e is AndroidPermissionDef), isTrue);
+        expect(entries.ios.every((e) => e is IosPermissionDef), isTrue);
       });
 
       test('android and ios getters return non-overlapping sets', () {
