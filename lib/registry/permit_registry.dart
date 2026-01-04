@@ -29,6 +29,15 @@ class EntriesLookup {
     return matches;
   }
 
+  PermissionDef? lookupByKey(String key) {
+    for (var entry in entries) {
+      if (entry.key == key) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
   Set<String> get groups {
     final groups = <String>{};
     for (var entry in entries) {

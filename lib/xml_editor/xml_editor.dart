@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:collection/collection.dart';
-import 'package:permit/path/path_finder.dart';
 import 'package:xml/xml.dart';
 
 import 'models.dart';

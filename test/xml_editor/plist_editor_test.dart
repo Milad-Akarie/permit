@@ -21,7 +21,7 @@ void main() {
 </plist>''';
     });
 
-    group('addPlistEntry', () {
+    group('addEntry', () {
       test('should add a new plist entry with comments', () {
         final editor = PListEditor(plistContent);
         editor.addUsageDescription(
@@ -150,7 +150,7 @@ void main() {
         final editor = PListEditor(plistWithComments);
         editor.removeUsageDescription(
           key: 'NSCameraUsageDescription',
-          commentMarkers: ['@permit'],
+          removeComments: (comment) => comment.contains('@permit'),
         );
 
         final result = editor.toXmlString();
@@ -710,7 +710,7 @@ void main() {
       editor.removeEntry(
         path: 'plist.dict',
         key: 'NSCameraUsageDescription',
-        commentMarkers: ['@internal'],
+        removeComments: (c) => c.contains('@internal'),
       );
 
       final result = editor.toXmlString();
@@ -835,7 +835,7 @@ void main() {
       expect(descriptions, equals([]));
     });
 
-    test('should return all string entries including non-usage-description keys', () {
+    test('should return only usage-description keys', () {
       final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
@@ -847,16 +847,9 @@ void main() {
 </plist>''';
 
       final editor = PListEditor(plistContent);
-      final descriptions = editor.getUsageDescriptions();
-
       expect(
-        descriptions,
+        editor.getUsageDescriptions(),
         equals([
-          PListUsageDescription(
-            key: 'SomeOtherKey',
-            description: 'Some value',
-            comments: [],
-          ),
           PListUsageDescription(
             key: 'NSCameraUsageDescription',
             description: 'We need camera access',

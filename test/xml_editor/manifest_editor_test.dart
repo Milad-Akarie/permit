@@ -119,7 +119,7 @@ void main() {
           path: 'manifest',
           tagName: 'uses-permission',
           attribute: ('android:name', 'android.permission.INTERNET'),
-          comments: ['@permit'],
+          removeComments: (comment) => comment.contains('@permit'),
         );
 
         final result = editor.toXmlString();
@@ -565,37 +565,6 @@ void main() {
 
         // Should only have one BLUETOOTH permission
         final count = result.split('android.permission.BLUETOOTH').length - 1;
-        expect(count, equals(1));
-      });
-
-      test('should override existing feature with new comments', () {
-        final manifestWithFeature = '''<?xml version="1.0" encoding="UTF-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:label="TestApp">
-        <!-- @permit camera v1 -->
-        <uses-feature android:name="android.hardware.camera" android:required="true" />
-    </application>
-</manifest>''';
-
-        final editor = ManifestEditor(manifestWithFeature);
-
-        // Override with new comments and different required value
-        editor.addFeature(
-          name: 'android.hardware.camera',
-          required: false,
-          comments: ['@permit camera v2', 'Camera is now optional'],
-          shouldRemoveComment: (comment) => comment.contains('@permit'),
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('android.hardware.camera'), true);
-        expect(result.contains('@permit camera v2'), true);
-        expect(result.contains('Camera is now optional'), true);
-        expect(result.contains('@permit camera v1'), false);
-        expect(result.contains('android:required="false"'), true);
-
-        // Should only have one camera feature
-        final count = result.split('android.hardware.camera').length - 1;
         expect(count, equals(1));
       });
 

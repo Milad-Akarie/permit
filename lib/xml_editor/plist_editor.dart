@@ -150,7 +150,7 @@ class PListEditor extends XmlEditor {
   void removeEntry({
     required String path,
     required String key,
-    List<String>? commentMarkers,
+    CommentRemoverPredicate? removeComments,
   }) {
     final dict = _findElementByPath(path);
     if (dict == null) {
@@ -179,18 +179,9 @@ class PListEditor extends XmlEditor {
     if (valueInfo == null) {
       throw Exception('Could not locate value in file');
     }
-
-    // Find all comments above the key
-    if (commentMarkers != null && commentMarkers.isNotEmpty) {
-      bool predicate(String c) => commentMarkers.any((marker) => c.contains(marker));
-      final combined = _ElementLines(startLine: keyInfo.startLine, endLine: valueInfo.endLine, indent: keyInfo.indent);
-      _removeElementAndMatchingComments(combined, predicate);
-      return;
-    }
-
-    // If no markers provided, remove entire element+comments (default behavior)
-    int defaultStart = _findCommentBlockStart(keyInfo.startLine, shouldRemoveComment: (c) => c.contains('@permit'));
+    int defaultStart = _findCommentBlockStart(keyInfo.startLine, shouldRemoveComment: removeComments);
     lines.removeRange(defaultStart, valueInfo.endLine + 1);
+
     _updateDocument();
   }
 
@@ -204,12 +195,12 @@ class PListEditor extends XmlEditor {
   /// );
   void removeUsageDescription({
     required String key,
-    List<String>? commentMarkers,
+    CommentRemoverPredicate? removeComments,
   }) {
     removeEntry(
       path: 'plist.dict',
       key: key,
-      commentMarkers: commentMarkers,
+      removeComments: removeComments,
     );
   }
 
@@ -226,6 +217,10 @@ class PListEditor extends XmlEditor {
       final child = children[i];
       if (child.name.qualified == 'key') {
         final keyName = child.innerText.trim();
+        // check if this is an NS*UsageDescription key
+        if (!keyName.startsWith('NS') || !keyName.endsWith('UsageDescription')) {
+          continue;
+        }
         final valueElement = _getNextSiblingElement(child);
         if (valueElement != null && valueElement.name.qualified == 'string') {
           final description = valueElement.innerText.trim();

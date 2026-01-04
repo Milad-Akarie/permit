@@ -88,36 +88,6 @@ class ManifestEditor extends XmlEditor {
     _updateDocument();
   }
 
-  /// adds a feature to application tag
-  void addFeature({
-    required String name,
-    bool required = false,
-    List<String>? comments,
-    bool override = true,
-    CommentRemoverPredicate? shouldRemoveComment,
-  }) {
-    addTag(
-      path: 'manifest.application',
-      tag: '<uses-feature android:name="$name" android:required="${required.toString().toLowerCase()}" />',
-      comments: comments,
-      override: override,
-      shouldRemoveComment: shouldRemoveComment,
-    );
-  }
-
-  // removes a feature from application tag
-  void removeFeature({
-    required String name,
-    List<String>? comments,
-  }) {
-    removeTag(
-      path: 'manifest.application',
-      tagName: 'uses-feature',
-      attribute: ('android:name', name),
-      comments: comments,
-    );
-  }
-
   List<ManifestPermissionEntry> getPermissions() {
     final manifest = _findElementByPath('manifest');
     if (manifest == null) {
@@ -161,7 +131,7 @@ class ManifestEditor extends XmlEditor {
     required String path,
     required String tagName,
     required (String, String) attribute,
-    List<String>? comments,
+    CommentRemoverPredicate? removeComments,
   }) {
     final parent = _findElementByPath(path);
     if (parent == null) {
@@ -173,24 +143,18 @@ class ManifestEditor extends XmlEditor {
       throw Exception('Element not found: $tagName with attribute $attribute');
     }
 
-    if (comments != null && comments.isNotEmpty) {
-      bool predicate(String c) => comments.any((marker) => c.contains(marker));
-      _removeElementAndMatchingComments(elementInfo, predicate);
-      return;
-    }
-    // No comment markers provided: remove the element itself (but keep existing comments)
-    _removeElementAndMatchingComments(elementInfo, null);
+    _removeElementAndMatchingComments(elementInfo, removeComments);
   }
 
   void removePermission({
     required String permissionName,
-    List<String>? comments,
+    CommentRemoverPredicate? removeComments,
   }) {
     removeTag(
       path: 'manifest',
       tagName: 'uses-permission',
       attribute: ('android:name', permissionName),
-      comments: comments,
+      removeComments: removeComments,
     );
   }
 

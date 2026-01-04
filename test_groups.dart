@@ -1,6 +1,5 @@
 import 'lib/registry/permit_registry.dart';
 import 'lib/registry/android_permissions.dart';
-import 'lib/registry/ios_permissions.dart';
 
 void main() {
   final lookup = EntriesLookup.forDefaults();
