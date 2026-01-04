@@ -45,6 +45,10 @@ class Logger {
     print('${androidPen('Android:')} $message');
   }
 
+  static void listed(String message) {
+    print('  - $message');
+  }
+
   /// Logs a fine-level message (lowest priority).
   ///
   /// Use for very detailed tracing information.
