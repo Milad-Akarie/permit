@@ -1,10 +1,28 @@
 import 'dart:io';
 
-class PathFinder {
+abstract class PathFinder {
+  Directory get root;
+
   /// Attempts to locate the AndroidManifest.xml actually used by the app.
   /// Returns null if it cannot be determined reliably.
-  static File? getManifest(Directory projectRoot) {
-    final androidDir = Directory('${projectRoot.path}/android/app');
+  File? getManifest();
+
+  /// Attempts to locate the Info.plist used by iOS builds.
+  /// Returns null if it cannot be determined reliably.
+  File? getInfoPlist();
+}
+
+class PathFinderImpl extends PathFinder {
+  @override
+  final Directory root;
+
+  PathFinderImpl(this.root);
+
+  /// Attempts to locate the AndroidManifest.xml actually used by the app.
+  /// Returns null if it cannot be determined reliably.
+  @override
+  File? getManifest() {
+    final androidDir = Directory('${root.path}/android/app');
     if (!androidDir.existsSync()) return null;
 
     // 1. Check conventional location first (most common case)
@@ -23,21 +41,19 @@ class PathFinder {
       final content = gradle.readAsStringSync();
 
       final match = RegExp(
-        r'manifest\.srcFile\s*[=(]\s*["'
+        r'manifest\.srcFile\s*[=(]?\s*(["'
         "'"
-        r'](.+AndroidManifest\.xml)["'
-        "'"
-        r']',
+        r'])(.+AndroidManifest\.xml)\1',
       ).firstMatch(content);
       if (match != null) {
-        final customPath = match.group(1)!;
+        final customPath = match.group(2)!;
 
         // Try relative to android/app first
         var file = File('${androidDir.path}/$customPath');
         if (file.existsSync() && _isMainManifest(file)) return file;
 
         // Try relative to android root
-        file = File('${projectRoot.path}/android/$customPath');
+        file = File('${root.path}/android/$customPath');
         if (file.existsSync() && _isMainManifest(file)) return file;
 
         // Try as absolute path
@@ -63,8 +79,9 @@ class PathFinder {
 
   /// Attempts to locate the Info.plist used by iOS builds.
   /// Returns null if it cannot be determined reliably.
-  static File? getInfoPlist(Directory projectRoot) {
-    final iosDir = Directory('${projectRoot.path}/ios');
+  @override
+  File? getInfoPlist() {
+    final iosDir = Directory('${root.path}/ios');
     if (!iosDir.existsSync()) return null;
 
     // 1. Check conventional location first (most common case)
@@ -101,7 +118,7 @@ class PathFinder {
   }
 
   /// Validates that the file is a valid Info.plist.
-  static bool _isValidPlist(File plist) {
+  bool _isValidPlist(File plist) {
     try {
       final content = plist.readAsStringSync();
       // Valid plist must have proper XML structure and CFBundleIdentifier

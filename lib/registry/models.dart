@@ -24,6 +24,7 @@ class AndroidPermissionDef extends PermissionDef {
       other is AndroidPermissionDef &&
           key == other.key &&
           group == other.group &&
+          runtime == other.runtime &&
           runtimeType == other.runtimeType &&
           minimumSdkVersion == other.minimumSdkVersion;
 

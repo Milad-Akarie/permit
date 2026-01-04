@@ -1,12 +1,9 @@
-import 'dart:io';
-
-import 'package:args/command_runner.dart';
-import 'package:permit/path/path_finder.dart';
+import 'package:permit/commands/permit_runner.dart';
 import 'package:permit/utils/logger.dart';
 import 'package:permit/xml_editor/models.dart';
 import 'package:permit/xml_editor/xml_editor.dart';
 
-class ListPermissionsCommand extends Command {
+class ListPermissionsCommand extends PermitCommand {
   @override
   String get name => 'list';
 
@@ -26,8 +23,8 @@ class ListPermissionsCommand extends Command {
     final codeOnly = argResults?['code'] == true;
 
     // Minimize I/O by reading files only when needed
-    final manifestFile = (!iosOnly) ? PathFinder.getManifest(Directory.current) : null;
-    final plistFile = (!androidOnly) ? PathFinder.getInfoPlist(Directory.current) : null;
+    final manifestFile = (!iosOnly) ? pathFinder.getManifest() : null;
+    final plistFile = (!androidOnly) ? pathFinder.getInfoPlist() : null;
 
     if (manifestFile == null && plistFile == null) {
       Logger.error('Could not locate AndroidManifest.xml or Info.plist in the current directory.');
@@ -73,6 +70,7 @@ class ListPermissionsCommand extends Command {
       Logger.android('Uses Permissions (${androidEntries.length}):');
       for (final entry in androidEntries) {
         final codeIndicator = entry.generatesCode ? ' [CODE]' : '';
+
         Logger.listed('${Logger.mutedPen.write(entry.key)}$codeIndicator');
       }
       if (iosEntries.isNotEmpty) print('');
@@ -82,6 +80,7 @@ class ListPermissionsCommand extends Command {
       Logger.ios('Usage Descriptions (${iosEntries.length}):');
       for (final entry in iosEntries) {
         final codeIndicator = entry.generatesCode ? ' [CODE]' : '';
+
         Logger.listed('${Logger.mutedPen.write(entry.key)}: ${entry.description}$codeIndicator');
       }
     }

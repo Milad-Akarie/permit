@@ -1,14 +1,13 @@
 import 'dart:io';
 
-import 'package:args/command_runner.dart';
-import 'package:permit/path/path_finder.dart';
+import 'package:permit/commands/permit_runner.dart';
 import 'package:permit/registry/permit_registry.dart';
 import 'package:permit/utils/logger.dart';
 import 'package:permit/utils/utils.dart';
 import 'package:permit/xml_editor/models.dart';
 import 'package:permit/xml_editor/xml_editor.dart';
 
-class DeletePermissionCommand extends Command {
+class DeletePermissionCommand extends PermitCommand {
   @override
   String get name => 'remove';
 
@@ -25,8 +24,8 @@ class DeletePermissionCommand extends Command {
     var key = argResults?.rest.isNotEmpty == true ? argResults!.rest[0] : '';
 
     // Read existing permissions from both platforms
-    final manifestFile = PathFinder.getManifest(Directory.current);
-    final plistFile = PathFinder.getInfoPlist(Directory.current);
+    final manifestFile = pathFinder.getManifest();
+    final plistFile = pathFinder.getInfoPlist();
     if (manifestFile == null && plistFile == null) {
       Logger.error('Could not locate AndroidManifest.xml or Info.plist in the current directory.');
       return;

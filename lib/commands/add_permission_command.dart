@@ -1,7 +1,4 @@
-import 'dart:io';
-
-import 'package:args/command_runner.dart';
-import 'package:permit/path/path_finder.dart';
+import 'package:permit/commands/permit_runner.dart';
 import 'package:permit/registry/models.dart';
 import 'package:permit/registry/permit_registry.dart';
 import 'package:permit/utils/logger.dart';
@@ -9,7 +6,7 @@ import 'package:permit/utils/utils.dart';
 import 'package:permit/xml_editor/models.dart';
 import 'package:permit/xml_editor/xml_editor.dart';
 
-class AddPermissionCommand extends Command {
+class AddPermissionCommand extends PermitCommand {
   @override
   String get name => 'add';
 
@@ -71,7 +68,7 @@ class AddPermissionCommand extends Command {
   }
 
   void addAndroidPermissions(List<ManifestPermissionEntry> entries) {
-    final file = PathFinder.getManifest(Directory.current);
+    final file = pathFinder.getManifest();
     if (file == null) {
       Logger.error('Could not locate AndroidManifest.xml');
       return;
@@ -94,7 +91,7 @@ class AddPermissionCommand extends Command {
   }
 
   void addIosPermissions(List<PListUsageDescription> entries) {
-    final file = PathFinder.getInfoPlist(Directory.current);
+    final file = pathFinder.getInfoPlist();
     if (file == null) {
       Logger.error('Could not locate Info.plist');
       return;
