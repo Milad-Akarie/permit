@@ -10,6 +10,23 @@ abstract class PathFinder {
   /// Attempts to locate the Info.plist used by iOS builds.
   /// Returns null if it cannot be determined reliably.
   File? getInfoPlist();
+
+  File? getPubspec();
+
+  static Directory? findRootDirectory(Directory start) {
+    var current = start;
+    while (true) {
+      final pubspec = File('${current.path}/pubspec.yaml');
+      if (pubspec.existsSync()) {
+        return current;
+      }
+      final parent = current.parent;
+      if (parent.path == current.path) {
+        return null;
+      }
+      current = parent;
+    }
+  }
 }
 
 class PathFinderImpl extends PathFinder {
@@ -126,5 +143,14 @@ class PathFinderImpl extends PathFinder {
     } catch (_) {
       return false;
     }
+  }
+
+  @override
+  File? getPubspec() {
+    final pubspec = File('${root.path}/pubspec.yaml');
+    if (pubspec.existsSync()) {
+      return pubspec;
+    }
+    return null;
   }
 }

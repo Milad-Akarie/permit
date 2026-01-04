@@ -1,8 +1,13 @@
 abstract class PermissionDef {
   final String key;
+  final String unifiedName;
   final String group;
 
-  const PermissionDef(this.key, {required this.group});
+  const PermissionDef(
+    this.key, {
+    required this.group,
+    required this.unifiedName,
+  });
 
   bool matches(String input);
 }
@@ -15,6 +20,7 @@ class AndroidPermissionDef extends PermissionDef {
     super.key, {
     this.runtime = false,
     required super.group,
+    required super.unifiedName,
     this.minimumSdkVersion,
   });
 
@@ -25,11 +31,12 @@ class AndroidPermissionDef extends PermissionDef {
           key == other.key &&
           group == other.group &&
           runtime == other.runtime &&
+          unifiedName == other.unifiedName &&
           runtimeType == other.runtimeType &&
           minimumSdkVersion == other.minimumSdkVersion;
 
   @override
-  int get hashCode => Object.hash(runtime, minimumSdkVersion, key, group);
+  int get hashCode => Object.hash(runtime, minimumSdkVersion, key, group, unifiedName);
 
   @override
   bool matches(String input) {
@@ -53,6 +60,7 @@ class IosPermissionDef extends PermissionDef {
   const IosPermissionDef(
     super.key, {
     required super.group,
+    required super.unifiedName,
     this.scope = .standardOrFull,
     this.minimumIosVersion,
     this.successorOf,
@@ -67,12 +75,13 @@ class IosPermissionDef extends PermissionDef {
       other is IosPermissionDef &&
           key == other.key &&
           group == other.group &&
+          unifiedName == other.unifiedName &&
           minimumIosVersion == other.minimumIosVersion &&
           successorOf == other.successorOf &&
           scope == other.scope;
 
   @override
-  int get hashCode => Object.hash(key, group, minimumIosVersion, successorOf, scope);
+  int get hashCode => Object.hash(key, group, minimumIosVersion, successorOf, scope, unifiedName);
 
   @override
   bool matches(String input) {

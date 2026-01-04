@@ -20,6 +20,12 @@ class MockPathFinder extends PathFinder {
       ..writeAsStringSync(content ?? '<?xml version="1.0"?><plist><dict><key>CFBundle</key></dict></plist>');
   }
 
+  void createMockPubspec({String? content}) {
+    File('${root.path}/pubspec.yaml')
+      ..createSync()
+      ..writeAsStringSync(content ?? 'name: mock_project\ndependencies:\n  flutter:\n    sdk: flutter');
+  }
+
   @override
   File? getManifest() {
     // Mock implementation for testing purposes
@@ -31,6 +37,12 @@ class MockPathFinder extends PathFinder {
   File? getInfoPlist() {
     // Mock implementation for testing purposes
     final file = File('${root.path}/Info.plist');
+    return file.existsSync() ? file : null;
+  }
+
+  @override
+  File? getPubspec() {
+    final file = File('${root.path}/pubspec.yaml');
     return file.existsSync() ? file : null;
   }
 }
