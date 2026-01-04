@@ -85,7 +85,12 @@ class AddPermissionCommand extends Command {
         shouldRemoveComment: (c) => c.startsWith('@permit'),
       );
     }
-    manifestEditor.save(file);
+
+    if (manifestEditor.save(file)) {
+      for (var entry in entries) {
+        Logger.android('Added Android permission: ${Logger.mutedPen.write(entry.key)}');
+      }
+    }
   }
 
   void addIosPermissions(List<PListUsageDescription> entries) {
@@ -103,7 +108,11 @@ class AddPermissionCommand extends Command {
         shouldRemoveComment: (c) => c.startsWith('@permit'),
       );
     }
-    plistEditor.save(file);
+    if (plistEditor.save(file)) {
+      for (var entry in entries) {
+        Logger.ios('Added iOS usage description: ${Logger.mutedPen.write(entry.key)}');
+      }
+    }
   }
 
   List<XmlEntry> _resolveEntries(List<PermissionDef> entries) {

@@ -122,13 +122,16 @@ class DeletePermissionCommand extends Command {
           permissionName: entry.key,
           removeComments: (c) => c.startsWith('@permit'),
         );
-        Logger.success('Removed Android permission: ${entry.key}');
       } catch (e) {
         Logger.error('Failed to remove Android permission ${entry.key}: $e');
       }
     }
 
-    manifestEditor.save(file);
+    if (manifestEditor.save(file)) {
+      for (final entry in entries) {
+        Logger.android('Removed Android permissions successfully: ${Logger.mutedPen.write(entry.key)}');
+      }
+    }
   }
 
   void removeIosPermissions(List<PListUsageDescription> entries, PListEditor plistEditor, File file) {
@@ -138,12 +141,15 @@ class DeletePermissionCommand extends Command {
           key: entry.key,
           removeComments: (c) => c.startsWith('@permit'),
         );
-        Logger.success('Removed iOS permission: ${entry.key}');
       } catch (e) {
         Logger.error('Failed to remove iOS permission ${entry.key}: $e');
       }
     }
 
-    plistEditor.save(file);
+    if (plistEditor.save(file)) {
+      for (final entry in entries) {
+        Logger.ios('Removed iOS permissions successfully: ${Logger.mutedPen.write(entry.key)}');
+      }
+    }
   }
 }

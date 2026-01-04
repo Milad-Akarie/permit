@@ -33,8 +33,16 @@ class Logger {
   void log(LogLevel level, String message) {
     if (level.index >= _currentLevel.index) {
       final AnsiPen pen = _getLevelPen(level);
-      print('${pen('[${level.name.toUpperCase()}]')} $message');
+      print('${pen('${level.name.toUpperCase()}:')} $message');
     }
+  }
+
+  static void ios(String message) {
+    print('${iosPen('iOS:')} $message');
+  }
+
+  static void android(String message) {
+    print('${androidPen('Android:')} $message');
   }
 
   /// Logs a fine-level message (lowest priority).
@@ -82,6 +90,10 @@ class Logger {
   static void success(String message) {
     _instance.log(LogLevel.success, message);
   }
+
+  static AnsiPen androidPen = AnsiPen()..rgb(r: 0.255, g: 0.612, b: 0.067);
+  static AnsiPen iosPen = AnsiPen()..rgb(r: 0.067, g: 0.439, b: 0.678);
+  static AnsiPen mutedPen = AnsiPen()..rgb(r: 0.5, g: 0.5, b: 0.5);
 
   /// Returns the appropriate color pen for the given log level.
   ///
