@@ -1,7 +1,7 @@
 import 'package:permit/commands/permit_runner.dart';
 import 'package:permit/utils/logger.dart';
-import 'package:permit/xml_editor/models.dart';
-import 'package:permit/xml_editor/xml_editor.dart';
+import 'package:permit/editor/models.dart';
+import 'package:permit/editor/xml_editor.dart';
 
 class ListPermissionsCommand extends PermitCommand {
   @override

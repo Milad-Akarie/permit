@@ -1,6 +1,6 @@
-import 'package:permit/xml_editor/models.dart';
+import 'package:permit/editor/models.dart';
 import 'package:test/test.dart';
-import 'package:permit/xml_editor/xml_editor.dart';
+import 'package:permit/editor/xml_editor.dart';
 
 void main() {
   group('XmlEditor - Plist Tests', () {
@@ -105,6 +105,49 @@ void main() {
         final result = editor.toXmlString();
         expect(result.contains('NewKey'), true);
         expect(result.contains('new value'), true);
+      });
+
+      test('should place comments correctly above their keys', () {
+        final editor = PListEditor(plistContent);
+        editor.addUsageDescription(
+          key: 'NSMicrophoneUsageDescription',
+          description: 'We need microphone access',
+          keyComments: ['comment1'],
+        );
+        editor.addUsageDescription(
+          key: 'NSBluetoothPeripheralUsageDescription',
+          description: 'We need bluetooth access',
+          keyComments: ['comment2'],
+        );
+
+        final result = editor.toXmlString();
+        final lines = result.split('\n');
+
+        // Find indices of comments and keys
+        int comment1Index = -1;
+        int key1Index = -1;
+        int comment2Index = -1;
+        int key2Index = -1;
+
+        for (int i = 0; i < lines.length; i++) {
+          if (lines[i].contains('comment1')) comment1Index = i;
+          if (lines[i].contains('NSMicrophoneUsageDescription')) key1Index = i;
+          if (lines[i].contains('comment2')) comment2Index = i;
+          if (lines[i].contains('NSBluetoothPeripheralUsageDescription')) key2Index = i;
+        }
+
+        // Verify all were found
+        expect(comment1Index, greaterThanOrEqualTo(0));
+        expect(key1Index, greaterThanOrEqualTo(0));
+        expect(comment2Index, greaterThanOrEqualTo(0));
+        expect(key2Index, greaterThanOrEqualTo(0));
+
+        // Verify comments are directly above their keys
+        expect(comment1Index, lessThan(key1Index), reason: 'comment1 should appear before key1');
+        expect(comment2Index, lessThan(key2Index), reason: 'comment2 should appear before key2');
+
+        // Verify comment1 comes before comment2
+        expect(comment1Index, lessThan(comment2Index), reason: 'comment1 should appear before comment2');
       });
 
       test('should throw exception when dict not found at path', () {
@@ -531,35 +574,6 @@ void main() {
       // Should have TWO NSCameraUsageDescription keys
       final keyCount = result.split('<key>NSCameraUsageDescription</key>').length - 1;
       expect(keyCount, equals(2));
-    });
-
-    test('should handle override with valueComments', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>TestKey</key>
-    <string>old value</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-
-      // Override with both key and value comments
-      editor.addEntry(
-        path: 'plist.dict',
-        key: 'TestKey',
-        value: '<string>new value</string>',
-        keyComments: ['@permit new key comment'],
-        valueComments: ['@permit new value comment'],
-        shouldRemoveComment: (comment) => comment.contains('@permit'),
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('TestKey'), true);
-      expect(result.contains('new value'), true);
-      expect(result.contains('@permit new key comment'), true);
-      expect(result.contains('@permit new value comment'), true);
-      expect(result.contains('old value'), false);
     });
 
     // Tests for shouldRemoveComment callback

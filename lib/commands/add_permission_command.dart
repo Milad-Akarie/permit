@@ -3,8 +3,8 @@ import 'package:permit/registry/models.dart';
 import 'package:permit/registry/permit_registry.dart';
 import 'package:permit/utils/logger.dart';
 import 'package:permit/utils/utils.dart';
-import 'package:permit/xml_editor/models.dart';
-import 'package:permit/xml_editor/xml_editor.dart';
+import 'package:permit/editor/models.dart';
+import 'package:permit/editor/xml_editor.dart';
 
 class AddPermissionCommand extends PermitCommand {
   @override

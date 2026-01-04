@@ -4,6 +4,10 @@ part of 'xml_editor.dart';
 class PListEditor extends XmlEditor {
   PListEditor(super.originalContent);
 
+  bool isNSUsageDesc(String key) {
+    return key.startsWith('NS') && key.endsWith('UsageDescription');
+  }
+
   /// Add a key-value pair to a plist file at a specific path
   ///
   /// The value parameter is optional. If null, only the key will be added.
@@ -34,8 +38,6 @@ class PListEditor extends XmlEditor {
     required String key,
     String? value,
     List<String>? keyComments,
-    List<String>? valueComments,
-    List<String>? anchorKeys,
     bool override = true,
     CommentRemoverPredicate? shouldRemoveComment,
   }) {
@@ -80,8 +82,30 @@ class PListEditor extends XmlEditor {
       throw Exception('Could not find <dict> element at path: $path');
     }
 
+    // Find the last NS*UsageDescription key to anchor after
+    String? lastNSUsageDescKey;
+    final dictChildren = currentDict.children.whereType<XmlElement>().toList();
+    for (int i = 0; i < dictChildren.length; i++) {
+      final child = dictChildren[i];
+      if (child.name.qualified == 'key') {
+        final keyName = child.innerText.trim();
+        if (isNSUsageDesc(keyName)) {
+          lastNSUsageDescKey = keyName;
+        }
+      }
+    }
+
+    // Build anchor keys list: use last NS key if found, otherwise use provided anchorKeys
+    final finalAnchorKeys = <String>[];
+    if (lastNSUsageDescKey != null) {
+      finalAnchorKeys.add(lastNSUsageDescKey);
+    }
+
     // Find insertion position
-    final insertInfo = _findPlistInsertPosition(currentDict, anchorKeys: anchorKeys);
+    final insertInfo = _findPlistInsertPosition(
+      currentDict,
+      anchorKeys: finalAnchorKeys.isNotEmpty ? finalAnchorKeys : null,
+    );
     if (insertInfo == null) {
       throw Exception('Could not find insertion point in plist');
     }
@@ -97,14 +121,8 @@ class PListEditor extends XmlEditor {
     }
     insertLines.add('${insertInfo.indent}<key>$key</key>');
 
-    // Add value only if provided
+    // Add value only if provided (without value comments)
     if (value != null) {
-      // Add value comments if provided
-      if (valueComments != null && valueComments.isNotEmpty) {
-        for (final comment in valueComments) {
-          insertLines.add('${insertInfo.indent}<!--$comment-->');
-        }
-      }
       insertLines.add('${insertInfo.indent}$value');
     }
 
@@ -130,8 +148,6 @@ class PListEditor extends XmlEditor {
       key: key,
       value: '<string>$description</string>',
       keyComments: keyComments,
-      valueComments: valueComments,
-      anchorKeys: anchorKeys,
       override: override,
       shouldRemoveComment: shouldRemoveComment,
     );
@@ -218,9 +234,7 @@ class PListEditor extends XmlEditor {
       if (child.name.qualified == 'key') {
         final keyName = child.innerText.trim();
         // check if this is an NS*UsageDescription key
-        if (!keyName.startsWith('NS') || !keyName.endsWith('UsageDescription')) {
-          continue;
-        }
+        if (!isNSUsageDesc(keyName)) continue;
         final valueElement = _getNextSiblingElement(child);
         if (valueElement != null && valueElement.name.qualified == 'string') {
           final description = valueElement.innerText.trim();
