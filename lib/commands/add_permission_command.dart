@@ -121,7 +121,7 @@ class AddPermissionCommand extends PermitCommand {
         'Select the permission to add',
         options: entries,
         display: (entry) {
-          return '[${entry is AndroidPermissionDef ? 'Android' : 'iOS'}]: ${entry.key}';
+          return '${entry is AndroidPermissionDef ? 'Android' : 'iOS'}: ${entry.key}';
         },
       );
     }

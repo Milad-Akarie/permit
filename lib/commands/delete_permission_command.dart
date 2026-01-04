@@ -63,7 +63,7 @@ class DeletePermissionCommand extends PermitCommand {
         options: existingEntries,
         display: (entry) {
           final platform = entry is ManifestPermissionEntry ? 'Android' : 'iOS';
-          return '[$platform]: ${entry.key}';
+          return '$platform: ${entry.key}';
         },
       );
 
@@ -106,7 +106,7 @@ class DeletePermissionCommand extends PermitCommand {
         options: matchingEntries,
         display: (entry) {
           final platform = entry is ManifestPermissionEntry ? 'Android' : 'iOS';
-          return '[$platform]: ${entry.key}';
+          return '$platform: ${entry.key}';
         },
       );
     }
