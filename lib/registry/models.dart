@@ -14,14 +14,14 @@ abstract class PermissionDef {
 
 class AndroidPermissionDef extends PermissionDef {
   final bool runtime;
-  final String? minimumSdkVersion;
+  final int? sinceApi;
 
   const AndroidPermissionDef(
     super.key, {
     this.runtime = false,
     required super.group,
     required super.unifiedName,
-    this.minimumSdkVersion,
+    this.sinceApi,
   });
 
   @override
@@ -33,10 +33,10 @@ class AndroidPermissionDef extends PermissionDef {
           runtime == other.runtime &&
           unifiedName == other.unifiedName &&
           runtimeType == other.runtimeType &&
-          minimumSdkVersion == other.minimumSdkVersion;
+          sinceApi == other.sinceApi;
 
   @override
-  int get hashCode => Object.hash(runtime, minimumSdkVersion, key, group, unifiedName);
+  int get hashCode => Object.hash(runtime, sinceApi, key, group, unifiedName);
 
   @override
   bool matches(String input) {
