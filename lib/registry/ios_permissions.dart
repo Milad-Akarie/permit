@@ -8,61 +8,52 @@ abstract class IosPermissions {
   static const camera = IosPermissionDef(
     'NSCameraUsageDescription',
     group: 'camera',
-    unifiedName: 'camera',
   );
 
   // MICROPHONE
   static const microphone = IosPermissionDef(
     'NSMicrophoneUsageDescription',
     group: 'microphone',
-    unifiedName: 'microphone',
   );
 
   // CONTACTS
   static const contacts = IosPermissionDef(
     'NSContactsUsageDescription',
     group: 'contacts',
-    unifiedName: 'contacts',
   );
 
   // LOCATION
   static const locationWhenInUse = IosPermissionDef(
     'NSLocationWhenInUseUsageDescription',
     group: 'location',
-    unifiedName: 'location',
   );
 
   static const locationAlways = IosPermissionDef(
     'NSLocationAlwaysUsageDescription',
-    group: 'location',
-    unifiedName: 'location_always',
+    group: 'location_always',
   );
 
   static const locationAlwaysAndWhenInUse = IosPermissionDef(
     'NSLocationAlwaysAndWhenInUseUsageDescription',
-    group: 'location',
-    unifiedName: 'location_always',
+    group: 'location_always',
   );
 
   // MEDIA LIBRARY & MUSIC
   static const mediaLibrary = IosPermissionDef(
     'NSAppleMusicUsageDescription',
     group: 'media',
-    unifiedName: 'media_library',
   );
 
   // PHOTOS & MEDIA
   static const photoLibrary = IosPermissionDef(
     'NSPhotoLibraryUsageDescription',
     group: 'photos',
-    unifiedName: 'photos',
   );
 
   static const photoLibraryAdd = IosPermissionDef(
     'NSPhotoLibraryAddUsageDescription',
     minimumIosVersion: '11.0',
-    group: 'photos',
-    unifiedName: 'photos_add_only',
+    group: 'photos_add_only',
   );
 
   // CALENDARS & EVENTS
@@ -71,14 +62,12 @@ abstract class IosPermissions {
     minimumIosVersion: '17.0',
     successorOf: 'NSCalendarsUsageDescription',
     group: 'calendar',
-    unifiedName: 'calendar',
   );
   static const calendarsWriteOnly = IosPermissionDef(
     'NSCalendarsWriteOnlyAccessUsageDescription',
     scope: AccessScope.writeOnly,
     minimumIosVersion: '17.0',
-    group: 'calendar',
-    unifiedName: 'calendar_write_only',
+    group: 'calendar_write_only',
   );
 
   // REMINDERS
@@ -87,7 +76,6 @@ abstract class IosPermissions {
     minimumIosVersion: '17.0',
     successorOf: 'NSRemindersUsageDescription',
     group: 'reminders',
-    unifiedName: 'reminders',
   );
 
   // BLUETOOTH
@@ -96,57 +84,50 @@ abstract class IosPermissions {
     minimumIosVersion: '13.0',
     successorOf: 'NSBluetoothPeripheralUsageDescription',
     group: 'bluetooth',
-    unifiedName: 'bluetooth',
   );
 
   // MOTION & FITNESS
   static const motion = IosPermissionDef(
     'NSMotionUsageDescription',
-    group: 'motion',
-    unifiedName: 'sensors',
+    group: 'sensors',
   );
 
   // HEALTH
   static const healthShare = IosPermissionDef(
     'NSHealthShareUsageDescription',
-    group: 'health',
-    unifiedName: 'health_share',
+    group: 'health_share',
   );
   static const healthUpdate = IosPermissionDef(
     'NSHealthUpdateUsageDescription',
-    group: 'health',
-    unifiedName: 'health_update',
+    group: 'health_update',
   );
   static const healthClinicalRecords = IosPermissionDef(
     'NSHealthClinicalHealthRecordsShareUsageDescription',
-    group: 'health',
-    unifiedName: 'health_clinical_records',
+    group: 'health_clinical_records',
   );
 
   // SPEECH & SIRI
   static const speechRecognition = IosPermissionDef(
     'NSSpeechRecognitionUsageDescription',
     group: 'speech',
-    unifiedName: 'speech',
   );
 
-  static const siri = IosPermissionDef('NSSiriUsageDescription', group: 'siri', unifiedName: 'assistant');
+  static const siri = IosPermissionDef('NSSiriUsageDescription', group: 'assistant');
 
   // FACE ID & BIOMETRICS
-  static const faceId = IosPermissionDef('NSFaceIDUsageDescription', group: 'biometrics', unifiedName: 'face_id');
+  static const faceId = IosPermissionDef('NSFaceIDUsageDescription', group: 'face_id');
 
   // HOMEKIT
-  static const homeKit = IosPermissionDef('NSHomeKitUsageDescription', group: 'homekit', unifiedName: 'home_kit');
+  static const homeKit = IosPermissionDef('NSHomeKitUsageDescription', group: 'home_kit');
 
   // NFC
-  static const nfcReader = IosPermissionDef('NFCReaderUsageDescription', group: 'nfc', unifiedName: 'nfc_reader');
+  static const nfcReader = IosPermissionDef('NFCReaderUsageDescription', group: 'nfc');
 
   // TRACKING
   static const userTracking = IosPermissionDef(
     'NSUserTrackingUsageDescription',
     minimumIosVersion: '14.5',
     group: 'tracking',
-    unifiedName: 'app_tracking_transparency',
   );
 
   // LOCAL NETWORK
@@ -154,15 +135,12 @@ abstract class IosPermissions {
     'NSLocalNetworkUsageDescription',
     minimumIosVersion: '14.0',
     group: 'network',
-    unifiedName: 'local_network',
   );
 
-  // NEARBY INTERACTION
   static const nearbyInteraction = IosPermissionDef(
     'NSNearbyInteractionUsageDescription',
     minimumIosVersion: '14.0',
-    group: 'nearby',
-    unifiedName: 'nearby_interaction',
+    group: 'nearby_interaction',
   );
 
   // SENSORS & FOCUS
@@ -170,7 +148,6 @@ abstract class IosPermissions {
     'NSFocusStatusUsageDescription',
     minimumIosVersion: '15.0',
     group: 'focus',
-    unifiedName: 'focus_status',
   );
 
   /// Get all permissions

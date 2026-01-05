@@ -1,11 +1,16 @@
+import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/template.dart';
 
 class PluginPubspecTemp extends Template {
-  PluginPubspecTemp({this.dartConstraint = defaultDartConstraint});
-  final String dartConstraint;
+  PluginPubspecTemp({
+    this.dartConstraint = kDefaultDartConstraint,
+    this.packageName = kDartPackageName,
+    this.androidPackageName = kAndroidPackageName,
+  });
 
-  static const packageName = 'permit_plugin';
-  static const defaultDartConstraint = '^3.0.0';
+  final String dartConstraint;
+  final String packageName;
+  final String androidPackageName;
 
   @override
   String get path => 'pubspec.yaml';
@@ -29,7 +34,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: local.app.permit_plugin
+        package: $androidPackageName
         pluginClass: PermitPlugin
       ios:
         pluginClass: PermitPlugin

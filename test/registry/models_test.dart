@@ -8,7 +8,6 @@ void main() {
         'android.permission.CAMERA',
         runtime: true,
         group: 'camera',
-        unifiedName: 'camera',
       );
       expect(def.matches('android.permission.CAMERA'), isTrue);
       expect(def.matches('ANDROID.PERMISSION.CAMERA'), isTrue);
@@ -21,14 +20,12 @@ void main() {
       const a = AndroidPermissionDef(
         'android.permission.INTERNET',
         runtime: false,
-        group: 'network',
-        unifiedName: 'internet',
+        group: 'internet',
       );
       const b = AndroidPermissionDef(
         'android.permission.INTERNET',
         runtime: false,
-        group: 'network',
-        unifiedName: 'internet',
+        group: 'internet',
       );
       expect(a, equals(b));
       expect(a.hashCode, equals(b.hashCode));
@@ -36,14 +33,13 @@ void main() {
       const c = AndroidPermissionDef(
         'android.permission.INTERNET',
         runtime: true,
-        group: 'network',
-        unifiedName: 'internet',
+        group: 'internet',
       );
       expect(a == c, isFalse);
     });
 
     test('IosPermissionDef.matches and toString', () {
-      const ios = IosPermissionDef('NSCameraUsageDescription', group: 'camera', unifiedName: 'camera');
+      const ios = IosPermissionDef('NSCameraUsageDescription', group: 'camera');
       expect(ios.matches('NSCameraUsageDescription'), isTrue);
       expect(ios.matches('nscamerausagedescription'), isTrue);
       expect(ios.toString(), equals('NSCameraUsageDescription'));
@@ -55,14 +51,12 @@ void main() {
         group: 'misc',
         minimumIosVersion: '13.0',
         successorOf: 'NSBar',
-        unifiedName: 'foo',
       );
       const y = IosPermissionDef(
         'NSFoo',
         group: 'misc',
         minimumIosVersion: '13.0',
         successorOf: 'NSBar',
-        unifiedName: 'foo',
       );
       expect(x, equals(y));
       expect(x.hashCode, equals(y.hashCode));

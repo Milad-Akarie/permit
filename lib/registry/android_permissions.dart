@@ -6,7 +6,6 @@ abstract class AndroidPermissions {
     'android.permission.CAMERA',
     runtime: true,
     group: 'camera',
-    unifiedName: 'camera',
   );
 
   // Microphone
@@ -14,7 +13,6 @@ abstract class AndroidPermissions {
     'android.permission.RECORD_AUDIO',
     runtime: true,
     group: 'microphone',
-    unifiedName: 'microphone',
   );
 
   // Location
@@ -22,20 +20,18 @@ abstract class AndroidPermissions {
     'android.permission.ACCESS_FINE_LOCATION',
     runtime: true,
     group: 'location',
-    unifiedName: 'location',
   );
   static const accessCoarseLocation = AndroidPermissionDef(
     'android.permission.ACCESS_COARSE_LOCATION',
     runtime: true,
+
     group: 'location',
-    unifiedName: 'location',
   );
   static const accessBackgroundLocation = AndroidPermissionDef(
     'android.permission.ACCESS_BACKGROUND_LOCATION',
     runtime: true,
-    group: 'location',
     sinceApi: 29,
-    unifiedName: 'location_always',
+    group: 'location_always',
   );
 
   // Contacts
@@ -43,18 +39,15 @@ abstract class AndroidPermissions {
     'android.permission.READ_CONTACTS',
     runtime: true,
     group: 'contacts',
-    unifiedName: 'contacts',
   );
   static const writeContacts = AndroidPermissionDef(
     'android.permission.WRITE_CONTACTS',
     runtime: true,
     group: 'contacts',
-    unifiedName: 'contacts',
   );
   static const getAccounts = AndroidPermissionDef(
     'android.permission.GET_ACCOUNTS',
     group: 'contacts',
-    unifiedName: 'contacts_accounts',
   );
 
   // Calendar
@@ -62,13 +55,11 @@ abstract class AndroidPermissions {
     'android.permission.READ_CALENDAR',
     runtime: true,
     group: 'calendar',
-    unifiedName: 'calendar',
   );
   static const writeCalendar = AndroidPermissionDef(
     'android.permission.WRITE_CALENDAR',
     runtime: true,
     group: 'calendar',
-    unifiedName: 'calendar',
   );
 
   // Phone
@@ -76,27 +67,47 @@ abstract class AndroidPermissions {
     'android.permission.READ_PHONE_STATE',
     runtime: true,
     group: 'phone',
-    unifiedName: 'phone',
   );
   static const readPhoneNumbers = AndroidPermissionDef(
     'android.permission.READ_PHONE_NUMBERS',
-    group: 'phone',
     sinceApi: 26,
     runtime: true,
-    unifiedName: 'phone_numbers',
+    group: 'phone',
   );
   static const callPhone = AndroidPermissionDef(
     'android.permission.CALL_PHONE',
     runtime: true,
     group: 'phone',
-    unifiedName: 'phone_call',
   );
   static const answerPhoneCalls = AndroidPermissionDef(
     'android.permission.ANSWER_PHONE_CALLS',
-    group: 'phone',
     sinceApi: 26,
     runtime: true,
-    unifiedName: 'phone_answer',
+    group: 'phone',
+  );
+  static const readCallLog = AndroidPermissionDef(
+    'android.permission.READ_CALL_LOG',
+    runtime: true,
+    sinceApi: 16,
+    group: 'phone',
+  );
+  static const writeCallLog = AndroidPermissionDef(
+    'android.permission.WRITE_CALL_LOG',
+    runtime: true,
+    sinceApi: 16,
+    group: 'phone',
+  );
+  static const addVoicemail = AndroidPermissionDef(
+    'android.permission.ADD_VOICEMAIL',
+    runtime: true,
+    sinceApi: 14,
+    group: 'phone',
+  );
+  static const useSip = AndroidPermissionDef(
+    'android.permission.USE_SIP',
+    runtime: true,
+    sinceApi: 9,
+    group: 'phone',
   );
 
   // SMS
@@ -104,14 +115,26 @@ abstract class AndroidPermissions {
     'android.permission.SEND_SMS',
     runtime: true,
     group: 'sms',
-    unifiedName: 'sms',
   );
-
+  static const receiveSms = AndroidPermissionDef(
+    'android.permission.RECEIVE_SMS',
+    runtime: true,
+    group: 'sms',
+  );
   static const readSms = AndroidPermissionDef(
     'android.permission.READ_SMS',
     runtime: true,
     group: 'sms',
-    unifiedName: 'sms',
+  );
+  static const receiveWapPush = AndroidPermissionDef(
+    'android.permission.RECEIVE_WAP_PUSH',
+    runtime: true,
+    group: 'sms',
+  );
+  static const receiveMms = AndroidPermissionDef(
+    'android.permission.RECEIVE_MMS',
+    runtime: true,
+    group: 'sms',
   );
 
   // Storage (legacy / media-scoped)
@@ -119,116 +142,105 @@ abstract class AndroidPermissions {
     'android.permission.READ_EXTERNAL_STORAGE',
     runtime: true,
     group: 'storage',
-    unifiedName: 'storage',
   );
   static const writeExternalStorage = AndroidPermissionDef(
     'android.permission.WRITE_EXTERNAL_STORAGE',
     runtime: true,
     group: 'storage',
-    unifiedName: 'storage_write',
   );
 
   static const accessMediaLocation = AndroidPermissionDef(
     'android.permission.ACCESS_MEDIA_LOCATION',
     runtime: true,
-    group: 'storage',
     sinceApi: 29,
-    unifiedName: 'media_location',
+    group: 'media_location',
   );
 
   // Media (Android 13+)
   static const readMediaImages = AndroidPermissionDef(
     'android.permission.READ_MEDIA_IMAGES',
-    group: 'storage',
     sinceApi: 33,
     runtime: true,
-    unifiedName: 'photos',
+    group: 'photos',
   );
   static const readMediaVideo = AndroidPermissionDef(
     'android.permission.READ_MEDIA_VIDEO',
-    group: 'storage',
     sinceApi: 33,
     runtime: true,
-    unifiedName: 'videos',
+    group: 'videos',
   );
   static const readMediaAudio = AndroidPermissionDef(
     'android.permission.READ_MEDIA_AUDIO',
-    group: 'storage',
     sinceApi: 33,
     runtime: true,
-    unifiedName: 'audio',
+    group: 'audio',
   );
 
   // Manage External Storage (Android 11+)
   static const manageExternalStorage = AndroidPermissionDef(
     'android.permission.MANAGE_EXTERNAL_STORAGE',
     runtime: true,
-    group: 'storage',
     sinceApi: 30,
-    unifiedName: 'manage_external_storage',
+    group: 'manage_external_storage',
   );
 
   // Battery
   static const ignoreBatteryOptimizations = AndroidPermissionDef(
     'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
-    group: 'battery',
-    unifiedName: 'ignore_battery_optimizations',
+    group: 'ignore_battery_optimizations',
   );
 
   // Network
   static const internet = AndroidPermissionDef(
     'android.permission.INTERNET',
     runtime: false,
-    group: 'network',
-    unifiedName: 'internet',
+    group: 'internet',
   );
   static const accessNetworkState = AndroidPermissionDef(
     'android.permission.ACCESS_NETWORK_STATE',
-    group: 'network',
-    unifiedName: 'network_state',
+    group: 'network_state',
   );
   static const accessWifiState = AndroidPermissionDef(
     'android.permission.ACCESS_WIFI_STATE',
-    group: 'network',
-    unifiedName: 'wifi_state',
+    group: 'wifi_state',
   );
   static const changeWifiState = AndroidPermissionDef(
     'android.permission.CHANGE_WIFI_STATE',
-    group: 'network',
-    unifiedName: 'wifi_change',
+    group: 'wifi_change',
+  );
+  static const nearbyWifiDevices = AndroidPermissionDef(
+    'android.permission.NEARBY_WIFI_DEVICES',
+    runtime: true,
+    sinceApi: 33,
+    group: 'nearby_wifi_devices',
   );
 
   // Bluetooth
   static const bluetooth = AndroidPermissionDef(
     'android.permission.BLUETOOTH',
     group: 'bluetooth',
-    unifiedName: 'bluetooth',
   );
   static const bluetoothAdmin = AndroidPermissionDef(
     'android.permission.BLUETOOTH_ADMIN',
-    group: 'bluetooth',
-    unifiedName: 'bluetooth_admin',
+    group: 'bluetooth_admin',
   );
   static const bluetoothConnect = AndroidPermissionDef(
     'android.permission.BLUETOOTH_CONNECT',
-    group: 'bluetooth',
     sinceApi: 31,
     runtime: true,
-    unifiedName: 'bluetooth_connect',
+    group: 'bluetooth_connect',
   );
   static const bluetoothScan = AndroidPermissionDef(
     'android.permission.BLUETOOTH_SCAN',
-    group: 'bluetooth',
     sinceApi: 31,
     runtime: true,
-    unifiedName: 'bluetooth_scan',
+    group: 'bluetooth_scan',
   );
   static const bluetoothAdvertise = AndroidPermissionDef(
     'android.permission.BLUETOOTH_ADVERTISE',
-    group: 'bluetooth',
     sinceApi: 31,
     runtime: true,
-    unifiedName: 'bluetooth_advertise',
+    group: 'bluetooth_advertise',
   );
 
   // Sensors
@@ -236,61 +248,62 @@ abstract class AndroidPermissions {
     'android.permission.BODY_SENSORS',
     runtime: true,
     group: 'sensors',
-    unifiedName: 'sensors',
   );
   static const bodySensorsBackground = AndroidPermissionDef(
     'android.permission.BODY_SENSORS_BACKGROUND',
     runtime: true,
-    group: 'sensors',
     sinceApi: 33,
-    unifiedName: 'body_sensors_background',
+    group: 'body_sensors_background',
   );
 
   // System / Misc
   static const vibrate = AndroidPermissionDef(
     'android.permission.VIBRATE',
-    group: 'system',
-    unifiedName: 'vibrate',
+    group: 'vibrate',
   );
   static const wakeLock = AndroidPermissionDef(
     'android.permission.WAKE_LOCK',
-    group: 'system',
-    unifiedName: 'wake_lock',
+    group: 'wake_lock',
   );
   static const systemAlertWindow = AndroidPermissionDef(
     'android.permission.SYSTEM_ALERT_WINDOW',
     runtime: true,
-    group: 'system',
-    unifiedName: 'system_alert_window',
+    group: 'system_alert_window',
   );
   static const foregroundService = AndroidPermissionDef(
     'android.permission.FOREGROUND_SERVICE',
-    group: 'system',
     sinceApi: 28,
-    unifiedName: 'foreground_service',
+    group: 'foreground_service',
   );
   static const scheduleExactAlarm = AndroidPermissionDef(
     'android.permission.SCHEDULE_EXACT_ALARM',
     runtime: true,
-    group: 'system',
     sinceApi: 31,
-    unifiedName: 'schedule_exact_alarm',
+    group: 'schedule_exact_alarm',
   );
   static const postNotifications = AndroidPermissionDef(
     'android.permission.POST_NOTIFICATIONS',
-    group: 'notifications',
     sinceApi: 33,
     runtime: true,
-    unifiedName: 'notification',
+    group: 'notification',
+  );
+  static const requestInstallPackages = AndroidPermissionDef(
+    'android.permission.REQUEST_INSTALL_PACKAGES',
+    runtime: true,
+    sinceApi: 26,
+    group: 'request_install_packages',
+  );
+  static const nfc = AndroidPermissionDef(
+    'android.permission.NFC',
+    group: 'nfc',
   );
 
   // Activity Recognition
   static const activityRecognition = AndroidPermissionDef(
     'android.permission.ACTIVITY_RECOGNITION',
     runtime: true,
-    group: 'sensors',
     sinceApi: 29,
-    unifiedName: 'activity_recognition',
+    group: 'activity_recognition',
   );
 
   static final Set<AndroidPermissionDef> all = {
@@ -314,6 +327,10 @@ abstract class AndroidPermissions {
     readPhoneNumbers,
     callPhone,
     answerPhoneCalls,
+    readCallLog,
+    writeCallLog,
+    addVoicemail,
+    useSip,
     // Storage
     readExternalStorage,
     writeExternalStorage,
@@ -326,7 +343,10 @@ abstract class AndroidPermissions {
     manageExternalStorage,
     // SMS
     sendSms,
+    receiveSms,
     readSms,
+    receiveWapPush,
+    receiveMms,
     // Battery
     ignoreBatteryOptimizations,
     // Network
@@ -334,6 +354,7 @@ abstract class AndroidPermissions {
     accessNetworkState,
     accessWifiState,
     changeWifiState,
+    nearbyWifiDevices,
     // Bluetooth
     bluetooth,
     bluetoothAdmin,
@@ -350,6 +371,8 @@ abstract class AndroidPermissions {
     foregroundService,
     scheduleExactAlarm,
     postNotifications,
+    requestInstallPackages,
+    nfc,
     // Activity Recognition
     activityRecognition,
   };
