@@ -63,7 +63,7 @@ void main() {
         await runner.run(['remove', '--android', 'microphone']);
       }, zoneSpecification: spec);
 
-      expect(output.toString(), contains('Removed Android permissions successfully'));
+      expect(output.toString(), contains('Removed permissions successfully'));
       expect(output.toString(), contains('android.permission.RECORD_AUDIO'));
 
       // Check the manifest file was updated

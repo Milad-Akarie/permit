@@ -1,4 +1,5 @@
 import 'package:ansicolor/ansicolor.dart' show AnsiPen;
+import 'package:permit/generate/utils.dart';
 
 /// A static logging utility for the lean_builder package.
 ///
@@ -33,7 +34,7 @@ class Logger {
   void log(LogLevel level, String message) {
     if (level.index >= _currentLevel.index) {
       final AnsiPen pen = _getLevelPen(level);
-      print('${pen('${level.name.toUpperCase()}:')} $message');
+      print('${pen('${level.name.capitalize()}:')} $message');
     }
   }
 

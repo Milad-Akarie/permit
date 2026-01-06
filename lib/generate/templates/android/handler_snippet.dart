@@ -66,8 +66,8 @@ class $className : PermissionHandler(
     $requestCode,
     arrayOf(${permissionsArray.join(',\n$indent$indent')})
 ) {
-    override fun getStatus(context: Context): Int {
-        return if (Settings.canDrawOverlays(context)) 1 else 0
+    override fun getStatus(activity: Activity): Int {
+        return if (Settings.canDrawOverlays(activity)) 1 else 0
     }
 
     override fun handleRequest(activity: Activity, result: MethodChannel.Result) {

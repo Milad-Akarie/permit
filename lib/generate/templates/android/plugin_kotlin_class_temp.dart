@@ -19,6 +19,7 @@ class PluginKotlinClassTemp extends Template {
   @override
   String generate() {
     return '''
+// ---- GENERATED CODE - DO NOT MODIFY BY HAND ----
 package $packageName
 
 import android.app.Activity
@@ -41,13 +42,11 @@ class PermitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwa
     PluginRegistry.RequestPermissionsResultListener {
 
     private lateinit var channel: MethodChannel
-    private var context: Context? = null
     private var activity: Activity? = null
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(binding.binaryMessenger, "$channelName")
         channel.setMethodCallHandler(this)
-        context = binding.applicationContext
     }
 
 
@@ -62,15 +61,14 @@ class PermitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwa
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-        val ctx = context ?: run { result.error("NO_CONTEXT", "Context is null", null); return }
         val act = activity ?: run { result.error("NO_ACTIVITY", "Activity is null", null); return }
 
         when (call.method) {
             "open_settings" -> openSettings(act, result)
-            "check_permission_status" -> getHandler(call, result)?.handleCheck(ctx, result)
+            "check_permission_status" -> getHandler(call, result)?.handleCheck(act, result)
             "request_permission" -> getHandler(call, result)?.handleRequest(act, result)
             "should_show_rationale" -> getHandler(call, result)
-                ?.handleShouldShowRationale(ctx, result)
+                ?.handleShouldShowRationale(act, result)
 
             else -> result.notImplemented()
         }
@@ -99,14 +97,14 @@ class PermitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwa
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ): Boolean {
         return PermissionRegistry.handlerByCode(requestCode)?.let {
-            context?.let { ctx -> it.handleResult(ctx, grantResults) }
+            activity?.let { act -> it.handleResult(act, grantResults) }
             true
         } ?: false
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         return PermissionRegistry.handlerByCode(requestCode)?.let {
-            context?.let { ctx -> it.handleOnActivityResult(ctx) }
+            activity?.let { act -> it.handleOnActivityResult(act) }
             true
         } ?: false
     }
@@ -115,6 +113,7 @@ class PermitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwa
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
         binding.addRequestPermissionsResultListener(this)
+        binding.addActivityResultListener(this)
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
@@ -124,6 +123,7 @@ class PermitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwa
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
         activity = binding.activity
         binding.addRequestPermissionsResultListener(this)
+        binding.addActivityResultListener(this)
     }
 
     override fun onDetachedFromActivity() {
@@ -132,7 +132,6 @@ class PermitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwa
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
-        context = null
     }
 
 
@@ -141,6 +140,7 @@ class PermitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwa
 data class Permission(val name: String, val sinceApi: Int? = null)
 
 abstract class PermissionHandler(val requestCode: Int, permissions: Array<Permission>) {
+     val prefs = "permit_plugin_prefs"
      var pendingResult: MethodChannel.Result? = null
 
     val applicablePermissions: Array<String> = permissions
@@ -148,34 +148,53 @@ abstract class PermissionHandler(val requestCode: Int, permissions: Array<Permis
         .map { it.name }
         .toTypedArray()
 
-   open fun getStatus(context: Context): Int {
+
+    private fun wasAsked(context: Context): Boolean =
+         context.getSharedPreferences(prefs, Context.MODE_PRIVATE)
+            .getBoolean("perm_asked_\${applicablePermissions.joinToString("-")}", false)
+
+    private fun markAsked(context: Context) {
+        context.getSharedPreferences(prefs, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean("perm_asked_\${applicablePermissions.joinToString("-")}", true)
+            .apply()
+    }
+
+   open fun getStatus(activity: Activity): Int {
         applicablePermissions.ifEmpty { return 1 } // granted if no permissions to check
         val allGranted = applicablePermissions.all {
-            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(activity, it) == PackageManager.PERMISSION_GRANTED
         }
         if (allGranted) return 1 // granted
 
-        if (shouldShowRationale(context)) return 0 // denied, can ask again
+       val shouldShow = shouldShowRationale(activity)
+       val askedBefore = wasAsked(activity)
 
-        return 4 // permanently denied
+
+       return when {
+           !askedBefore -> 0     // first request
+           shouldShow -> 0       // denied, can ask again
+           else -> 4             // permanently denied
+       }
     }
 
-    fun shouldShowRationale(context: Context): Boolean {
-        if (context !is Activity || applicablePermissions.isEmpty()) return false
+    fun shouldShowRationale(activity: Activity): Boolean {
+        if ( applicablePermissions.isEmpty()) return false
         return applicablePermissions.any {
-            ActivityCompat.shouldShowRequestPermissionRationale(context, it)
+            ActivityCompat.shouldShowRequestPermissionRationale(activity, it)
         }
     }
 
-    fun handleShouldShowRationale(context: Context, result: MethodChannel.Result) {
-        result.success(shouldShowRationale(context))
+    fun handleShouldShowRationale(activity: Activity, result: MethodChannel.Result) {
+        result.success(shouldShowRationale(activity))
     }
 
-    fun handleCheck(context: Context, result: MethodChannel.Result) {
-        result.success(getStatus(context))
+    fun handleCheck(activity: Activity, result: MethodChannel.Result) {
+        result.success(getStatus(activity))
     }
 
     open fun handleRequest(activity: Activity, result: MethodChannel.Result) {
+        markAsked(activity)
         if (getStatus(activity) == 1) {
             result.success(1)
             return
@@ -184,14 +203,14 @@ abstract class PermissionHandler(val requestCode: Int, permissions: Array<Permis
         ActivityCompat.requestPermissions(activity, applicablePermissions, requestCode)
     }
 
-    fun handleResult(context: Context, grantResults: IntArray) {
+    fun handleResult(activity: Activity, grantResults: IntArray) {
         val granted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-        pendingResult?.success(if (granted) 1 else getStatus(context))
+        pendingResult?.success(if (granted) 1 else getStatus(activity))
         pendingResult = null
     }
 
-    fun handleOnActivityResult(context: Context) {
-        pendingResult?.success(getStatus(context))
+    fun handleOnActivityResult(activity: Activity) {
+        pendingResult?.success(getStatus(activity))
         pendingResult = null
     }
 }

@@ -135,7 +135,7 @@ class AddPermissionCommand extends PermitCommand {
       resolvedEntries.add(
         ManifestPermissionEntry(
           key: androidEntry.key,
-          comments: [generateCode ? '@permit:code' : '@permit'],
+          comments: [generateCode && androidEntry.runtime ? '@permit:code' : '@permit'],
         ),
       );
     }

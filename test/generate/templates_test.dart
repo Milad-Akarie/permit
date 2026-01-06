@@ -4,6 +4,7 @@ import 'package:permit/generate/templates/android/plugin_manifest_temp.dart';
 import 'package:permit/generate/templates/android/handler_snippet.dart';
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/plugin_pubspec_temp.dart';
+import 'package:permit/registry/models.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -14,7 +15,7 @@ void main() {
         final content = template.generate();
 
         expect(content, contains('name: $kDartPackageName'));
-        expect(content, contains('sdk: \'$kDefaultDartConstraint\''));
+        expect(content, contains('sdk: $kDefaultDartConstraint'));
         expect(content, contains('package: $kAndroidPackageName'));
         expect(content, contains('pluginClass: PermitPlugin'));
       });
@@ -28,7 +29,7 @@ void main() {
         final content = template.generate();
 
         expect(content, contains('name: custom_plugin'));
-        expect(content, contains('sdk: \'^2.19.0\''));
+        expect(content, contains('sdk: ^2.19.0'));
         expect(content, contains('package: com.custom.plugin'));
       });
 
@@ -36,12 +37,34 @@ void main() {
         final template = PluginPubspecTemp();
         expect(template.path, equals('pubspec.yaml'));
       });
+
+      test('should generate pubspec.yaml with only android platform', () {
+        final template = PluginPubspecTemp(android: true, ios: false);
+        final content = template.generate();
+        expect(content, contains('android:'));
+        expect(content, isNot(contains('ios:')));
+      });
+
+      test('should generate pubspec.yaml with only ios platform', () {
+        final template = PluginPubspecTemp(android: false, ios: true);
+        final content = template.generate();
+        expect(content, contains('ios:'));
+        expect(content, isNot(contains('android:')));
+      });
     });
 
     group('PluginKotlinClassTemp', () {
       final handlers = [
-        HandlerSnippet(key: 'camera', requestCode: '1001', permissions: ['android.permission.CAMERA']),
-        HandlerSnippet(key: 'microphone', requestCode: '1002', permissions: ['android.permission.RECORD_AUDIO']),
+        HandlerSnippet(
+          key: 'camera',
+          requestCode: '1001',
+          permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
+        ),
+        HandlerSnippet(
+          key: 'microphone',
+          requestCode: '1002',
+          permissions: [AndroidPermissionDef('android.permission.RECORD_AUDIO', group: 'microphone', runtime: true)],
+        ),
       ];
 
       test('should generate Kotlin class with default package', () {
@@ -110,6 +133,59 @@ void main() {
       test('should have correct path', () {
         final template = PluginManifestTemp();
         expect(template.path, equals('android/src/main/AndroidManifest.xml'));
+      });
+    });
+
+    group('HandlerSnippet', () {
+      test('should have correct className', () {
+        final handler = HandlerSnippet(
+          key: 'camera',
+          requestCode: '1001',
+          permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
+        );
+        expect(handler.className, equals('CameraHandler'));
+      });
+
+      test('should generate Kotlin handler class', () {
+        final handler = HandlerSnippet(
+          key: 'camera',
+          requestCode: '1001',
+          permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
+        );
+        final content = handler.generate();
+
+        expect(content, contains('class CameraHandler : PermissionHandler('));
+        expect(content, contains('1001, arrayOf('));
+        expect(content, contains('Permission(android.Manifest.permission.CAMERA)'));
+      });
+
+      test('should generate handler with multiple permissions', () {
+        final handler = HandlerSnippet(
+          key: 'location',
+          requestCode: '1002',
+          permissions: [
+            AndroidPermissionDef('android.permission.ACCESS_FINE_LOCATION', group: 'location', runtime: true),
+            AndroidPermissionDef('android.permission.ACCESS_COARSE_LOCATION', group: 'location', runtime: true),
+          ],
+        );
+        final content = handler.generate();
+
+        expect(content, contains('class LocationHandler : PermissionHandler('));
+        expect(content, contains('Permission(android.Manifest.permission.ACCESS_FINE_LOCATION),'));
+        expect(content, contains('Permission(android.Manifest.permission.ACCESS_COARSE_LOCATION),'));
+      });
+
+      test('should generate handler with sinceApi', () {
+        final handler = HandlerSnippet(
+          key: 'bluetooth',
+          requestCode: '1003',
+          permissions: [
+            AndroidPermissionDef('android.permission.BLUETOOTH_SCAN', group: 'bluetooth', runtime: true, sinceApi: 31),
+          ],
+        );
+        final content = handler.generate();
+
+        expect(content, contains('Permission(android.Manifest.permission.BLUETOOTH_SCAN, sinceApi = 31)'));
       });
     });
   });

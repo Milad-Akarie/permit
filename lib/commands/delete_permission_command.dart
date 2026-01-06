@@ -130,7 +130,7 @@ class DeletePermissionCommand extends PermitCommand {
 
     if (manifestEditor.save(file)) {
       for (final entry in entries) {
-        Logger.android('Removed Android permissions successfully: ${Logger.mutedPen.write(entry.key)}');
+        Logger.android('Removed permissions successfully: ${Logger.mutedPen.write(entry.key)}');
       }
     }
   }

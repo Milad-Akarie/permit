@@ -1,10 +1,7 @@
 import 'dart:io';
 
-import 'package:permit/generate/plugin_generator.dart';
 import 'package:permit/generate/templates/template.dart';
 import 'package:test/test.dart';
-
-import '../commands/helpers.dart';
 
 class MockTemplate implements Template {
   final String mockPath;
