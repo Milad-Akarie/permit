@@ -1,6 +1,7 @@
-import 'package:permit/generate/templates/android/plugin_class_temp.dart';
 import 'package:permit/generate/templates/android/plugin_gradle_temp.dart';
+import 'package:permit/generate/templates/android/plugin_kotlin_class_temp.dart';
 import 'package:permit/generate/templates/android/plugin_manifest_temp.dart';
+import 'package:permit/generate/templates/android/handler_snippet.dart';
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/plugin_pubspec_temp.dart';
 import 'package:test/test.dart';
@@ -37,9 +38,14 @@ void main() {
       });
     });
 
-    group('PluginClassTemp', () {
+    group('PluginKotlinClassTemp', () {
+      final handlers = [
+        HandlerSnippet(key: 'camera', requestCode: '1001', permissions: ['android.permission.CAMERA']),
+        HandlerSnippet(key: 'microphone', requestCode: '1002', permissions: ['android.permission.RECORD_AUDIO']),
+      ];
+
       test('should generate Kotlin class with default package', () {
-        final template = PluginClassTemp();
+        final template = PluginKotlinClassTemp(handlers: handlers);
         final content = template.generate();
 
         expect(content, contains('package $kAndroidPackageName'));
@@ -49,14 +55,14 @@ void main() {
       });
 
       test('should generate Kotlin class with custom package', () {
-        final template = PluginClassTemp(packageName: 'com.example.custom');
+        final template = PluginKotlinClassTemp(packageName: 'com.example.custom', handlers: handlers);
         final content = template.generate();
 
         expect(content, contains('package com.example.custom'));
       });
 
       test('should have correct path', () {
-        final template = PluginClassTemp();
+        final template = PluginKotlinClassTemp(handlers: handlers);
         expect(
           template.path,
           equals('android/src/main/kotlin/${kAndroidPackageName.replaceAll('.', '/')}/PermitPlugin.kt'),

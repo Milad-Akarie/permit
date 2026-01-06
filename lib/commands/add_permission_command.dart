@@ -1,4 +1,5 @@
 import 'package:permit/commands/permit_runner.dart';
+import 'package:permit/generate/plugin_generator.dart';
 import 'package:permit/registry/models.dart';
 import 'package:permit/registry/permit_registry.dart';
 import 'package:permit/utils/logger.dart';
@@ -49,14 +50,14 @@ class AddPermissionCommand extends PermitCommand {
 
     if (entries.isNotEmpty) {
       final resolved = _resolveEntries(List.of(entries));
-      onEntriesResolved(resolved);
+      onAddEntries(resolved);
     } else {
       Logger.info('No permission entries found for key: $key');
       return;
     }
   }
 
-  void onEntriesResolved(List<XmlEntry> entries) {
+  void onAddEntries(List<XmlEntry> entries) {
     final androidEntries = entries.whereType<ManifestPermissionEntry>();
     final iosEntries = entries.whereType<PListUsageDescription>();
     if (androidEntries.isNotEmpty) {
@@ -65,6 +66,9 @@ class AddPermissionCommand extends PermitCommand {
     if (iosEntries.isNotEmpty) {
       addIosPermissions(iosEntries.toList());
     }
+
+    /// Generate plugin code
+    PluginGenerator(pathFinder: pathFinder).generate();
   }
 
   void addAndroidPermissions(List<ManifestPermissionEntry> entries) {

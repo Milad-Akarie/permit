@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:permit/commands/permit_runner.dart';
+import 'package:permit/generate/plugin_generator.dart';
 import 'package:permit/registry/permit_registry.dart';
 import 'package:permit/utils/logger.dart';
 import 'package:permit/utils/utils.dart';
@@ -44,7 +45,7 @@ class DeletePermissionCommand extends PermitCommand {
       return;
     }
 
-    void onEntriesSelected(List<XmlEntry> entries) {
+    void onRemoveEntries(List<XmlEntry> entries) {
       final androidEntries = entries.whereType<ManifestPermissionEntry>();
       final iosEntries = entries.whereType<PListUsageDescription>();
 
@@ -54,6 +55,7 @@ class DeletePermissionCommand extends PermitCommand {
       if (iosEntries.isNotEmpty) {
         removeIosPermissions(iosEntries.toList(), plistEditor!, plistFile!);
       }
+      PluginGenerator(pathFinder: pathFinder).generate();
     }
 
     // If no key provided, show multi-select of all existing permissions
@@ -72,7 +74,7 @@ class DeletePermissionCommand extends PermitCommand {
         return;
       }
 
-      onEntriesSelected(selectedEntries);
+      onRemoveEntries(selectedEntries);
       return;
     }
 
@@ -111,7 +113,7 @@ class DeletePermissionCommand extends PermitCommand {
       );
     }
 
-    onEntriesSelected(selected);
+    onRemoveEntries(selected);
   }
 
   void removeAndroidPermissions(List<ManifestPermissionEntry> entries, ManifestEditor manifestEditor, File file) {
