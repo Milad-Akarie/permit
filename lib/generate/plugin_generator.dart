@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:ansicolor/ansicolor.dart';
 import 'package:collection/collection.dart';
 import 'package:permit/editor/pubspec_editor.dart';
 import 'package:permit/editor/xml_editor.dart';
@@ -16,6 +15,8 @@ import 'package:permit/registry/models.dart';
 import 'package:permit/registry/permit_registry.dart';
 import 'package:permit/utils/logger.dart';
 import 'package:path/path.dart' as p;
+
+import '../registry/android_permissions.dart' show AndroidPermissions;
 
 const String _toolRoot = 'tools/permit_plugin';
 const String _androidDir = '$_toolRoot/android/';
@@ -123,7 +124,11 @@ class PluginGenerator {
     final snippets = <PermissionGetterSnippet>[];
     for (var handler in kotlinSnippets) {
       snippets.add(
-        PermissionGetterSnippet(handler.key, null),
+        PermissionGetterSnippet(
+          handler.key,
+          null, //tODO: iOS support
+          hasService: handler.permissions.any((e) => e.service != null),
+        ),
       );
     }
 
@@ -151,7 +156,6 @@ class PluginGenerator {
         Logger.info(
           'pubspec.yaml updated, run ${Logger.mutedPen("flutter pub get")} then hard-reload App.',
         );
-        // alert to run flutter pub get
       } else {
         Logger.error('Failed to update pubspec.yaml with permit_plugin dependency.');
       }

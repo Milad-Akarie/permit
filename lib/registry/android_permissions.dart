@@ -20,18 +20,20 @@ abstract class AndroidPermissions {
     'android.permission.ACCESS_FINE_LOCATION',
     runtime: true,
     group: 'location',
+    service: AssociatedService.location,
   );
   static const accessCoarseLocation = AndroidPermissionDef(
     'android.permission.ACCESS_COARSE_LOCATION',
     runtime: true,
-
     group: 'location',
+    service: AssociatedService.location,
   );
   static const accessBackgroundLocation = AndroidPermissionDef(
     'android.permission.ACCESS_BACKGROUND_LOCATION',
     runtime: true,
     sinceApi: 29,
     group: 'location_always',
+    service: AssociatedService.location,
   );
 
   // Contacts
@@ -67,47 +69,55 @@ abstract class AndroidPermissions {
     'android.permission.READ_PHONE_STATE',
     runtime: true,
     group: 'phone',
+    service: AssociatedService.phone,
   );
   static const readPhoneNumbers = AndroidPermissionDef(
     'android.permission.READ_PHONE_NUMBERS',
     sinceApi: 26,
     runtime: true,
     group: 'phone',
+    service: AssociatedService.phone,
   );
   static const callPhone = AndroidPermissionDef(
     'android.permission.CALL_PHONE',
     runtime: true,
     group: 'phone',
+    service: AssociatedService.phone,
   );
   static const answerPhoneCalls = AndroidPermissionDef(
     'android.permission.ANSWER_PHONE_CALLS',
     sinceApi: 26,
     runtime: true,
     group: 'phone',
+    service: AssociatedService.phone,
   );
   static const readCallLog = AndroidPermissionDef(
     'android.permission.READ_CALL_LOG',
     runtime: true,
     sinceApi: 16,
     group: 'phone',
+    service: AssociatedService.phone,
   );
   static const writeCallLog = AndroidPermissionDef(
     'android.permission.WRITE_CALL_LOG',
     runtime: true,
     sinceApi: 16,
     group: 'phone',
+    service: AssociatedService.phone,
   );
   static const addVoicemail = AndroidPermissionDef(
     'android.permission.ADD_VOICEMAIL',
     runtime: true,
     sinceApi: 14,
     group: 'phone',
+    service: AssociatedService.phone,
   );
   static const useSip = AndroidPermissionDef(
     'android.permission.USE_SIP',
     runtime: true,
     sinceApi: 9,
     group: 'phone',
+    service: AssociatedService.phone,
   );
 
   // SMS
@@ -188,6 +198,7 @@ abstract class AndroidPermissions {
   static const ignoreBatteryOptimizations = AndroidPermissionDef(
     'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
     group: 'ignore_battery_optimizations',
+    runtime: true,
   );
 
   // Network
@@ -229,18 +240,21 @@ abstract class AndroidPermissions {
     sinceApi: 31,
     runtime: true,
     group: 'bluetooth_connect',
+    service: AssociatedService.bluetooth,
   );
   static const bluetoothScan = AndroidPermissionDef(
     'android.permission.BLUETOOTH_SCAN',
     sinceApi: 31,
     runtime: true,
     group: 'bluetooth_scan',
+    service: AssociatedService.bluetooth,
   );
   static const bluetoothAdvertise = AndroidPermissionDef(
     'android.permission.BLUETOOTH_ADVERTISE',
     sinceApi: 31,
     runtime: true,
     group: 'bluetooth_advertise',
+    service: AssociatedService.bluetooth,
   );
 
   // Sensors

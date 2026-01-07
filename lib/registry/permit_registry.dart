@@ -1,5 +1,3 @@
-import 'package:permit/editor/models.dart';
-
 import 'android_permissions.dart';
 import 'ios_permissions.dart';
 import 'models.dart';
@@ -55,7 +53,9 @@ extension PermissionEntrySet on Iterable<PermissionDef> {
   }
 
   bool get hasAndroid => any((entry) => entry is AndroidPermissionDef);
+
   bool get hasIos => any((entry) => entry is IosPermissionDef);
+
   Set<IosPermissionDef> get ios => whereType<IosPermissionDef>().toSet();
 
   Set<AndroidPermissionDef> get android => whereType<AndroidPermissionDef>().toSet();

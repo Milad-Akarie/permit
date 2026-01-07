@@ -13,4 +13,11 @@ extension StringExtensions on String {
     final capitalizedWords = words.skip(1).map((word) => word.capitalize());
     return [firstWord, ...capitalizedWords].join();
   }
+
+  /// Converts the string to PascalCase.
+  String toPascalCase() {
+    final words = split(RegExp(r'[_\s-]+'));
+    final capitalizedWords = words.map((word) => word.capitalize());
+    return capitalizedWords.join();
+  }
 }

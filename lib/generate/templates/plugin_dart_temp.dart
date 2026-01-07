@@ -1,3 +1,4 @@
+import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/template.dart';
 import 'package:permit/generate/utils.dart';
 
@@ -6,8 +7,9 @@ class PluginDartTemp extends Template {
   String get path => 'lib/permit.dart';
 
   final List<PermissionGetterSnippet> getterSnippets;
+  final String channelName;
 
-  PluginDartTemp(this.getterSnippets);
+  PluginDartTemp(this.getterSnippets, {this.channelName = kDefaultChannelName});
 
   @override
   String generate() =>
@@ -18,7 +20,7 @@ import 'dart:io' show Platform;
 
 /// A plugin to handle permissions in a cross-platform way.
 abstract class Permit {
-  static const _channel = MethodChannel('permit.plugin/permissions');
+  static const _channel = MethodChannel('$channelName');
 
   /// Opens the app settings page.
   ///
@@ -105,20 +107,64 @@ enum PermissionStatus {
   bool get isPermanentlyDenied => this == PermissionStatus.permanentlyDenied;
   bool get isProvisional => this == PermissionStatus.provisional;
 }
+
+${getterSnippets.any((e) => e.hasService) ? _serviceStatusSnippet : ''}
 ''';
 }
+
+const _serviceStatusSnippet = '''
+/// Represents a specific permission that has an associated service status.
+class PermissionWithService extends Permission {
+  const PermissionWithService._(String name, MethodChannel channel, {String? platform})
+      : super._(name, channel, platform: platform);
+
+  Future<ServiceStatus> get serviceStatus async {
+    if (platform != null && platform != Platform.operatingSystem) {
+      return ServiceStatus.notApplicable;
+    }
+    final int statusValue = await _channel.invokeMethod<int>(
+          'check_service_status',
+          {'permission': name},
+        ) ??
+        2;
+    return ServiceStatus.fromValue(statusValue);
+  }
+}
+
+/// Defines the different states a service can be in.
+enum ServiceStatus {
+  // The service for the permission is disabled.
+  disabled(0),
+  // The service for the permission is enabled.
+  enabled(1),
+  // Platform does not have an associated service or the service is not applicable.
+  notApplicable(2);
+
+  final int value;
+
+  const ServiceStatus(this.value);
+
+  factory ServiceStatus.fromValue(int value) => values[value];
+
+  bool get isDisabled => this == ServiceStatus.disabled;
+  bool get isEnabled => this == ServiceStatus.enabled;
+  bool get isNotApplicable => this == ServiceStatus.notApplicable;
+}
+''';
 
 class PermissionGetterSnippet {
   final String name;
   final String? platform;
+  final bool hasService;
 
-  PermissionGetterSnippet(this.name, this.platform);
+  PermissionGetterSnippet(this.name, this.platform, {this.hasService = false});
 
   String generate() {
     final plat = platform != null ? ", platform: '$platform'" : '';
+    final className = hasService ? 'PermissionWithService' : 'Permission';
     return '''
   /// Permission to access $name
-  static const ${name.toCamelCase()} = Permission._('$name', _channel$plat);
+  static const ${name.toCamelCase()} = $className._('$name', _channel$plat);
 ''';
   }
 }

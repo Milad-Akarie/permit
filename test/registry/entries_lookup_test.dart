@@ -332,11 +332,6 @@ void main() {
     });
 
     group('ios getter', () {
-      test('returns only iOS permissions', () {
-        final iosPerms = entries.ios;
-        expect(iosPerms.every((e) => e is IosPermissionDef), isTrue);
-      });
-
       test('returns empty set when no iOS permissions', () {
         final androidOnly = entries.whereType<AndroidPermissionDef>().toSet();
         expect(androidOnly.ios.isEmpty, isTrue);
@@ -350,11 +345,6 @@ void main() {
     });
 
     group('android getter', () {
-      test('returns only Android permissions', () {
-        final androidPerms = entries.android;
-        expect(androidPerms.every((e) => e is AndroidPermissionDef), isTrue);
-      });
-
       test('returns empty set when no Android permissions', () {
         final iosOnly = entries.whereType<IosPermissionDef>().toSet();
         expect(iosOnly.android.isEmpty, isTrue);
@@ -371,8 +361,6 @@ void main() {
       test('mixed entries can be filtered by platform', () {
         expect(entries.hasAndroid, isTrue);
         expect(entries.hasIos, isTrue);
-        expect(entries.android.every((e) => e is AndroidPermissionDef), isTrue);
-        expect(entries.ios.every((e) => e is IosPermissionDef), isTrue);
       });
 
       test('android and ios getters return non-overlapping sets', () {

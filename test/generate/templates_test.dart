@@ -73,7 +73,7 @@ void main() {
 
         expect(content, contains('package $kAndroidPackageName'));
         expect(content, contains('class PermitPlugin'));
-        expect(content, contains('MethodChannel(binding.binaryMessenger, "$kChannelName")'));
+        expect(content, contains('MethodChannel(binding.binaryMessenger, "$kDefaultChannelName")'));
         expect(content, contains('PermissionRegistry.getHandler(permission)'));
       });
 

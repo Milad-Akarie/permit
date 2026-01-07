@@ -1,10 +1,14 @@
+import 'package:permit/generate/utils.dart';
+
 abstract class PermissionDef {
   final String key;
   final String group;
+  final AssociatedService? service;
 
   const PermissionDef(
     this.key, {
     required this.group,
+    this.service,
   });
 
   bool matches(String input);
@@ -16,6 +20,7 @@ class AndroidPermissionDef extends PermissionDef {
 
   const AndroidPermissionDef(
     super.key, {
+    super.service,
     this.runtime = false,
     required super.group,
     this.sinceApi,
@@ -27,12 +32,13 @@ class AndroidPermissionDef extends PermissionDef {
       other is AndroidPermissionDef &&
           key == other.key &&
           group == other.group &&
+          service == other.service &&
           runtime == other.runtime &&
           runtimeType == other.runtimeType &&
           sinceApi == other.sinceApi;
 
   @override
-  int get hashCode => Object.hash(runtime, sinceApi, key, group);
+  int get hashCode => Object.hash(runtime, sinceApi, key, group, service);
 
   @override
   bool matches(String input) {
@@ -55,6 +61,7 @@ class IosPermissionDef extends PermissionDef {
 
   const IosPermissionDef(
     super.key, {
+    super.service,
     required super.group,
     this.scope = .standardOrFull,
     this.minimumIosVersion,
@@ -70,12 +77,13 @@ class IosPermissionDef extends PermissionDef {
       other is IosPermissionDef &&
           key == other.key &&
           group == other.group &&
+          service == other.service &&
           minimumIosVersion == other.minimumIosVersion &&
           successorOf == other.successorOf &&
           scope == other.scope;
 
   @override
-  int get hashCode => Object.hash(key, group, minimumIosVersion, successorOf, scope);
+  int get hashCode => Object.hash(key, group, minimumIosVersion, successorOf, scope, service);
 
   @override
   bool matches(String input) {
@@ -83,7 +91,23 @@ class IosPermissionDef extends PermissionDef {
   }
 }
 
-enum AccessScope {
-  standardOrFull,
-  writeOnly,
+enum AccessScope { standardOrFull, writeOnly }
+
+enum AssociatedService {
+  location(),
+  phone([SupportedPlatform.android]),
+  bluetooth()
+  ;
+
+  final List<SupportedPlatform> platforms;
+
+  const AssociatedService([this.platforms = const [SupportedPlatform.android, SupportedPlatform.ios]]);
+
+  @override
+  String toString() => name.capitalize();
+
+  bool get isAndroidSupported => platforms.contains(SupportedPlatform.android);
+  bool get isIosSupported => platforms.contains(SupportedPlatform.ios);
 }
+
+enum SupportedPlatform { android, ios }

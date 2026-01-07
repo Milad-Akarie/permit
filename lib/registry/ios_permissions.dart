@@ -26,16 +26,19 @@ abstract class IosPermissions {
   static const locationWhenInUse = IosPermissionDef(
     'NSLocationWhenInUseUsageDescription',
     group: 'location',
+    service: AssociatedService.location,
   );
 
   static const locationAlways = IosPermissionDef(
     'NSLocationAlwaysUsageDescription',
     group: 'location_always',
+    service: AssociatedService.location,
   );
 
   static const locationAlwaysAndWhenInUse = IosPermissionDef(
     'NSLocationAlwaysAndWhenInUseUsageDescription',
     group: 'location_always',
+    service: AssociatedService.location,
   );
 
   // MEDIA LIBRARY & MUSIC
@@ -84,6 +87,7 @@ abstract class IosPermissions {
     minimumIosVersion: '13.0',
     successorOf: 'NSBluetoothPeripheralUsageDescription',
     group: 'bluetooth',
+    service: AssociatedService.bluetooth,
   );
 
   // MOTION & FITNESS
@@ -121,7 +125,10 @@ abstract class IosPermissions {
   static const homeKit = IosPermissionDef('NSHomeKitUsageDescription', group: 'home_kit');
 
   // NFC
-  static const nfcReader = IosPermissionDef('NFCReaderUsageDescription', group: 'nfc');
+  static const nfcReader = IosPermissionDef(
+    'NFCReaderUsageDescription',
+    group: 'nfc',
+  );
 
   // TRACKING
   static const userTracking = IosPermissionDef(
