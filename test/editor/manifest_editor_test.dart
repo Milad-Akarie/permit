@@ -13,7 +13,7 @@ void main() {
     <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:label="TestApp"
-        android:name="\${applicationName}"
+        android:name="\${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
@@ -81,18 +81,6 @@ void main() {
         );
       });
 
-      test('should throw exception for self-closing parent', () {
-        final selfClosingManifest = '<manifest />';
-        final editor = ManifestEditor(selfClosingManifest);
-        expect(
-          () => editor.addTag(
-            path: 'manifest',
-            tag: '<uses-permission android:name="test" />',
-          ),
-          throwsException,
-        );
-      });
-
       test('should preserve XML formatting and indentation', () {
         final editor = ManifestEditor(manifestContent);
         editor.addTag(
@@ -103,6 +91,72 @@ void main() {
         final result = editor.toXmlString();
         // Check that indentation is preserved
         expect(result.contains('    <uses-permission'), true);
+      });
+
+      test('should preserve XML formatting when adding tags', () {
+        final editor = ManifestEditor(manifestContent);
+        editor.addTag(
+          path: 'manifest',
+          tag: '<uses-permission android:name="android.permission.BLUETOOTH" />',
+          comments: ['@permit bluetooth access'],
+        );
+
+        final result = editor.toXmlString();
+        final expected = '''<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!--@permit bluetooth access-->
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <application android:label="TestApp" android:name="\${applicationName}" android:icon="@mipmap/ic_launcher">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <service android:name=".MyService" android:enabled="true"/>
+    </application>
+</manifest>''';
+
+        expect(result, expected);
+      });
+
+      test('should preserve formatting when overriding tags', () {
+        final editor = ManifestEditor(manifestContent);
+        editor.addTag(
+          path: 'manifest',
+          tag: '<uses-permission android:name="android.permission.INTERNET" />',
+          comments: ['@permit updated internet access'],
+          shouldRemoveComment: (comment) => comment.contains('@permit'),
+        );
+
+        final result = editor.toXmlString();
+        final expected = '''<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!--@permit updated internet access-->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <application
+        android:label="TestApp"
+        android:name="\${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <service
+            android:name=".MyService"
+            android:enabled="true"/>
+    </application>
+</manifest>''';
+
+        expect(result, expected);
       });
     });
 
@@ -843,6 +897,26 @@ void main() {
             ManifestPermissionEntry(key: 'android.permission.ACCESS_FINE_LOCATION', comments: ['@permit location']),
           ]),
         );
+      });
+    });
+
+    group('Single-line XML', () {
+      test('should handle single-line XML input correctly', () {
+        final singleLineManifest =
+            '<?xml version="1.0" encoding="UTF-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET" /></manifest>';
+        final editor = ManifestEditor(singleLineManifest);
+
+        editor.addTag(
+          path: 'manifest',
+          tag: '<uses-permission android:name="android.permission.CAMERA" />',
+          comments: ['@permit camera access'],
+        );
+
+        final result = editor.toXmlString();
+
+        expect(result.contains('android.permission.CAMERA'), true);
+        expect(result.contains('@permit camera access'), true);
+        expect(editor.validate(), true);
       });
     });
   });

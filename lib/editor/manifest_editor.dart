@@ -2,9 +2,9 @@ part of 'xml_editor.dart';
 
 /// Android Manifest-specific editor
 class ManifestEditor extends XmlEditor {
-  ManifestEditor(super.originalContent);
+  ManifestEditor(super.content);
 
-  /// New canonical methods
+  /// Add a tag to the manifest
   void addTag({
     required String path,
     required String tag,
@@ -23,33 +23,21 @@ class ManifestEditor extends XmlEditor {
 
     // If override is true, check if a tag with the same attributes exists
     if (override && tagName.isNotEmpty) {
-      // Parse the tag to extract its attributes
       try {
         final wrappedTag = tag.contains('<?xml') ? tag : '<?xml version="1.0"?>\n<root>$tag</root>';
         final doc = XmlDocument.parse(wrappedTag);
         final parsedEl = doc.findAllElements(tagName).firstOrNull;
 
         if (parsedEl != null && parsedEl.attributes.isNotEmpty) {
-          // Try to find an existing tag with the same primary attribute
-          // For Android manifest tags, typically the "android:name" attribute is the key identifier
           final nameAttr = parsedEl.getAttribute('android:name');
           if (nameAttr != null) {
-            final existingElementInfo = _findElementLinesByTagAndAttribute(
-              parent,
-              tagName,
-              ('android:name', nameAttr),
+            // Find existing element with same attribute
+            final existing = parent.children.whereType<XmlElement>().firstWhereOrNull(
+              (e) => e.name.qualified == tagName && e.getAttribute('android:name') == nameAttr,
             );
 
-            if (existingElementInfo != null) {
-              // Remove existing tag including comments that match our criteria
-              // Default to removing @permit comments if no callback specified
-              _removeElementAndMatchingComments(existingElementInfo, shouldRemoveComment);
-
-              // Re-find parent after document update
-              final updatedParent = _findElementByPath(path);
-              if (updatedParent == null) {
-                throw Exception('Parent element not found after override: $path');
-              }
+            if (existing != null) {
+              _removeElement(existing, shouldRemoveComment: shouldRemoveComment);
             }
           }
         }
@@ -58,34 +46,11 @@ class ManifestEditor extends XmlEditor {
       }
     }
 
-    // Re-find parent to ensure we have fresh reference
-    final currentParent = _findElementByPath(path);
-    if (currentParent == null) {
-      throw Exception('Parent element not found: $path');
-    }
+    // Find where to insert (after last sibling of same type)
+    final lastSiblingOfType = _findLastSiblingOfType(parent, tagName);
 
-    // Find insertion position based on siblings of the same type
-    final insertInfo = _findManifestInsertPosition(currentParent, tagName: tagName);
-    if (insertInfo == null) {
-      throw Exception('Could not find insertion point for: $path');
-    }
-
-    // Build the content to insert
-    final insertLines = <String>[];
-
-    // Add comments if provided
-    if (comments != null && comments.isNotEmpty) {
-      for (final comment in comments) {
-        insertLines.add('${insertInfo.indent}<!--$comment-->');
-      }
-    }
-    insertLines.add('${insertInfo.indent}$tag');
-
-    // Insert at the appropriate position
-    lines.insertAll(insertInfo.lineIndex, insertLines);
-
-    // Reparse document so subsequent operations see the change
-    _updateDocument();
+    // Add the element
+    _addElement(parent, tag, comments: comments, afterSibling: lastSiblingOfType);
   }
 
   List<ManifestPermissionEntry> getPermissions() {
@@ -138,12 +103,15 @@ class ManifestEditor extends XmlEditor {
       throw Exception('Parent element not found: $path');
     }
 
-    final elementInfo = _findElementLinesByTagAndAttribute(parent, tagName, attribute);
-    if (elementInfo == null) {
+    final element = parent.children.whereType<XmlElement>().firstWhereOrNull(
+      (e) => e.name.qualified == tagName && e.getAttribute(attribute.$1) == attribute.$2,
+    );
+
+    if (element == null) {
       throw Exception('Element not found: $tagName with attribute $attribute');
     }
 
-    _removeElementAndMatchingComments(elementInfo, removeComments);
+    _removeElement(element, shouldRemoveComment: removeComments);
   }
 
   void removePermission({
@@ -156,90 +124,5 @@ class ManifestEditor extends XmlEditor {
       attribute: ('android:name', permissionName),
       removeComments: removeComments,
     );
-  }
-
-  // Internal helper used by removeTag
-  _ElementLines? _findElementLinesByTagAndAttribute(
-    XmlElement parent,
-    String tagName,
-    (String, String) attribute,
-  ) {
-    // Get the parent's line range so we only search within it
-    final parentInfo = _findElementLines(parent);
-    if (parentInfo == null) return null;
-
-    // Search for the opening tag of the child inside the parent's lines
-    for (var i = parentInfo.startLine; i <= parentInfo.endLine; i++) {
-      final line = lines[i];
-      if (!line.contains('<$tagName')) continue;
-
-      // Find end of opening tag (may span multiple lines)
-      int j = i;
-      for (; j < lines.length; j++) {
-        if (lines[j].contains('>')) break;
-      }
-      if (j >= lines.length) continue;
-
-      // Determine if self-closing
-      final openingSegment = lines.sublist(i, j + 1).join('\n');
-      final isSelfClosingOpening = openingSegment.contains('/>');
-
-      int endLine = j;
-      if (isSelfClosingOpening) {
-        // build snippet and parse to confirm attribute
-        final snippet = openingSegment;
-        try {
-          final doc = XmlDocument.parse(
-            snippet.contains('<?xml') ? snippet : '<?xml version="1.0"?>\n<root>$snippet</root>',
-          );
-          // Extract the element from the wrapper
-          final parsedEl = doc.findAllElements(tagName).firstOrNull;
-          if (parsedEl != null && parsedEl.getAttribute(attribute.$1) == attribute.$2) {
-            return _ElementLines(startLine: i, endLine: j, indent: _getLineIndent(i));
-          }
-        } catch (_) {
-          // ignore parse errors for snippet
-        }
-        continue;
-      }
-
-      // Not self-closing: find corresponding closing tag
-      int depth = 0;
-      bool inOpenTag = true;
-      for (var k = j; k < lines.length; k++) {
-        final currentLine = lines[k];
-        if (inOpenTag) {
-          if (currentLine.contains('>') && !currentLine.contains('/>')) {
-            inOpenTag = false;
-            depth = 1;
-            continue;
-          }
-        } else {
-          if (currentLine.contains('<$tagName')) depth++;
-          if (currentLine.contains('</$tagName>')) {
-            depth--;
-            if (depth == 0) {
-              endLine = k;
-              break;
-            }
-          }
-        }
-      }
-
-      // Build full element text and parse it to accurately check attributes
-      final elementText = lines.sublist(i, endLine + 1).join('\n');
-      try {
-        final wrapped = '<?xml version="1.0"?>\n<root>\n$elementText\n</root>';
-        final doc = XmlDocument.parse(wrapped);
-        final parsedEl = doc.findAllElements(tagName).firstOrNull;
-        if (parsedEl != null && parsedEl.getAttribute(attribute.$1) == attribute.$2) {
-          return _ElementLines(startLine: i, endLine: endLine, indent: _getLineIndent(i));
-        }
-      } catch (_) {
-        // ignore parse errors and continue
-      }
-    }
-
-    return null;
   }
 }

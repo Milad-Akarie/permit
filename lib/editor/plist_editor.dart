@@ -1,38 +1,14 @@
 part of 'xml_editor.dart';
 
-/// // Plist-specific editor
+/// Plist-specific editor
 class PListEditor extends XmlEditor {
-  PListEditor(super.originalContent);
+  PListEditor(super.content);
 
   bool isNSUsageDesc(String key) {
     return key.startsWith('NS') && key.endsWith('UsageDescription');
   }
 
   /// Add a key-value pair to a plist file at a specific path
-  ///
-  /// The value parameter is optional. If null, only the key will be added.
-  /// The path parameter is required and specifies where to add the entry.
-  ///
-  /// Example with root dict:
-  /// ```dart
-  /// editor.addEntry(
-  ///   path: 'plist.dict',
-  ///   key: 'NSCameraUsageDescription',
-  ///   value: '<string>We need camera access for photos</string>',
-  ///   keyComments: ['@permit camera'],
-  ///   valueComments: ['User-facing description'],
-  ///   anchorKeys: ['NSPhotoLibraryUsageDescription', 'NSMicrophoneUsageDescription'],
-  /// );
-  /// ```
-  ///
-  /// Example with nested path:
-  /// ```dart
-  /// editor.addPlistEntry(
-  ///   path: 'plist.dict.customDict',
-  ///   key: 'item1',
-  ///   value: '<string>value1</string>',
-  /// );
-  /// ```
   void addEntry({
     required String path,
     required String key,
@@ -41,99 +17,48 @@ class PListEditor extends XmlEditor {
     bool override = true,
     CommentRemoverPredicate? shouldRemoveComment,
   }) {
-    // Find the target dict element at the specified path
     final dict = _findElementByPath(path);
-
     if (dict == null) {
       throw Exception('Could not find <dict> element at path: $path');
     }
 
-    // If override is true, check if the key already exists and remove it
+    // If override is true, remove existing key
     if (override) {
       final existingKey = _findPlistKey(dict, key);
       if (existingKey != null) {
-        // Key exists, remove it with its value and @permit comments
-        final keyInfo = _findElementLines(existingKey);
-        if (keyInfo != null) {
-          // Find the value element (next element after key)
-          final valueElement = _getNextSiblingElement(existingKey);
-          if (valueElement != null) {
-            final valueInfo = _findElementLines(valueElement);
-            if (valueInfo != null) {
-              // Remove both the key and its value; create a combined element range
-              final combined = _ElementLines(
-                startLine: keyInfo.startLine,
-                endLine: valueInfo.endLine,
-                indent: keyInfo.indent,
-              );
-              _removeElementAndMatchingComments(combined, shouldRemoveComment);
-
-              // Reparse document after removal
-              _updateDocument();
-            }
-          }
+        final valueElement = _getNextSiblingElement(existingKey);
+        // Remove key
+        _removeElement(existingKey, shouldRemoveComment: shouldRemoveComment);
+        // Remove value if exists
+        if (valueElement != null) {
+          _removeElement(valueElement);
         }
       }
     }
 
-    // Re-find the dict after potential removal
-    final currentDict = _findElementByPath(path);
-    if (currentDict == null) {
-      throw Exception('Could not find <dict> element at path: $path');
-    }
-
-    // Find the last NS*UsageDescription key to anchor after
-    String? lastNSUsageDescKey;
-    final dictChildren = currentDict.children.whereType<XmlElement>().toList();
-    for (int i = 0; i < dictChildren.length; i++) {
+    // Find last NS*UsageDescription key to anchor after
+    XmlElement? anchorElement;
+    final dictChildren = dict.children.whereType<XmlElement>().toList();
+    for (int i = dictChildren.length - 1; i >= 0; i--) {
       final child = dictChildren[i];
       if (child.name.qualified == 'key') {
         final keyName = child.innerText.trim();
         if (isNSUsageDesc(keyName)) {
-          lastNSUsageDescKey = keyName;
+          // Find its value element to anchor after
+          anchorElement = _getNextSiblingElement(child);
+          break;
         }
       }
     }
 
-    // Build anchor keys list: use last NS key if found, otherwise use provided anchorKeys
-    final finalAnchorKeys = <String>[];
-    if (lastNSUsageDescKey != null) {
-      finalAnchorKeys.add(lastNSUsageDescKey);
-    }
+    // Build key-value string
+    final keyElement = '<key>$key</key>';
+    final combined = value != null ? '$keyElement$value' : keyElement;
 
-    // Find insertion position
-    final insertInfo = _findPlistInsertPosition(
-      currentDict,
-      anchorKeys: finalAnchorKeys.isNotEmpty ? finalAnchorKeys : null,
-    );
-    if (insertInfo == null) {
-      throw Exception('Could not find insertion point in plist');
-    }
-
-    // Build the content to insert
-    final insertLines = <String>[];
-
-    // Add key comments if provided
-    if (keyComments != null && keyComments.isNotEmpty) {
-      for (final comment in keyComments) {
-        insertLines.add('${insertInfo.indent}<!--$comment-->');
-      }
-    }
-    insertLines.add('${insertInfo.indent}<key>$key</key>');
-
-    // Add value only if provided (without value comments)
-    if (value != null) {
-      insertLines.add('${insertInfo.indent}$value');
-    }
-
-    // Insert at the appropriate position
-    lines.insertAll(insertInfo.lineIndex, insertLines);
-
-    // Reparse document so subsequent operations see the change
-    _updateDocument();
+    _addElement(dict, combined, comments: keyComments, afterSibling: anchorElement);
   }
 
-  // add plistUsageDescription
+  /// Add a plist usage description
   void addUsageDescription({
     required String key,
     required String description,
@@ -154,15 +79,6 @@ class PListEditor extends XmlEditor {
   }
 
   /// Remove a plist key-value pair with its associated comments
-  ///
-  /// Example:
-  /// ```dart
-  /// editor.removeEntry(
-  ///   path: 'plist.dict',
-  ///   key: 'NSCameraUsageDescription',
-  ///   commentMarkers: ['@permit'],
-  /// );
-  /// ```
   void removeEntry({
     required String path,
     required String key,
@@ -173,32 +89,20 @@ class PListEditor extends XmlEditor {
       throw Exception('Could not find <dict> element at path: $path');
     }
 
-    // Find the key element
     final keyElement = _findPlistKey(dict, key);
     if (keyElement == null) {
       throw Exception('Key not found: $key');
     }
 
-    // Find the key and its value in the lines
-    final keyInfo = _findElementLines(keyElement);
-    if (keyInfo == null) {
-      throw Exception('Could not locate key in file: $key');
-    }
-
-    // Find the value element (next element after key)
     final valueElement = _getNextSiblingElement(keyElement);
-    if (valueElement == null) {
-      throw Exception('Could not find value for key: $key');
-    }
 
-    final valueInfo = _findElementLines(valueElement);
-    if (valueInfo == null) {
-      throw Exception('Could not locate value in file');
-    }
-    int defaultStart = _findCommentBlockStart(keyInfo.startLine, shouldRemoveComment: removeComments);
-    lines.removeRange(defaultStart, valueInfo.endLine + 1);
+    // Remove key with its comments
+    _removeElement(keyElement, shouldRemoveComment: removeComments);
 
-    _updateDocument();
+    // Remove value if exists
+    if (valueElement != null) {
+      _removeElement(valueElement);
+    }
   }
 
   /// Remove a plist usage description by key with its associated comments
@@ -213,11 +117,18 @@ class PListEditor extends XmlEditor {
     required String key,
     CommentRemoverPredicate? removeComments,
   }) {
-    removeEntry(
-      path: 'plist.dict',
-      key: key,
-      removeComments: removeComments,
-    );
+    removeEntry(path: 'plist.dict', key: key, removeComments: removeComments);
+  }
+
+  /// Find a specific key in a plist dict
+  XmlElement? _findPlistKey(XmlElement dict, String keyName) {
+    final keys = dict.findElements('key');
+    for (final key in keys) {
+      if (key.innerText.trim() == keyName) {
+        return key;
+      }
+    }
+    return null;
   }
 
   List<PListUsageDescription> getUsageDescriptions() {
@@ -253,19 +164,6 @@ class PListEditor extends XmlEditor {
   }
 
   /// Add an entry to an array at a specific path
-  ///
-  /// If the array does not exist at the path, creates a new key-array pair.
-  /// If the array already exists, appends the entry to it.
-  ///
-  /// Example:
-  /// ```dart
-  /// editor.addArrayEntry(
-  ///   path: 'plist.dict',
-  ///   key: 'UIBackgroundModes',
-  ///   entry: '<string>location</string>',
-  ///   keyComments: ['@permit background'],
-  /// );
-  /// ```
   void addArrayEntry({
     required String path,
     required String key,
@@ -282,58 +180,25 @@ class PListEditor extends XmlEditor {
     if (existingKey != null) {
       final existingValue = _getNextSiblingElement(existingKey);
       if (existingValue != null && existingValue.name.qualified == 'array') {
-        // Array exists, append entry to it
-        final arrayInfo = _findElementLines(existingValue);
-        if (arrayInfo == null) {
-          throw Exception('Could not locate existing array for key: $key');
-        }
+        // Array exists, parse and add entry
+        final wrappedEntry = entry.contains('<?xml') ? entry : '<?xml version="1.0"?>\n<root>$entry</root>';
+        final tempDoc = XmlDocument.parse(wrappedEntry);
+        final newElement = tempDoc.rootElement.children.whereType<XmlElement>().first.copy();
 
-        // Insert before the closing </array> tag
-        final insertIdx = arrayInfo.endLine;
-        final childIndent = '${arrayInfo.indent}    ';
-        lines.insert(insertIdx, '$childIndent$entry');
-
-        _updateDocument();
+        // Add to end of array
+        existingValue.children.add(XmlText('\n        '));
+        existingValue.children.add(newElement);
+        existingValue.children.add(XmlText('\n    '));
         return;
       }
     }
 
     // Array doesn't exist, create new key-array pair
-    final insertInfo = _findPlistInsertPosition(dict, anchorKeys: []);
-    if (insertInfo == null) {
-      throw Exception('Could not find insertion point in plist');
-    }
-
-    final insertLines = <String>[];
-
-    // Add key comments if provided
-    if (keyComments != null && keyComments.isNotEmpty) {
-      for (final comment in keyComments) {
-        insertLines.add('${insertInfo.indent}<!-- $comment -->');
-      }
-    }
-    insertLines.add('${insertInfo.indent}<key>$key</key>');
-    insertLines.add('${insertInfo.indent}<array>');
-    insertLines.add('${insertInfo.indent}    $entry');
-    insertLines.add('${insertInfo.indent}</array>');
-
-    lines.insertAll(insertInfo.lineIndex, insertLines);
-
-    _updateDocument();
+    final arrayContent = '<key>$key</key>\n    <array>\n        $entry\n    </array>';
+    _addElement(dict, arrayContent, comments: keyComments);
   }
 
   /// Remove an entry from an array at a specific path
-  ///
-  /// If the array becomes empty after removal, removes the entire array and key.
-  ///
-  /// Example:
-  /// ```dart
-  /// editor.removeArrayEntry(
-  ///   path: 'plist.dict',
-  ///   key: 'UIBackgroundModes',
-  ///   entry: '<string>location</string>',
-  /// );
-  /// ```
   void removeArrayEntry({
     required String path,
     required String key,
@@ -344,67 +209,40 @@ class PListEditor extends XmlEditor {
       throw Exception('Could not find <dict> element at path: $path');
     }
 
-    // Find the key element
     final keyElement = _findPlistKey(dict, key);
     if (keyElement == null) {
       throw Exception('Key not found: $key');
     }
 
-    // Find the array element
     final arrayElement = _getNextSiblingElement(keyElement);
     if (arrayElement == null || arrayElement.name.qualified != 'array') {
       throw Exception('Array not found for key: $key');
     }
 
-    // Find the entry line in the array
-    final arrayInfo = _findElementLines(arrayElement);
-    if (arrayInfo == null) {
-      throw Exception('Could not locate array in file: $key');
-    }
+    // Find and remove the entry element by matching inner text
+    final entryToRemove = arrayElement.children.whereType<XmlElement>().firstWhereOrNull(
+      (e) => e.toXmlString().trim() == entry.trim(),
+    );
 
-    // Find and remove the entry from the array
-    int entryLine = -1;
-    for (int i = arrayInfo.startLine + 1; i < arrayInfo.endLine; i++) {
-      if (lines[i].trim() == entry.trim()) {
-        entryLine = i;
-        break;
-      }
-    }
-
-    if (entryLine == -1) {
+    if (entryToRemove == null) {
       throw Exception('Entry not found in array: $entry');
     }
 
-    // Remove the entry line
-    lines.removeAt(entryLine);
+    // Remove the element
+    final index = arrayElement.children.indexOf(entryToRemove);
+    arrayElement.children.removeAt(index);
 
-    _updateDocument();
+    // Also remove preceding whitespace
+    if (index > 0 && arrayElement.children[index - 1] is XmlText) {
+      arrayElement.children.removeAt(index - 1);
+    }
 
     // Check if array is now empty
-    // Re-find the dict since document was updated
-    final updatedDict = _findElementByPath(path);
-    if (updatedDict != null) {
-      final updatedArrayElement = _findPlistKey(updatedDict, key);
-      if (updatedArrayElement != null) {
-        final updatedArrayValue = _getNextSiblingElement(updatedArrayElement);
-        if (updatedArrayValue != null && updatedArrayValue.name.qualified == 'array') {
-          final arrayChildren = updatedArrayValue.children.whereType<XmlElement>().toList();
-          if (arrayChildren.isEmpty) {
-            // Array is empty, remove the entire key-array pair
-            // Re-find the element lines since they've changed after the entry removal
-            final keyInfo = _findElementLines(updatedArrayElement);
-            final arrayInfo2 = _findElementLines(updatedArrayValue);
-            if (keyInfo != null && arrayInfo2 != null) {
-              // Ensure the range is valid - end index must not exceed lines.length
-              final safeEndLine = (arrayInfo2.endLine + 1) > lines.length ? lines.length : (arrayInfo2.endLine + 1);
-              if (keyInfo.startLine >= 0 && keyInfo.startLine <= safeEndLine && safeEndLine <= lines.length) {
-                lines.removeRange(keyInfo.startLine, safeEndLine);
-                _updateDocument();
-              }
-            }
-          }
-        }
-      }
+    final remainingElements = arrayElement.children.whereType<XmlElement>().toList();
+    if (remainingElements.isEmpty) {
+      // Remove the entire key-array pair
+      _removeElement(keyElement);
+      _removeElement(arrayElement);
     }
   }
 }

@@ -11,12 +11,39 @@ void main() {
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- Bundle identifier -->
+    <key>CFBundleIdentifier</key>
+    <string>com.example.myapp</string>
+    <!-- Bundle version -->
+    <key>CFBundleVersion</key>
+    <string>1.0.0</string>
+    <!-- Bundle short version -->
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <!-- Camera usage description -->
+    <!-- @permit camera -->
     <key>NSCameraUsageDescription</key>
-    <string>We need camera access for photos</string>
+    <string>We need camera access for taking photos</string>
+    <!-- Photo library usage -->
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need photo library access</string>
+    <string>We need photo library access for saving images</string>
+    <!-- Location usage when in use -->
+    <!-- Custom location comment -->
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>We need your location for mapping</string>
+    <string>We need your location for mapping features</string>
+    <!-- Microphone access -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Microphone access for voice recording</string>
+    <!-- Background modes -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>location</string>
+        <string>fetch</string>
+    </array>
+    <!-- Custom user comment -->
+    <!-- Another comment -->
+    <key>CustomKey</key>
+    <string>Custom value</string>
 </dict>
 </plist>''';
     });
@@ -1130,6 +1157,177 @@ void main() {
           ),
         ]),
       );
+    });
+  });
+
+  group('Format Preservation', () {
+    late String plistContent;
+
+    setUp(() {
+      plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Bundle identifier -->
+    <key>CFBundleIdentifier</key>
+    <string>com.example.myapp</string>
+    <!-- Bundle version -->
+    <key>CFBundleVersion</key>
+    <string>1.0.0</string>
+    <!-- Bundle short version -->
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <!-- Camera usage description -->
+    <!-- @permit camera -->
+    <key>NSCameraUsageDescription</key>
+    <string>We need camera access for taking photos</string>
+    <!-- Photo library usage -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>We need photo library access for saving images</string>
+    <!-- Location usage when in use -->
+    <!-- Custom location comment -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>We need your location for mapping features</string>
+    <!-- Microphone access -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Microphone access for voice recording</string>
+    <!-- Background modes -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>location</string>
+        <string>fetch</string>
+    </array>
+    <!-- Custom user comment -->
+    <!-- Another comment -->
+    <key>CustomKey</key>
+    <string>Custom value</string>
+</dict>
+</plist>''';
+    });
+
+    test('should preserve XML formatting when adding entries', () {
+      final editor = PListEditor(plistContent);
+      editor.addUsageDescription(
+        key: 'NSMicrophoneUsageDescription',
+        description: 'We need microphone access',
+        keyComments: ['@permit microphone'],
+      );
+
+      final result = editor.toXmlString();
+      final expected = '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <!-- Bundle identifier -->
+        <key>CFBundleIdentifier</key>
+        <string>com.example.myapp</string>
+        <!-- Bundle version -->
+        <key>CFBundleVersion</key>
+        <string>1.0.0</string>
+        <!-- Bundle short version -->
+        <key>CFBundleShortVersionString</key>
+        <string>1.0</string>
+        <!-- Camera usage description -->
+        <!-- @permit camera -->
+        <key>NSCameraUsageDescription</key>
+        <string>We need camera access for taking photos</string>
+        <!-- Photo library usage -->
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>We need photo library access for saving images</string>
+        <!-- Location usage when in use -->
+        <!-- Custom location comment -->
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>We need your location for mapping features</string>
+        <!--@permit microphone-->
+        <key>NSMicrophoneUsageDescription</key>
+        <string>We need microphone access</string>
+        <!-- Microphone access -->
+        <!-- Background modes -->
+        <key>UIBackgroundModes</key>
+        <array>
+            <string>location</string>
+            <string>fetch</string>
+        </array>
+        <!-- Custom user comment -->
+        <!-- Another comment -->
+        <key>CustomKey</key>
+        <string>Custom value</string>
+    </dict>
+</plist>''';
+
+      expect(result, expected);
+    });
+
+    test('should preserve formatting when overriding entries', () {
+      final editor = PListEditor(plistContent);
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'Updated camera access',
+        keyComments: ['@permit camera'],
+        override: true,
+        shouldRemoveComment: (comment) => comment.contains('@permit'),
+      );
+
+      final result = editor.toXmlString();
+      final expected = '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <!-- Bundle identifier -->
+        <key>CFBundleIdentifier</key>
+        <string>com.example.myapp</string>
+        <!-- Bundle version -->
+        <key>CFBundleVersion</key>
+        <string>1.0.0</string>
+        <!-- Bundle short version -->
+        <key>CFBundleShortVersionString</key>
+        <string>1.0</string>
+        <!-- Camera usage description -->
+        <!-- Photo library usage -->
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>We need photo library access for saving images</string>
+        <!-- Location usage when in use -->
+        <!-- Custom location comment -->
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>We need your location for mapping features</string>
+        <!-- Microphone access -->
+        <key>NSMicrophoneUsageDescription</key>
+        <string>Microphone access for voice recording</string>
+        <!--@permit camera-->
+        <key>NSCameraUsageDescription</key>
+        <string>Updated camera access</string>
+        <!-- Background modes -->
+        <key>UIBackgroundModes</key>
+        <array>
+            <string>location</string>
+            <string>fetch</string>
+        </array>
+        <!-- Custom user comment -->
+        <!-- Another comment -->
+        <key>CustomKey</key>
+        <string>Custom value</string>
+    </dict>
+</plist>''';
+
+      expect(result, expected);
+    });
+
+    test('should handle single-line XML input correctly', () {
+      final singleLinePlist =
+          '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>NSCameraUsageDescription</key><string>We need camera access</string></dict></plist>';
+      final editor = PListEditor(singleLinePlist);
+
+      editor.addUsageDescription(
+        key: 'NSMicrophoneUsageDescription',
+        description: 'We need microphone access',
+        keyComments: ['@permit microphone'],
+      );
+
+      final result = editor.toXmlString();
+      expect(result.contains('NSMicrophoneUsageDescription'), true);
+      expect(result.contains('We need microphone access'), true);
+      expect(result.contains('@permit microphone'), true);
+      expect(editor.validate(), true);
     });
   });
 }
