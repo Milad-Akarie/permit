@@ -16,8 +16,6 @@ import 'package:permit/registry/permit_registry.dart';
 import 'package:permit/utils/logger.dart';
 import 'package:path/path.dart' as p;
 
-import '../registry/android_permissions.dart' show AndroidPermissions;
-
 const String _toolRoot = 'tools/permit_plugin';
 const String _androidDir = '$_toolRoot/android/';
 const String _iosDir = '$_toolRoot/ios/';

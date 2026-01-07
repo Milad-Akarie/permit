@@ -57,7 +57,7 @@ void main() {
     test('locationAlways permission defaults', () {
       final p = IosPermissions.locationAlways;
       expect(p.key, 'NSLocationAlwaysUsageDescription');
-      expect(p.group, 'location');
+      expect(p.group, 'location_always');
       expect(p.minimumIosVersion, isNull);
       expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
@@ -66,7 +66,7 @@ void main() {
     test('locationAlwaysAndWhenInUse permission defaults', () {
       final p = IosPermissions.locationAlwaysAndWhenInUse;
       expect(p.key, 'NSLocationAlwaysAndWhenInUseUsageDescription');
-      expect(p.group, 'location');
+      expect(p.group, 'location_always');
       expect(p.minimumIosVersion, isNull);
       expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
@@ -120,7 +120,7 @@ void main() {
     test('motion permission defaults', () {
       final p = IosPermissions.motion;
       expect(p.key, 'NSMotionUsageDescription');
-      expect(p.group, 'motion');
+      expect(p.group, 'sensors');
       expect(p.minimumIosVersion, isNull);
       expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
@@ -129,7 +129,7 @@ void main() {
     test('healthShare permission defaults', () {
       final p = IosPermissions.healthShare;
       expect(p.key, 'NSHealthShareUsageDescription');
-      expect(p.group, 'health');
+      expect(p.group, 'health_share');
       expect(p.minimumIosVersion, isNull);
       expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
@@ -138,7 +138,7 @@ void main() {
     test('healthUpdate permission defaults', () {
       final p = IosPermissions.healthUpdate;
       expect(p.key, 'NSHealthUpdateUsageDescription');
-      expect(p.group, 'health');
+      expect(p.group, 'health_update');
       expect(p.minimumIosVersion, isNull);
       expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
@@ -147,7 +147,7 @@ void main() {
     test('healthClinicalRecords permission defaults', () {
       final p = IosPermissions.healthClinicalRecords;
       expect(p.key, 'NSHealthClinicalHealthRecordsShareUsageDescription');
-      expect(p.group, 'health');
+      expect(p.group, 'health_clinical_records');
       expect(p.minimumIosVersion, isNull);
       expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
@@ -165,7 +165,7 @@ void main() {
     test('siri permission defaults', () {
       final p = IosPermissions.siri;
       expect(p.key, 'NSSiriUsageDescription');
-      expect(p.group, 'siri');
+      expect(p.group, 'assistant');
       expect(p.minimumIosVersion, isNull);
       expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
@@ -174,7 +174,7 @@ void main() {
     test('faceId permission defaults', () {
       final p = IosPermissions.faceId;
       expect(p.key, 'NSFaceIDUsageDescription');
-      expect(p.group, 'biometrics');
+      expect(p.group, 'face_id');
       expect(p.minimumIosVersion, isNull);
       expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
@@ -183,7 +183,7 @@ void main() {
     test('homeKit permission defaults', () {
       final p = IosPermissions.homeKit;
       expect(p.key, 'NSHomeKitUsageDescription');
-      expect(p.group, 'homekit');
+      expect(p.group, 'home_kit');
       expect(p.minimumIosVersion, isNull);
       expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
@@ -219,7 +219,7 @@ void main() {
     test('nearbyInteraction permission has minimumIosVersion', () {
       final p = IosPermissions.nearbyInteraction;
       expect(p.key, 'NSNearbyInteractionUsageDescription');
-      expect(p.group, 'nearby');
+      expect(p.group, 'nearby_interaction');
       expect(p.minimumIosVersion, '14.0');
       expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
