@@ -8,12 +8,71 @@ part 'manifest_editor.dart';
 
 typedef CommentRemoverPredicate = bool Function(String comment);
 
-/// A node-based XML editor that preserves formatting
-class XmlEditor {
-  late XmlDocument document;
+/// Represents a single edit operation on the source text
+class SourceEdit {
+  final int offset;
+  final int length;
+  final String replacement;
 
-  XmlEditor(String content) {
-    document = XmlDocument.parse(content);
+  SourceEdit({
+    required this.offset,
+    required this.length,
+    required this.replacement,
+  });
+
+  @override
+  String toString() => 'Edit($offset, -$length, +${replacement.length})';
+}
+
+/// Tracks the position of an element in the original source text
+class ElementPosition {
+  final int startOffset;
+  final int endOffset;
+
+  ElementPosition({required this.startOffset, required this.endOffset});
+}
+
+/// A source-edit-based XML editor that preserves formatting
+class XmlEditor {
+  final String originalText;
+  late XmlDocument document;
+  final List<SourceEdit> edits = [];
+  late Map<XmlElement, ElementPosition> elementPositions;
+
+  XmlEditor(this.originalText) {
+    document = XmlDocument.parse(originalText);
+    elementPositions = _mapElementPositions();
+  }
+
+  /// Map all elements to their positions in the source text
+  Map<XmlElement, ElementPosition> _mapElementPositions() {
+    final positions = <XmlElement, ElementPosition>{};
+    _mapElementsRecursive(document.rootElement, positions);
+    return positions;
+  }
+
+  void _mapElementsRecursive(XmlElement element, Map<XmlElement, ElementPosition> positions) {
+    // Find the opening tag
+    final tagName = element.name.local;
+    final openingTagPattern = RegExp(r'<' + tagName + r'(?:\s|>)');
+
+    int searchStart = 0;
+    final match = openingTagPattern.firstMatch(originalText);
+    if (match != null) {
+      final startOffset = match.start;
+      // Find closing tag
+      final closingTagPattern = '</$tagName>';
+      final closeIndex = originalText.lastIndexOf(closingTagPattern);
+      if (closeIndex != -1) {
+        final endOffset = closeIndex + closingTagPattern.length;
+        positions[element] = ElementPosition(startOffset: startOffset, endOffset: endOffset);
+      }
+    }
+
+    // Map children
+    for (final child in element.children.whereType<XmlElement>()) {
+      _mapElementsRecursive(child, positions);
+    }
   }
 
   /// Find all tags by name within a specific path
@@ -119,7 +178,7 @@ class XmlEditor {
   /// Validate that the modified content is still valid XML
   bool validate() {
     try {
-      XmlDocument.parse(toXmlString());
+      XmlDocument.parse(_applyEdits());
       return true;
     } catch (e) {
       return false;
