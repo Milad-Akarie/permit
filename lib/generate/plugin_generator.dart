@@ -3,12 +3,14 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:permit/editor/pubspec_editor.dart';
 import 'package:permit/editor/xml_editor.dart';
-import 'package:permit/generate/templates/android/handler_snippet.dart';
+import 'package:permit/generate/templates/android/kotlin_handler_snippet.dart';
 import 'package:permit/generate/templates/android/plugin_gradle_temp.dart';
 import 'package:permit/generate/templates/android/plugin_kotlin_class_temp.dart';
 import 'package:permit/generate/templates/android/plugin_manifest_temp.dart';
 import 'package:permit/generate/templates/ios/plugin_pod_temp.dart';
 import 'package:permit/generate/templates/ios/plugin_privacy_manifest.dart';
+import 'package:permit/generate/templates/ios/plugin_swift_class_temp.dart';
+import 'package:permit/generate/templates/ios/swift_handler_snippet.dart';
 import 'package:permit/generate/templates/plugin_dart_temp.dart';
 import 'package:permit/generate/templates/plugin_pubspec_temp.dart';
 import 'package:permit/generate/templates/template.dart';
@@ -42,7 +44,7 @@ class PluginGenerator {
         .where((e) => e.runtime);
 
     if (runtimeEntries.isNotEmpty) {
-      final snippets = <HandlerSnippet>[];
+      final snippets = <KotlinHandlerSnippet>[];
       final entryGroups = runtimeEntries.groupListsBy((e) => e.group);
       int requestCode = 1010;
       for (var group in entryGroups.entries) {
@@ -51,7 +53,7 @@ class PluginGenerator {
           continue;
         }
         snippets.add(
-          HandlerSnippet(
+          KotlinHandlerSnippet(
             key: group.key,
             requestCode: '${requestCode++}',
             permissions: List.of(group.value.whereType<AndroidPermissionDef>()),
@@ -76,8 +78,18 @@ class PluginGenerator {
     final permissionsInPlist = editor.getUsageDescriptions();
     if (permissionsInPlist.isEmpty) return null;
     final entryLookUp = EntriesLookup.forDefaults(iosOnly: true);
+    final handlers = permissionsInPlist
+        .map((e) => entryLookUp.lookupByKey(e.key))
+        .whereType<IosPermissionDef>()
+        .map((e) => swiftHandlers[e.group]?.call())
+        .nonNulls;
+    if (handlers.isEmpty) return null;
 
-    return [PluginPodTemp(), PluginPrivacyManifestTemp()];
+    return [
+      PluginPodTemp(),
+      PluginPrivacyManifestTemp(),
+      PluginSwiftClassTemp(List.of(handlers)),
+    ];
   }
 
   void generate() {

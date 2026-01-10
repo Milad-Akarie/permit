@@ -1,4 +1,4 @@
-import 'package:permit/generate/templates/android/handler_snippet.dart';
+import 'package:permit/generate/templates/android/kotlin_handler_snippet.dart';
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/template.dart';
 import 'package:permit/registry/models.dart';
@@ -18,7 +18,7 @@ final _serviceImports = <AssociatedService, Set<String>>{
 class PluginKotlinClassTemp extends Template {
   final String packageName;
   final String channelName;
-  final List<HandlerSnippet> handlers;
+  final List<KotlinHandlerSnippet> handlers;
 
   PluginKotlinClassTemp({
     this.packageName = kAndroidPackageName,

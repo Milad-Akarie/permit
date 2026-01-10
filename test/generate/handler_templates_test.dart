@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
-import 'package:permit/generate/templates/android/handler_snippet.dart';
+import 'package:permit/generate/templates/android/kotlin_handler_snippet.dart';
 import 'package:test/test.dart';
 
 void main() {

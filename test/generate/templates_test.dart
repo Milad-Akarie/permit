@@ -1,7 +1,7 @@
 import 'package:permit/generate/templates/android/plugin_gradle_temp.dart';
 import 'package:permit/generate/templates/android/plugin_kotlin_class_temp.dart';
 import 'package:permit/generate/templates/android/plugin_manifest_temp.dart';
-import 'package:permit/generate/templates/android/handler_snippet.dart';
+import 'package:permit/generate/templates/android/kotlin_handler_snippet.dart';
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/plugin_pubspec_temp.dart';
 import 'package:permit/registry/models.dart';
@@ -55,12 +55,12 @@ void main() {
 
     group('PluginKotlinClassTemp', () {
       final handlers = [
-        HandlerSnippet(
+        KotlinHandlerSnippet(
           key: 'camera',
           requestCode: '1001',
           permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
         ),
-        HandlerSnippet(
+        KotlinHandlerSnippet(
           key: 'microphone',
           requestCode: '1002',
           permissions: [AndroidPermissionDef('android.permission.RECORD_AUDIO', group: 'microphone', runtime: true)],
@@ -138,7 +138,7 @@ void main() {
 
     group('HandlerSnippet', () {
       test('should have correct className', () {
-        final handler = HandlerSnippet(
+        final handler = KotlinHandlerSnippet(
           key: 'camera',
           requestCode: '1001',
           permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
@@ -147,7 +147,7 @@ void main() {
       });
 
       test('should generate Kotlin handler class', () {
-        final handler = HandlerSnippet(
+        final handler = KotlinHandlerSnippet(
           key: 'camera',
           requestCode: '1001',
           permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
@@ -160,7 +160,7 @@ void main() {
       });
 
       test('should generate handler with multiple permissions', () {
-        final handler = HandlerSnippet(
+        final handler = KotlinHandlerSnippet(
           key: 'location',
           requestCode: '1002',
           permissions: [
@@ -176,7 +176,7 @@ void main() {
       });
 
       test('should generate handler with sinceApi', () {
-        final handler = HandlerSnippet(
+        final handler = KotlinHandlerSnippet(
           key: 'bluetooth',
           requestCode: '1003',
           permissions: [

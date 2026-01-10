@@ -4,12 +4,12 @@ import 'package:permit/registry/models.dart';
 
 const indent = '    ';
 
-class HandlerSnippet {
+class KotlinHandlerSnippet {
   final String key;
   final String requestCode;
   final List<AndroidPermissionDef> permissions;
   final Set<String>? imports;
-  HandlerSnippet({
+  KotlinHandlerSnippet({
     required this.key,
     required this.requestCode,
     required this.permissions,
@@ -51,7 +51,7 @@ class HandlerSnippet {
   }
 }
 
-final customHandlers = <String, HandlerSnippet Function(int requestCode)>{
+final customHandlers = <String, KotlinHandlerSnippet Function(int requestCode)>{
   AndroidPermissions.systemAlertWindow.group: (requestCode) => SystemAlertWindowHandler(requestCode),
   AndroidPermissions.ignoreBatteryOptimizations.group: (requestCode) => IgnoreBatteryOptimizationsHandler(requestCode),
   AndroidPermissions.manageExternalStorage.group: (requestCode) => ManageExternalStorageHandler(requestCode),
@@ -59,7 +59,7 @@ final customHandlers = <String, HandlerSnippet Function(int requestCode)>{
   AndroidPermissions.scheduleExactAlarm.group: (requestCode) => ScheduleExactAlarmHandler(requestCode),
 };
 
-class SystemAlertWindowHandler extends HandlerSnippet {
+class SystemAlertWindowHandler extends KotlinHandlerSnippet {
   SystemAlertWindowHandler(int requestCode)
     : super(
         key: 'system_alert_window',
@@ -95,7 +95,7 @@ class $className : PermissionHandler(
   }
 }
 
-class IgnoreBatteryOptimizationsHandler extends HandlerSnippet {
+class IgnoreBatteryOptimizationsHandler extends KotlinHandlerSnippet {
   IgnoreBatteryOptimizationsHandler(int requestCode)
     : super(
         key: 'ignore_battery_optimizations',
@@ -142,7 +142,7 @@ class $className : PermissionHandler(
   }
 }
 
-class ManageExternalStorageHandler extends HandlerSnippet {
+class ManageExternalStorageHandler extends KotlinHandlerSnippet {
   ManageExternalStorageHandler(int requestCode)
     : super(
         key: 'manage_external_storage',
@@ -187,7 +187,7 @@ class $className : PermissionHandler(
   }
 }
 
-class RequestInstallPackagesHandler extends HandlerSnippet {
+class RequestInstallPackagesHandler extends KotlinHandlerSnippet {
   RequestInstallPackagesHandler(int requestCode)
     : super(
         key: 'request_install_packages',
@@ -231,7 +231,7 @@ class $className : PermissionHandler(
   }
 }
 
-class ScheduleExactAlarmHandler extends HandlerSnippet {
+class ScheduleExactAlarmHandler extends KotlinHandlerSnippet {
   ScheduleExactAlarmHandler(int requestCode)
     : super(
         key: 'schedule_exact_alarm',
