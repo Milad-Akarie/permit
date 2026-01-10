@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:xml/xml_events.dart';
 
 import 'models.dart';
@@ -8,6 +9,7 @@ part 'plist_editor.dart';
 part 'manifest_editor.dart';
 
 typedef RemoveComment = bool Function(String comment);
+const _defaultIndent = '  ';
 
 class XmlEditor {
   final String _source;
@@ -54,7 +56,7 @@ class XmlEditor {
   }
 
   void insert(XmlInsertElementEdit insert) {
-    final (anchor, indent) = _getInsertionAnchor(insert);
+    final (anchor, indent) = getInsertionAnchor(insert);
     if (anchor == -1) {
       throw ArgumentError('Insertion path not found: ${insert.path}');
     }
@@ -63,7 +65,7 @@ class XmlEditor {
   }
 
   bool remove(XmlRemoveElementEdit remove) {
-    final indices = _getRemovableIndices(remove).toSet().toList()..sort();
+    final indices = _getRemovableIndices(remove);
     if (indices.isEmpty) {
       return false;
     } else {
@@ -72,20 +74,6 @@ class XmlEditor {
       }
     }
     return true;
-  }
-
-  bool hasElement(String path, XmlElementInfo element) {
-    final range = _getElementScope(path);
-    if (range == null) return false;
-    for (var i = range.start; i <= range.end; i++) {
-      final event = _events[i];
-      if (event is XmlStartElementEvent) {
-        if (element.matches(event)) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   void _append(XmlEvent event, StringBuffer buffer) {
@@ -143,7 +131,8 @@ class XmlEditor {
     final range = _getElementScope(remove.path);
     if (range == null) return removedIndices;
 
-    final mainTagIndices = _removeElement(range, remove)..sort();
+    final mainTagIndices = _removeElement(range, remove);
+    mainTagIndices.sort();
     removedIndices.addAll(mainTagIndices);
     if (remove.removeNextTag != null && mainTagIndices.isNotEmpty) {
       final newTagRange = Range(
@@ -160,10 +149,9 @@ class XmlEditor {
         checkOnlyNext: true,
       );
       removedIndices.addAll(nextTagIndices);
-      return removedIndices;
     }
-
-    return removedIndices;
+    final sorted = removedIndices.toSet().sorted((a, b) => a.compareTo(b));
+    return sorted;
   }
 
   List<int> _removeElement(Range range, XmlRemoveElementEdit remove, {bool checkOnlyNext = false}) {
@@ -171,25 +159,28 @@ class XmlEditor {
     for (var i = range.start; i <= range.end; i++) {
       final event = _events[i];
       if (event is XmlStartElementEvent) {
-        final content = (i + 1 < range.end && _events[i + 1] is XmlTextEvent) ? _events[i + 1] as XmlTextEvent : null;
+        final nextEvent = _events.elementAtOrNull(i + 1);
+        final content = (nextEvent is XmlTextEvent && nextEvent.value.trim().isNotEmpty) ? nextEvent : null;
         if (remove.matches(event, content)) {
           removedIndices.add(i);
           if (content != null) {
             removedIndices.add(i + 1);
           }
+
           // remove comments and whitespace before
-          if (remove.commentRemover != null) {
-            for (var j = i - 1; j >= range.start; j--) {
-              final prevEvent = _events[j];
-              if (prevEvent is XmlCommentEvent) {
-                if (remove.commentRemover!(prevEvent.value)) {
-                  removedIndices.add(j);
-                }
-              } else if (prevEvent is XmlTextEvent && prevEvent.value.trim().isEmpty) {
+          for (var j = i - 1; j >= range.start; j--) {
+            final prevEvent = _events[j];
+            if (prevEvent is XmlCommentEvent) {
+              if (remove.commentRemover != null && remove.commentRemover!(prevEvent.value)) {
                 removedIndices.add(j);
-              } else {
-                break;
               }
+            } else if (prevEvent is XmlTextEvent) {
+              final isBeforeRemoved = removedIndices.contains(j + 1) && _events.elementAtOrNull(j + 1) is! XmlTextEvent;
+              if (isBeforeRemoved) {
+                removedIndices.add(j);
+              }
+            } else {
+              break;
             }
           }
           // remove element end if not self-closing
@@ -211,58 +202,56 @@ class XmlEditor {
     return removedIndices;
   }
 
-  (int, String) _getInsertionAnchor(XmlInsertElementEdit insert) {
-    String indent = '    ';
-    int anchor = -1;
-
+  (int, String) getInsertionAnchor(XmlInsertElementEdit insert) {
     final range = _getElementScope(insert.path);
     if (range == null) {
-      return (-1, indent);
+      return (-1, _defaultIndent);
     }
-
-    for (var i = range.start; i <= range.end; i++) {
-      final event = _events[i];
-      if (event is XmlStartElementEvent) {
-        if (anchor == -1) {
-          anchor = i;
-          if (insert.insertBefore == null) break;
-        }
-
-        if (insert.insertBefore != null) {
-          final content = (i + 1 < range.end && _events[i + 1] is XmlTextEvent) ? _events[i + 1] as XmlTextEvent : null;
-          if (insert.insertBefore!(event.name, content?.value)) {
-            anchor = i;
-            break;
+    int anchor = -1;
+    if (insert.insertAfter != null) {
+      for (var i = range.start; i <= range.end; i++) {
+        final event = _events[i];
+        if (event is XmlStartElementEvent) {
+          final content = (i + 1 <= range.end && _events[i + 1] is XmlTextEvent)
+              ? _events[i + 1] as XmlTextEvent
+              : null;
+          if (insert.insertAfter!(event.name, content?.value)) {
+            anchor = i + 1;
           }
         }
+        // Stop at the end of the range
+        if (i == range.end) break;
       }
-
-      // Stop at the end of the range
-      if (i == range.end) break;
     }
 
     if (anchor != -1) {
-      if (anchor - 1 > 0) {
-        final precedingEvent = _events[anchor - 1];
-        if (precedingEvent is XmlTextEvent && precedingEvent.value.startsWith('\n')) {
-          anchor = anchor - 1;
-        }
-      }
-
-      return (anchor, _getNextElementIndent(anchor));
+      return (anchor, _getPreviousElementIndent(max(anchor - 1, 0)));
     }
-    return (range.end, indent);
+
+    // Default to inserting at the start of the range
+    return (range.start, _getNextElementIndent(range.start));
   }
 
   String _getNextElementIndent(int startIndex) {
-    if (startIndex >= _events.length) return '';
+    if (startIndex >= _events.length) return _defaultIndent;
     for (var i = startIndex; i < _events.length; i++) {
       final event = _events[i];
       if (event is XmlTextEvent && event.value.trim().isEmpty) {
-        return event.value.split('\n').lastOrNull ?? '';
+        return event.value.split('\n').lastOrNull ?? _defaultIndent;
       }
     }
-    return '';
+    return _defaultIndent;
+  }
+
+  String _getPreviousElementIndent(int startIndex) {
+    if (startIndex <= 0) return _defaultIndent;
+    for (var i = startIndex; i >= 0; i--) {
+      final event = _events[i];
+      if (event is XmlTextEvent && event.value.trim().isEmpty) {
+        return event.value.split('\n').lastOrNull ?? _defaultIndent;
+      }
+    }
+    return _defaultIndent;
   }
 
   bool save(File file) {
@@ -336,12 +325,12 @@ class XmlElementInfo {
 
 class XmlInsertElementEdit extends XmlEdit {
   final List<XmlElementInfo> tags;
-  final ElementAnchorPredicate? insertBefore;
+  final ElementAnchorPredicate? insertAfter;
 
   XmlInsertElementEdit({
     required super.path,
     required this.tags,
-    this.insertBefore,
+    this.insertAfter,
   });
 
   List<XmlEvent> buildEvents(String indent) {

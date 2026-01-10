@@ -33,9 +33,69 @@ class PListEditor extends XmlEditor {
           XmlElementInfo(name: 'key', content: key, comments: keyComments),
           XmlElementInfo(name: 'string', content: description, comments: valueComments),
         ],
-        insertBefore: (key, content) => key == 'key' && isNSUsageDesc(content),
+        insertAfter: (key, content) => key == 'key' && isNSUsageDesc(content),
       ),
     );
+  }
+
+  @override
+  (int, String) getInsertionAnchor(XmlInsertElementEdit insert) {
+    final defaultIndent = '	 ';
+
+    final range = _getElementScope(insert.path);
+    if (range == null) return (-1, defaultIndent);
+
+    int anchor = -1;
+
+    if (insert.insertAfter != null) {
+      for (var i = range.start; i <= range.end; i++) {
+        final event = _events[i];
+        if (event is! XmlStartElementEvent) continue;
+
+        final content = (i + 1 <= range.end && _events[i + 1] is XmlTextEvent) ? _events[i + 1] as XmlTextEvent : null;
+
+        if (!insert.insertAfter!(event.name, content?.value)) continue;
+
+        if (event.name == 'key') {
+          // Find the next value element start tag.
+          var j = i + 1;
+          while (j <= range.end && _events[j] is! XmlStartElementEvent) {
+            j++;
+          }
+
+          if (j <= range.end) {
+            final valueStart = j;
+
+            // Find the matching end tag and set anchor to the index AFTER it.
+            var depth = 0;
+            for (var k = valueStart; k <= range.end; k++) {
+              final e = _events[k];
+              if (e is XmlStartElementEvent) depth++;
+              if (e is XmlEndElementEvent) depth--;
+              if (depth == 0) {
+                anchor = k + 1; // insertion position (after value element)
+                break;
+              }
+            }
+
+            // If we couldn't find a clean end, fall back to after the value start tag.
+            if (anchor == -1) anchor = valueStart + 1;
+          } else {
+            // No value element found; fall back to after the key node.
+            anchor = i + 1;
+          }
+        } else {
+          // Non-key match: insert after this element's start/text as before.
+          anchor = i + 1;
+        }
+      }
+    }
+
+    if (anchor != -1) {
+      return (anchor, _getPreviousElementIndent(max(0, anchor - 1)));
+    }
+
+    return (range.start, _getNextElementIndent(range.start));
   }
 
   /// Remove a plist usage description by key with its associated comments

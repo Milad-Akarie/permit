@@ -59,14 +59,14 @@ void main() {
 
       final result = editor.toString();
       expect(result, contains('android.permission.CAMERA'));
-      expect(result, contains('android.permission.WRITE_EXTERNAL_STORAGE'));
       expect(result, contains('android.permission.INTERNET'));
+      expect(result, contains('android.permission.WRITE_EXTERNAL_STORAGE'));
       // Verify order: permissions should be grouped
       final internetIdx = result.indexOf('android.permission.INTERNET');
       final cameraIdx = result.indexOf('android.permission.CAMERA');
       final storageIdx = result.indexOf('android.permission.WRITE_EXTERNAL_STORAGE');
-      expect(internetIdx, greaterThan(cameraIdx));
-      expect(cameraIdx, greaterThan(storageIdx));
+      expect(internetIdx, lessThan(cameraIdx));
+      expect(cameraIdx, lessThan(storageIdx));
     });
 
     // test adding permission to manifest with no existing permissions
@@ -181,6 +181,23 @@ void main() {
       final result = editor.toString();
       expect(result, isNot(contains('android.permission.CAMERA')));
       expect(result, contains('android.permission.INTERNET'));
+    });
+
+    // adding then removing a permission should leave manifest unchanged
+    test('adds then removes permission leaves manifest unchanged', () {
+      const realManifest = '''<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"> 
+    <application>
+    </application>
+</manifest>''';
+      final editor = ManifestEditor(realManifest);
+      editor.addPermission(
+        name: 'android.permission.CAMERA',
+      );
+      editor.removePermission(name: 'android.permission.CAMERA');
+
+      final result = editor.toString();
+      expect(result, equals(realManifest));
     });
 
     test('removes permission and its preceding comment', () {
@@ -395,6 +412,7 @@ void main() {
       );
 
       final result = editor.toString();
+
       // Should maintain 4-space indentation
       expect(result, contains('    <uses-permission'));
     });

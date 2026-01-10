@@ -39,10 +39,16 @@ T singleSelect<T>(String message, {required List<T> options, required String Fun
   return options[index];
 }
 
-String prompt(String message, {String? defaultValue}) {
+String prompt(String message, {String? defaultValue, String? validatorErrorMessage}) {
   return Input.withTheme(
     theme: inputTheme,
     prompt: message,
+    validator: (input) {
+      if (input.isEmpty) {
+        throw ValidationError(validatorErrorMessage ?? 'Input cannot be empty');
+      }
+      return true;
+    },
     defaultValue: defaultValue,
   ).interact();
 }

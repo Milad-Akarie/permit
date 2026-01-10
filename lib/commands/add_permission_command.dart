@@ -158,6 +158,7 @@ class AddPermissionCommand extends PermitCommand {
       final desc = prompt(
         'Enter usage description for "${entry.key}"',
         defaultValue: argResults?['desc'] ?? '',
+        validatorErrorMessage: 'Description cannot be empty',
       );
       resolvedEntries.add(
         PListUsageDescription(

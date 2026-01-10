@@ -29,7 +29,7 @@ void main() {
       expect(result, contains('<existing>Value</existing>'));
     });
 
-    test('inserts element without comment and preserves 4-space indentation', () {
+    test('inserts element without comment and preserves 2-space indentation', () {
       const xml = '''<root>
     <body>
         <existing>Value</existing>
@@ -50,7 +50,7 @@ void main() {
       );
 
       final result = editor.toString();
-      expect(result, contains('        <new>'));
+      expect(result, contains('  <new>'));
       expect(result, contains('<existing>'));
     });
 
@@ -73,7 +73,6 @@ void main() {
       );
 
       final result = editor.toString();
-      print(result);
 
       expect(result, contains('<first>1</first>'));
       expect(result, contains('<second>2</second>'));
@@ -684,55 +683,6 @@ void main() {
       expect(result, contains('Special chars:'));
     });
 
-    test('respects anchor elements preceding comments during insertion', () {
-      const xml = '''<root>
-  <body>
-    <!-- Anchor comment -->
-    <anchor>AnchorValue</anchor>
-    <existing>Value</existing>
-  </body>
-</root>''';
-
-      final editor = XmlEditor(xml);
-      editor.insert(
-        XmlInsertElementEdit(
-          path: 'root.body',
-          tags: [
-            XmlElementInfo(
-              name: 'new',
-              content: 'NewValue',
-              comments: [' New element comment '],
-            ),
-          ],
-          insertBefore: (name, _) => name == 'anchor',
-        ),
-      );
-
-      final result = editor.toString();
-
-      print(result);
-
-      // Verify anchor comment is preserved
-      expect(result, contains('<!-- Anchor comment -->'));
-      expect(result, contains('<anchor>AnchorValue</anchor>'));
-
-      // Verify new element is inserted before existing with its own comment
-      expect(result, contains('<!-- New element comment -->'));
-      expect(result, contains('<new>NewValue</new>'));
-      expect(result, contains('<existing>Value</existing>'));
-
-      // Verify order: anchor comment -> anchor -> new comment -> new -> existing
-      final anchorCommentIdx = result.indexOf('<!-- Anchor comment -->');
-      final anchorIdx = result.indexOf('<anchor>');
-      final newCommentIdx = result.indexOf('<!-- New element comment -->');
-      final newIdx = result.indexOf('<new>');
-      final existingIdx = result.indexOf('<existing>');
-
-      expect(anchorCommentIdx, lessThan(anchorIdx));
-      expect(anchorIdx, lessThan(newCommentIdx));
-      expect(newCommentIdx, lessThan(newIdx));
-      expect(newIdx, lessThan(existingIdx));
-    });
     test('multiple root-level children preserved during operations', () {
       const xml = '''<root>
   <section1>

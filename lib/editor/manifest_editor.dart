@@ -28,7 +28,7 @@ class ManifestEditor extends XmlEditor {
             isSelfClosing: true,
           ),
         ],
-        insertBefore: (tag, _) => tag == 'uses-permission',
+        insertAfter: (tag, _) => tag == 'uses-permission',
       ),
     );
   }

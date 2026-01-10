@@ -91,6 +91,26 @@ void main() {
 
       expect(descriptions[0].description, contains('📷'));
     });
+    // adding then removing should equal original
+    test('adding and removing returns to original plist', () {
+      const plist = '''<?xml version="1.0" encoding="UTF-8"?>
+  <plist version="1.0">
+  <dict>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Location</string>
+  </dict>
+  </plist>''';
+
+      final editor = PListEditor(plist);
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'Camera',
+      );
+      editor.removeUsageDescription(name: 'NSCameraUsageDescription');
+
+      final result = editor.toString();
+      expect(result, equals(plist));
+    });
 
     test('handles very long descriptions', () {
       const plist = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -195,11 +215,13 @@ void main() {
       editor.addUsageDescription(
         key: 'NSCameraUsageDescription',
         description: 'Camera access',
+        keyComments: [' Camera permission '],
       );
 
       editor.addUsageDescription(
         key: 'NSPhotoLibraryUsageDescription',
         description: 'Photo library access',
+        keyComments: [' Photo library permission '],
       );
 
       final result = editor.toString();
@@ -211,7 +233,7 @@ void main() {
       final cameraIdx = result.indexOf('NSCameraUsageDescription');
       final photoIdx = result.indexOf('NSPhotoLibraryUsageDescription');
 
-      expect(cameraIdx, greaterThan(photoIdx));
+      expect(cameraIdx, lessThan(photoIdx));
     });
 
     test('adds usage description with both key and value comments', () {
