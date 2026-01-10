@@ -7,6 +7,9 @@ class PluginManifestTemp extends Template {
   PluginManifestTemp({this.packageName = kAndroidPackageName});
 
   @override
+  String get path => 'android/src/main/AndroidManifest.xml';
+
+  @override
   String generate() {
     return '''
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -14,7 +17,4 @@ class PluginManifestTemp extends Template {
 </manifest>
 ''';
   }
-
-  @override
-  String get path => 'android/src/main/AndroidManifest.xml';
 }

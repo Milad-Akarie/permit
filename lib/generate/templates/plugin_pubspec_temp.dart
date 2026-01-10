@@ -25,7 +25,7 @@ class PluginPubspecTemp extends Template {
     final YamlEditor editor = YamlEditor('{}');
     editor.update([], {
       'name': packageName,
-      'description': 'Handles native App permissions',
+      'description': 'Native permission handling for Flutter.',
       'publish_to': 'none',
       'version': '1.0.0+1',
       'environment': {

@@ -7,6 +7,8 @@ import 'package:permit/generate/templates/android/handler_snippet.dart';
 import 'package:permit/generate/templates/android/plugin_gradle_temp.dart';
 import 'package:permit/generate/templates/android/plugin_kotlin_class_temp.dart';
 import 'package:permit/generate/templates/android/plugin_manifest_temp.dart';
+import 'package:permit/generate/templates/ios/plugin_pod_temp.dart';
+import 'package:permit/generate/templates/ios/plugin_privacy_manifest.dart';
 import 'package:permit/generate/templates/plugin_dart_temp.dart';
 import 'package:permit/generate/templates/plugin_pubspec_temp.dart';
 import 'package:permit/generate/templates/template.dart';
@@ -68,9 +70,14 @@ class PluginGenerator {
   }
 
   List<Template>? _getIosTemplates() {
-    //TODO: implement iOS plugin generation
-    // iOS plugin generation can be implemented here in the future
-    return null;
+    final plist = pathFinder.getInfoPlist();
+    if (plist == null) return null;
+    final editor = PListEditor(plist.readAsStringSync());
+    final permissionsInPlist = editor.getUsageDescriptions();
+    if (permissionsInPlist.isEmpty) return null;
+    final entryLookUp = EntriesLookup.forDefaults(iosOnly: true);
+
+    return [PluginPodTemp(), PluginPrivacyManifestTemp()];
   }
 
   void generate() {
