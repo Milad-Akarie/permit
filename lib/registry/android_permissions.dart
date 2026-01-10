@@ -299,7 +299,7 @@ abstract class AndroidPermissions {
     'android.permission.POST_NOTIFICATIONS',
     sinceApi: 33,
     runtime: true,
-    group: 'notification',
+    group: 'notifications',
   );
   static const requestInstallPackages = AndroidPermissionDef(
     'android.permission.REQUEST_INSTALL_PACKAGES',

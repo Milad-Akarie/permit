@@ -16,7 +16,7 @@ class EntriesLookup {
     return EntriesLookup(allEntries);
   }
 
-  Set<PermissionDef> lookup(String input) {
+  Set<PermissionDef> find(String input) {
     final matches = <PermissionDef>{};
     for (var entry in entries) {
       if (entry.matches(input)) {

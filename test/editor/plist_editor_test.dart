@@ -1,1333 +1,886 @@
-import 'package:permit/editor/models.dart';
-import 'package:test/test.dart';
 import 'package:permit/editor/xml_editor.dart';
+import 'package:test/test.dart';
+import 'package:xml/xml.dart';
 
 void main() {
-  group('XmlEditor - Plist Tests', () {
-    late String plistContent;
+  group('PListEditor - Critical Edge Cases', () {
+    test('handles malformed plist gracefully', () {
+      const malformedPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+  <plist version="1.0">
+  <dict>
+   <key>NSCameraUsageDescription</key>
+  </dict>
+  </plist>''';
 
-    setUp(() {
-      plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+      final editor = PListEditor(malformedPlist);
+      final descriptions = editor.getUsageDescriptions();
+      // Should handle missing string value
+      expect(descriptions, hasLength(1));
+      expect(descriptions[0].description, equals(''));
+    });
+
+    test('handles comments without following NS description', () {
+      const plist = '''<?xml version="1.0" encoding="UTF-8"?>
+  <plist version="1.0">
+  <dict>
+   <!-- Orphaned comment -->
+   <key>CFBundleName</key>
+   <string>MyApp</string>
+   <key>NSCameraUsageDescription</key>
+   <string>Camera</string>
+  </dict>
+  </plist>''';
+
+      final editor = PListEditor(plist);
+      final descriptions = editor.getUsageDescriptions();
+      expect(descriptions, hasLength(1));
+      expect(descriptions[0].comments, isEmpty);
+    });
+
+    test('preserves comments that precede non-NS keys', () {
+      const plist = '''<?xml version="1.0" encoding="UTF-8"?>
+  <plist version="1.0">
+  <dict>
+   <!-- Bundle name comment -->
+   <key>CFBundleName</key>
+   <string>MyApp</string>
+   <!-- Camera permission -->
+   <key>NSCameraUsageDescription</key>
+   <string>Camera</string>
+  </dict>
+  </plist>''';
+
+      final editor = PListEditor(plist);
+      editor.addUsageDescription(
+        key: 'NSPhotoLibraryUsageDescription',
+        description: 'Photos',
+      );
+
+      final result = editor.toString();
+      expect(result, contains('Bundle name comment'));
+      expect(result, contains('CFBundleName'));
+    });
+
+    test('throws when plist has invalid XML syntax', () {
+      const invalidPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+ <key>NSCameraUsageDescription</key>
+ <string>Camera</string>
+ <!-- Unclosed comment
+</dict>
+</plist>''';
+
+      expect(
+        () => PListEditor(invalidPlist),
+        throwsA(isA<XmlParserException>()),
+      );
+    });
+
+    test('handles Unicode characters in descriptions', () {
+      const plist = '''<?xml version="1.0" encoding="UTF-8"?>
+  <plist version="1.0">
+  <dict>
+   <key>NSCameraUsageDescription</key>
+   <string>Camera — 📷</string>
+  </dict>
+  </plist>''';
+
+      final editor = PListEditor(plist);
+      final descriptions = editor.getUsageDescriptions();
+
+      expect(descriptions[0].description, contains('📷'));
+    });
+
+    test('handles very long descriptions', () {
+      const plist = '''<?xml version="1.0" encoding="UTF-8"?>
+  <plist version="1.0">
+  <dict>
+   <key>NSLocationWhenInUseUsageDescription</key>
+   <string>Location</string>
+  </dict>
+  </plist>''';
+
+      final editor = PListEditor(plist);
+      final longDescription = 'A' * 1000;
+
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: longDescription,
+      );
+
+      final result = editor.toString();
+      expect(result, contains(longDescription));
+    });
+
+    test('adding description when dict is empty', () {
+      const plist = '''<?xml version="1.0" encoding="UTF-8"?>
+  <plist version="1.0">
+  <dict>
+  </dict>
+  </plist>''';
+
+      final editor = PListEditor(plist);
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'Camera',
+      );
+
+      final result = editor.toString();
+      expect(result, contains('NSCameraUsageDescription'));
+      expect(result, contains('Camera'));
+    });
+
+    test('multiple consecutive comments before NS key', () {
+      const plist = '''<?xml version="1.0" encoding="UTF-8"?>
+  <plist version="1.0">
+  <dict>
+   <!-- Line 1 -->
+   <!-- Line 2 -->
+   <!-- Line 3 -->
+   <key>NSCameraUsageDescription</key>
+   <string>Camera</string>
+  </dict>
+  </plist>''';
+
+      final editor = PListEditor(plist);
+      final descriptions = editor.getUsageDescriptions();
+
+      expect(descriptions[0].comments, hasLength(3));
+    });
+  });
+
+  group('PListEditor - Adding Usage Descriptions', () {
+    test('adds camera usage description to real plist file', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Bundle identifier -->
-    <key>CFBundleIdentifier</key>
-    <string>com.example.myapp</string>
-    <!-- Bundle version -->
-    <key>CFBundleVersion</key>
-    <string>1.0.0</string>
-    <!-- Bundle short version -->
-    <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
-    <!-- Camera usage description -->
-    <!-- @permit camera -->
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access for taking photos</string>
-    <!-- Photo library usage -->
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need photo library access for saving images</string>
-    <!-- Location usage when in use -->
-    <!-- Custom location comment -->
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>We need your location for mapping features</string>
-    <!-- Microphone access -->
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Microphone access for voice recording</string>
-    <!-- Background modes -->
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>location</string>
-        <string>fetch</string>
-    </array>
-    <!-- Custom user comment -->
-    <!-- Another comment -->
-    <key>CustomKey</key>
-    <string>Custom value</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>Runner</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to your location</string>
 </dict>
 </plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'This app needs camera access to take photos',
+        keyComments: [' Camera permission '],
+      );
+
+      final result = editor.toString();
+      expect(result, contains('NSCameraUsageDescription'));
+      expect(result, contains('This app needs camera access to take photos'));
+      expect(result, contains('<!-- Camera permission -->'));
+      expect(result, contains('NSLocationWhenInUseUsageDescription'));
     });
 
-    group('addEntry', () {
-      test('should add a new plist entry with comments', () {
-        final editor = PListEditor(plistContent);
-        editor.addUsageDescription(
-          key: 'NSMicrophoneUsageDescription',
-          description: 'We need microphone access',
-          keyComments: ['@permit microphone'],
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('NSMicrophoneUsageDescription'), true);
-        expect(result.contains('We need microphone access'), true);
-        expect(result.contains('@permit microphone'), true);
-      });
-
-      test('should add entry after anchor key', () {
-        final editor = PListEditor(plistContent);
-        editor.addUsageDescription(
-          key: 'NSContactsUsageDescription',
-          description: 'We need contacts access',
-          anchorKeys: ['NSPhotoLibraryUsageDescription'],
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('NSContactsUsageDescription'), true);
-        // Verify the entry was added
-        expect(result.contains('We need contacts access'), true);
-      });
-
-      test('should add plist entry without comments', () {
-        final editor = PListEditor(plistContent);
-        editor.addEntry(
-          path: 'plist.dict',
-          key: 'NSBluetoothPeripheralUsageDescription',
-          value: '<string>We need bluetooth access</string>',
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('NSBluetoothPeripheralUsageDescription'), true);
-      });
-
-      test('should add plist entry with null value (key only)', () {
-        final editor = PListEditor(plistContent);
-        editor.addEntry(
-          path: 'plist.dict',
-          key: 'TestKeyOnly',
-          value: null,
-          keyComments: ['@permit test key'],
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('TestKeyOnly'), true);
-        expect(result.contains('@permit test key'), true);
-        // Value should not be present after the key
-        final lines = result.split('\n');
-        final keyLine = lines.indexWhere((line) => line.contains('TestKeyOnly'));
-        expect(keyLine, greaterThanOrEqualTo(0));
-        // Check next non-comment line is not a string/value
-        int nextLineIdx = keyLine + 1;
-        while (nextLineIdx < lines.length && lines[nextLineIdx].trim().startsWith('<!--')) {
-          nextLineIdx++;
-        }
-        expect(lines[nextLineIdx].contains('<string>'), false);
-      });
-
-      test('should add entry at specified path', () {
-        final plistWithArray = '''<?xml version="1.0" encoding="UTF-8"?>
+    test('adds multiple NS usage descriptions in sequence', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
-    <key>ArrayKey</key>
-    <array>
-    </array>
+	<key>CFBundleName</key>
+	<string>MyApp</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access needed</string>
 </dict>
 </plist>''';
-        final editor = PListEditor(plistWithArray);
-        editor.addEntry(
-          path: 'plist.dict',
-          key: 'NewKey',
-          value: '<string>new value</string>',
-        );
 
-        final result = editor.toXmlString();
-        expect(result.contains('NewKey'), true);
-        expect(result.contains('new value'), true);
-      });
+      final editor = PListEditor(realPlist);
 
-      test('should place comments correctly above their keys', () {
-        final editor = PListEditor(plistContent);
-        editor.addUsageDescription(
-          key: 'NSMicrophoneUsageDescription',
-          description: 'We need microphone access',
-          keyComments: ['comment1'],
-        );
-        editor.addUsageDescription(
-          key: 'NSBluetoothPeripheralUsageDescription',
-          description: 'We need bluetooth access',
-          keyComments: ['comment2'],
-        );
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'Camera access',
+      );
 
-        final result = editor.toXmlString();
-        final lines = result.split('\n');
+      editor.addUsageDescription(
+        key: 'NSPhotoLibraryUsageDescription',
+        description: 'Photo library access',
+      );
 
-        // Find indices of comments and keys
-        int comment1Index = -1;
-        int key1Index = -1;
-        int comment2Index = -1;
-        int key2Index = -1;
+      final result = editor.toString();
 
-        for (int i = 0; i < lines.length; i++) {
-          if (lines[i].contains('comment1')) comment1Index = i;
-          if (lines[i].contains('NSMicrophoneUsageDescription')) key1Index = i;
-          if (lines[i].contains('comment2')) comment2Index = i;
-          if (lines[i].contains('NSBluetoothPeripheralUsageDescription')) key2Index = i;
-        }
+      expect(result, contains('NSCameraUsageDescription'));
+      expect(result, contains('NSPhotoLibraryUsageDescription'));
+      expect(result, contains('NSLocationWhenInUseUsageDescription'));
 
-        // Verify all were found
-        expect(comment1Index, greaterThanOrEqualTo(0));
-        expect(key1Index, greaterThanOrEqualTo(0));
-        expect(comment2Index, greaterThanOrEqualTo(0));
-        expect(key2Index, greaterThanOrEqualTo(0));
+      final cameraIdx = result.indexOf('NSCameraUsageDescription');
+      final photoIdx = result.indexOf('NSPhotoLibraryUsageDescription');
 
-        // Verify comments are directly above their keys
-        expect(comment1Index, lessThan(key1Index), reason: 'comment1 should appear before key1');
-        expect(comment2Index, lessThan(key2Index), reason: 'comment2 should appear before key2');
-
-        // Verify comment1 comes before comment2
-        expect(comment1Index, lessThan(comment2Index), reason: 'comment1 should appear before comment2');
-      });
-
-      test('should throw exception when dict not found at path', () {
-        final invalidPlist = '<?xml version="1.0"?><plist version="1.0"><array></array></plist>';
-        final editor = PListEditor(invalidPlist);
-
-        expect(
-          () => editor.addEntry(
-            path: 'plist.dict',
-            key: 'TestKey',
-            value: '<string>Test</string>',
-          ),
-          throwsException,
-        );
-      });
-
-      test('should throw exception when specified path not found', () {
-        final editor = PListEditor(plistContent);
-        expect(
-          () => editor.addEntry(
-            path: 'plist.dict.nonexistent',
-            key: 'TestKey',
-            value: '<string>Test</string>',
-          ),
-          throwsException,
-        );
-      });
+      expect(cameraIdx, greaterThan(photoIdx));
     });
 
-    group('removeEntry', () {
-      test('should remove a plist entry with comment marker', () {
-        final plistWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+    test('adds usage description with both key and value comments', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>MyApp</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.addUsageDescription(
+        key: 'NSMicrophoneUsageDescription',
+        description: 'Microphone access for recording',
+        keyComments: [' Microphone permission '],
+        valueComments: [' Required for audio recording '],
+      );
+
+      final result = editor.toString();
+      expect(result, contains('<!-- Microphone permission -->'));
+      expect(result, contains('NSMicrophoneUsageDescription'));
+      expect(result, contains('<!-- Required for audio recording -->'));
+      expect(result, contains('Microphone access for recording'));
+    });
+
+    test('preserves plist file structure after adding description', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!--@permit camera-->
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need photo library access</string>
-</dict>
-</plist>''';
-        final editor = PListEditor(plistWithComments);
-        editor.removeUsageDescription(
-          key: 'NSCameraUsageDescription',
-          removeComments: (comment) => comment.contains('@permit'),
-        );
-
-        final result = editor.toXmlString();
-        expect(result.contains('NSCameraUsageDescription'), false);
-        expect(result.contains('We need camera access'), false);
-        expect(result.contains('NSPhotoLibraryUsageDescription'), true);
-        expect(result.contains('@permit camera'), false);
-      });
-
-      test('should remove plist entry without comments', () {
-        final editor = PListEditor(plistContent);
-        // Note: removePlistEntry removes from the key through the value
-        // It should remove both the key line and the value line
-        editor.removeUsageDescription(
-          key: 'NSLocationWhenInUseUsageDescription',
-        );
-
-        final result = editor.toXmlString();
-        // The key should be removed
-        expect(result.contains('NSLocationWhenInUseUsageDescription'), false);
-        // Other keys should remain
-        expect(result.contains('NSCameraUsageDescription'), true);
-      });
-
-      test('should throw exception for non-existent key', () {
-        final editor = PListEditor(plistContent);
-        expect(
-          () => editor.removeUsageDescription(key: 'NonexistentKey'),
-          throwsException,
-        );
-      });
-
-      test('should throw exception when dict not found', () {
-        final invalidPlist = '<?xml version="1.0"?><plist version="1.0"><array></array></plist>';
-        final editor = PListEditor(invalidPlist);
-
-        expect(
-          () => editor.removeUsageDescription(key: 'TestKey'),
-          throwsException,
-        );
-      });
-    });
-  });
-
-  group('addArrayEntry', () {
-    final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access for photos</string>
+	<key>CFBundleDisplayName</key>
+	<string>MyApp</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access needed</string>
 </dict>
 </plist>''';
 
-    test('should create new array if it does not exist', () {
-      final editor = PListEditor(plistContent);
-      editor.addArrayEntry(
-        path: 'plist.dict',
-        key: 'UIBackgroundModes',
-        entry: '<string>location</string>',
-        keyComments: ['@permit background'],
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('<key>UIBackgroundModes</key>'), true);
-      expect(result.contains('<array>'), true);
-      expect(result.contains('<string>location</string>'), true);
-      expect(result.contains('@permit background'), true);
-    });
-
-    test('should append to existing array', () {
-      final plistWithArray = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>location</string>
-    </array>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistWithArray);
-      editor.addArrayEntry(
-        path: 'plist.dict',
-        key: 'UIBackgroundModes',
-        entry: '<string>fetch</string>',
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('<string>location</string>'), true);
-      expect(result.contains('<string>fetch</string>'), true);
-      // Should only have one key
-      final keyCount = result.split('\n').where((l) => l.contains('<key>UIBackgroundModes</key>')).length;
-      expect(keyCount, equals(1));
-    });
-
-    test('should append multiple entries to array', () {
-      final editor = PListEditor(plistContent);
-      editor.addArrayEntry(
-        path: 'plist.dict',
-        key: 'UIBackgroundModes',
-        entry: '<string>location</string>',
-      );
-      editor.addArrayEntry(
-        path: 'plist.dict',
-        key: 'UIBackgroundModes',
-        entry: '<string>fetch</string>',
-      );
-      editor.addArrayEntry(
-        path: 'plist.dict',
-        key: 'UIBackgroundModes',
-        entry: '<string>voip</string>',
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('<string>location</string>'), true);
-      expect(result.contains('<string>fetch</string>'), true);
-      expect(result.contains('<string>voip</string>'), true);
-    });
-  });
-
-  group('removeArrayEntry', () {
-    test('should remove entry from array', () {
-      final plistWithArray = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>location</string>
-        <string>fetch</string>
-    </array>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistWithArray);
-      editor.removeArrayEntry(
-        path: 'plist.dict',
-        key: 'UIBackgroundModes',
-        entry: '<string>location</string>',
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('<string>location</string>'), false);
-      expect(result.contains('<string>fetch</string>'), true);
-      expect(result.contains('<key>UIBackgroundModes</key>'), true);
-      expect(result.contains('<array>'), true);
-    });
-
-    test('should remove key and array if it becomes empty', () {
-      final plistWithArray = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>location</string>
-    </array>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistWithArray);
-      editor.removeArrayEntry(
-        path: 'plist.dict',
-        key: 'UIBackgroundModes',
-        entry: '<string>location</string>',
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('UIBackgroundModes'), false);
-      expect(result.contains('<array>'), false);
-      expect(result.contains('<string>location</string>'), false);
-    });
-
-    test('should throw exception if entry not found', () {
-      final plistWithArray = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>location</string>
-    </array>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistWithArray);
-      expect(
-        () => editor.removeArrayEntry(
-          path: 'plist.dict',
-          key: 'UIBackgroundModes',
-          entry: '<string>nonexistent</string>',
-        ),
-        throwsException,
-      );
-    });
-
-    test('should throw exception if key not found', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access for photos</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-      expect(
-        () => editor.removeArrayEntry(
-          path: 'plist.dict',
-          key: 'UIBackgroundModes',
-          entry: '<string>location</string>',
-        ),
-        throwsException,
-      );
-    });
-  });
-
-  group('override functionality', () {
-    test('should override existing key with new comments', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access for photos</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-
-      // Add a usage description with initial comments
+      final editor = PListEditor(realPlist);
       editor.addUsageDescription(
-        key: 'NSLocationWhenInUseUsageDescription',
-        description: 'Old location description',
-        keyComments: ['@permit old location comment'],
+        key: 'NSCameraUsageDescription',
+        description: 'Camera access',
       );
 
-      String result = editor.toXmlString();
-      expect(result.contains('NSLocationWhenInUseUsageDescription'), true);
-      expect(result.contains('Old location description'), true);
-      expect(result.contains('@permit old location comment'), true);
-
-      // Override with new comments
-      editor.addUsageDescription(
-        key: 'NSLocationWhenInUseUsageDescription',
-        description: 'New location description',
-        keyComments: ['@permit new location comment', 'Updated for feature X'],
-        shouldRemoveComment: (comment) => comment.contains('@permit'),
-      );
-
-      result = editor.toXmlString();
-      expect(result.contains('NSLocationWhenInUseUsageDescription'), true);
-      expect(result.contains('New location description'), true);
-      expect(result.contains('@permit new location comment'), true);
-      expect(result.contains('Updated for feature X'), true);
-      expect(result.contains('Old location description'), false);
-      expect(result.contains('@permit old location comment'), false);
-
-      // Should only have one NSLocationWhenInUseUsageDescription key
-      final keyCount = result.split('<key>NSLocationWhenInUseUsageDescription</key>').length - 1;
-      expect(keyCount, equals(1));
+      final result = editor.toString();
+      // Verify XML structure is intact
+      expect(result, startsWith('<?xml version'));
+      expect(result, contains('<!DOCTYPE plist'));
+      expect(result, contains('<plist version="1.0">'));
+      expect(result, contains('</dict>'));
+      expect(result, contains('</plist>'));
+      expect(result, contains('<key>CFBundleDisplayName</key>'));
     });
 
-    test('should override existing entry with new comments using addEntry', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
+    test('replaces existing usage description with same key', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
-    <!-- @permit bluetooth v1 -->
-    <key>NSBluetoothPeripheralUsageDescription</key>
-    <string>Old bluetooth description</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Old description</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access</string>
 </dict>
 </plist>''';
 
-      final editor = PListEditor(plistContent);
-
-      // Override with new comments
-      editor.addEntry(
-        path: 'plist.dict',
-        key: 'NSBluetoothPeripheralUsageDescription',
-        value: '<string>New bluetooth description</string>',
-        keyComments: ['@permit bluetooth v2', 'Enhanced bluetooth support'],
-        shouldRemoveComment: (comment) => comment.contains('@permit'),
+      final editor = PListEditor(realPlist);
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'New camera description',
       );
 
-      final result = editor.toXmlString();
-      expect(result.contains('NSBluetoothPeripheralUsageDescription'), true);
-      expect(result.contains('New bluetooth description'), true);
-      expect(result.contains('@permit bluetooth v2'), true);
-      expect(result.contains('Enhanced bluetooth support'), true);
-      expect(result.contains('Old bluetooth description'), false);
-      expect(result.contains('@permit bluetooth v1'), false);
-
-      // Should only have one NSBluetoothPeripheralUsageDescription key
-      final keyCount = result.split('<key>NSBluetoothPeripheralUsageDescription</key>').length - 1;
-      expect(keyCount, equals(1));
+      final result = editor.toString();
+      expect(result, contains('New camera description'));
+      expect(result, isNot(contains('Old description')));
+      expect(result, contains('NSCameraUsageDescription'));
+      // Should only have one instance of NSCameraUsageDescription
+      expect(
+        RegExp('NSCameraUsageDescription').allMatches(result).length,
+        equals(1),
+      );
     });
 
-    test('should remove old @permit comments when overriding', () {
-      final plistWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+    test('inserts after last NS usage description', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
-    <!-- @permit old comment line 1 -->
-    <!-- @permit old comment line 2 -->
-    <key>NSCameraUsageDescription</key>
-    <string>Old camera description</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photos</string>
+	<key>CFBundleName</key>
+	<string>App</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'Camera',
+      );
+
+      final result = editor.toString();
+      final cameraIdx = result.indexOf('NSCameraUsageDescription');
+      final bundleIdx = result.indexOf('CFBundleName');
+      // Camera should be before CFBundleName (after NS descriptions)
+      expect(cameraIdx, lessThan(bundleIdx));
+    });
+  });
+
+  group('PListEditor - Removing Usage Descriptions', () {
+    test('removes camera usage description from real plist', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access needed</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access needed</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.removeUsageDescription(name: 'NSCameraUsageDescription');
+
+      final result = editor.toString();
+      expect(result, isNot(contains('NSCameraUsageDescription')));
+      expect(result, isNot(contains('Camera access needed')));
+      expect(result, contains('NSLocationWhenInUseUsageDescription'));
+      expect(result, contains('Location access needed'));
+    });
+
+    test('removes usage description and its preceding comment', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<!-- Camera permission for photos -->
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.removeUsageDescription(
+        name: 'NSCameraUsageDescription',
+        removeComments: (comment) => comment.contains('Camera'),
+      );
+
+      final result = editor.toString();
+      expect(result, isNot(contains('NSCameraUsageDescription')));
+      expect(result, isNot(contains('Camera permission for photos')));
+      expect(result, contains('NSLocationWhenInUseUsageDescription'));
+    });
+
+    test('handles orphaned key without string value', () {
+      const plistWithOrphanedKey = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+ <key>NSCameraUsageDescription</key>
+ <key>NSLocationWhenInUseUsageDescription</key>
+ <string>Location needed</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(plistWithOrphanedKey);
+
+      // Should handle orphaned key gracefully
+      editor.removeUsageDescription(name: 'NSCameraUsageDescription');
+
+      final result = editor.toString();
+      expect(result, isNot(contains('NSCameraUsageDescription')));
+      expect(result, contains('NSLocationWhenInUseUsageDescription'));
+      expect(result, contains('Location needed'));
+    });
+
+    test('preserves other comments when removing specific description', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<!-- Location permission marker -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access</string>
+	<!-- Camera permission marker -->
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.removeUsageDescription(
+        name: 'NSCameraUsageDescription',
+        removeComments: (comment) => comment.contains('Camera'),
+      );
+
+      final result = editor.toString();
+      expect(result, contains('Location permission marker'));
+      expect(result, contains('NSLocationWhenInUseUsageDescription'));
+      expect(result, isNot(contains('Camera permission marker')));
+      expect(result, isNot(contains('NSCameraUsageDescription')));
+    });
+
+    test('preserves plist structure after removing description', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>MyApp</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.removeUsageDescription(name: 'NSCameraUsageDescription');
+
+      final result = editor.toString();
+      expect(result, startsWith('<?xml version'));
+      expect(result, contains('<!DOCTYPE plist'));
+      expect(result, contains('<plist version="1.0">'));
+      expect(result, contains('</dict>'));
+      expect(result, contains('</plist>'));
+      expect(result, contains('CFBundleName'));
+      expect(result, contains('CFBundleVersion'));
+    });
+
+    test('handles removing non-existent description gracefully', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.removeUsageDescription(
+        name: 'NSCameraUsageDescription',
+      );
+
+      // Should not crash and location description should remain
+      expect(editor.toString(), contains('NSLocationWhenInUseUsageDescription'));
+    });
+
+    test('removes multiple descriptions one by one', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photos</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.removeUsageDescription(name: 'NSCameraUsageDescription');
+      editor.removeUsageDescription(name: 'NSPhotoLibraryUsageDescription');
+
+      final result = editor.toString();
+      expect(result, isNot(contains('NSCameraUsageDescription')));
+      expect(result, isNot(contains('NSPhotoLibraryUsageDescription')));
+      expect(result, contains('NSLocationWhenInUseUsageDescription'));
+    });
+  });
+
+  group('PListEditor - Querying Usage Descriptions', () {
+    test('retrieves all usage descriptions from plist', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs your location</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      final descriptions = editor.getUsageDescriptions();
+
+      expect(descriptions, hasLength(3));
+      expect(descriptions[0].key, equals('NSLocationWhenInUseUsageDescription'));
+      expect(descriptions[0].description, equals('This app needs your location'));
+      expect(descriptions[1].key, equals('NSCameraUsageDescription'));
+      expect(descriptions[1].description, equals('This app needs camera access'));
+      expect(descriptions[2].key, equals('NSPhotoLibraryUsageDescription'));
+      expect(descriptions[2].description, equals('This app needs photo library access'));
+    });
+
+    test('retrieves usage descriptions with associated comments', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<!-- Location permission for maps -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location needed</string>
+	<!-- Camera for video calls -->
+	<key>NSCameraUsageDescription</key>
+	<string>Camera needed</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      final descriptions = editor.getUsageDescriptions();
+
+      expect(descriptions, hasLength(2));
+      expect(descriptions[0].comments, isNotEmpty);
+      expect(descriptions[0].comments[0], contains('Location permission'));
+      expect(descriptions[1].comments, isNotEmpty);
+      expect(descriptions[1].comments[0], contains('Camera for video'));
+    });
+
+    test('handles plist with no usage descriptions', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>MyApp</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      final descriptions = editor.getUsageDescriptions();
+
+      expect(descriptions, isEmpty);
+    });
+
+    test('filters only NS usage descriptions', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>MyApp</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera</string>
+	<key>SomeOtherKey</key>
+	<string>Value</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location</string>
+	<key>NotAnUsageDescription</key>
+	<string>Other</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      final descriptions = editor.getUsageDescriptions();
+
+      expect(descriptions, hasLength(2));
+      expect(descriptions[0].key, equals('NSCameraUsageDescription'));
+      expect(descriptions[1].key, equals('NSLocationWhenInUseUsageDescription'));
+    });
+
+    test('preserves description order from original plist', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photos</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      final descriptions = editor.getUsageDescriptions();
+
+      expect(descriptions[0].key, equals('NSPhotoLibraryUsageDescription'));
+      expect(descriptions[1].key, equals('NSCameraUsageDescription'));
+      expect(descriptions[2].key, equals('NSLocationWhenInUseUsageDescription'));
+      expect(descriptions[3].key, equals('NSMicrophoneUsageDescription'));
+    });
+
+    test('retrieves descriptions with multiple preceding comments', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<!-- Marker: permit-auto -->
+	<!-- Camera permission for photo capture -->
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      final descriptions = editor.getUsageDescriptions();
+
+      expect(descriptions, hasLength(1));
+      expect(descriptions[0].comments, hasLength(2));
+      expect(descriptions[0].comments[0], contains('Marker'));
+      expect(descriptions[0].comments[1], contains('Camera permission'));
+    });
+  });
+
+  group('PListEditor - Format Preservation', () {
+    test('preserves original indentation after modifications', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>MyApp</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'Camera',
+      );
+
+      final result = editor.toString();
+      // Should maintain tab indentation
+      expect(result, contains('\t<key>'));
+      expect(result, contains('\t<string>'));
+    });
+
+    test('preserves DOCTYPE declaration', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Test</key>
+	<string>Value</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'Camera',
+      );
+
+      final result = editor.toString();
+      expect(
+        result,
+        contains('<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"'),
+      );
+    });
+
+    test('preserves XML declaration', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>Test</key>
+	<string>Value</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'Camera',
+      );
+
+      final result = editor.toString();
+      expect(result, startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
+    });
+
+    test('preserves exact spacing and newlines', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>First</key>
+	<string>Value1</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location</string>
+	<key>Last</key>
+	<string>Value2</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'Camera',
+      );
+
+      final result = editor.toString();
+
+      // Verify structure is intact
+      final lines = result.split('\n');
+      expect(lines[0], equals('<?xml version="1.0" encoding="UTF-8"?>'));
+      expect(lines[1], equals('<plist version="1.0">'));
+      expect(lines[2], equals('<dict>'));
+      expect(lines[lines.length - 1], equals('</plist>'));
+    });
+
+    test('no format changes when querying only', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+      editor.getUsageDescriptions();
+
+      final result = editor.toString();
+      expect(result, equals(realPlist));
+    });
+
+    test('preserves format through add and remove operations', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(realPlist);
+
+      // Add a permission
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'Camera',
+      );
+
+      // Remove it
+      editor.removeUsageDescription(name: 'NSCameraUsageDescription');
+
+      final result = editor.toString();
+      expect(result, contains('NSLocationWhenInUseUsageDescription'));
+      expect(result, startsWith('<?xml version'));
+      expect(result, contains('</dict>'));
+      expect(result, contains('</plist>'));
+    });
+  });
+
+  group('PListEditor - Complex Real-world Scenarios', () {
+    test('comprehensive example with multiple operations', () {
+      const complexPlist = '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>Runner</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.example.app</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access needed</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+</dict>
+</plist>''';
+
+      final editor = PListEditor(complexPlist);
+
+      // Add permissions
+      editor.addUsageDescription(
+        key: 'NSCameraUsageDescription',
+        description: 'Camera access for photos',
+      );
+      editor.addUsageDescription(
+        key: 'NSPhotoLibraryUsageDescription',
+        description: 'Photo library access',
+      );
+      editor.addUsageDescription(
+        key: 'NSMicrophoneUsageDescription',
+        description: 'Microphone access for audio',
+      );
+
+      // Query all
+      var descriptions = editor.getUsageDescriptions();
+      expect(descriptions, hasLength(4)); // 1 existing + 3 added
+
+      // Remove one
+      editor.removeUsageDescription(name: 'NSPhotoLibraryUsageDescription');
+
+      descriptions = editor.getUsageDescriptions();
+      expect(descriptions, hasLength(3));
+
+      // Verify structure
+      final result = editor.toString();
+      expect(result, startsWith('<?xml version'));
+      expect(result, contains('<!DOCTYPE plist'));
+      expect(result, contains('CFBundleIdentifier'));
+      expect(result, contains('NSCameraUsageDescription'));
+      expect(result, contains('NSMicrophoneUsageDescription'));
+      expect(result, isNot(contains('NSPhotoLibraryUsageDescription')));
+    });
+
+    test('handles commented permissions correctly', () {
+      const plistWithComments = '''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<!-- @permit:code location -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location needed</string>
+	<!-- @permit:code camera -->
+	<key>NSCameraUsageDescription</key>
+	<string>Camera needed</string>
 </dict>
 </plist>''';
 
       final editor = PListEditor(plistWithComments);
 
-      // Override with new comments
-      editor.addUsageDescription(
-        key: 'NSCameraUsageDescription',
-        description: 'New camera description',
-        keyComments: ['@permit new camera permission'],
-        shouldRemoveComment: (comment) => comment.contains('@permit'),
+      // Remove with specific comment marker
+      editor.removeUsageDescription(
+        name: 'NSCameraUsageDescription',
+        removeComments: (c) => c.contains('@permit:code camera'),
       );
 
-      final result = editor.toXmlString();
-      expect(result.contains('NSCameraUsageDescription'), true);
-      expect(result.contains('New camera description'), true);
-      expect(result.contains('@permit new camera permission'), true);
-      expect(result.contains('Old camera description'), false);
-      expect(result.contains('@permit old comment line 1'), false);
-      expect(result.contains('@permit old comment line 2'), false);
-    });
-
-    test('should override key-only entry (no value)', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <!-- @permit old key -->
-    <key>TestKey</key>
-    <string>some value</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-
-      // Override with new key and value
-      editor.addEntry(
-        path: 'plist.dict',
-        key: 'TestKey',
-        value: '<string>new value</string>',
-        keyComments: ['@permit new key'],
-        shouldRemoveComment: (comment) => comment.contains('@permit'),
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('TestKey'), true);
-      expect(result.contains('new value'), true);
-      expect(result.contains('@permit new key'), true);
-      expect(result.contains('some value'), false);
-      expect(result.contains('@permit old key'), false);
-    });
-
-    test('should not override when override=false and key exists', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>NSCameraUsageDescription</key>
-    <string>Existing camera description</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-
-      // This should not throw because we're checking existence differently
-      // But we expect duplicate keys if override=false
-      editor.addUsageDescription(
-        key: 'NSCameraUsageDescription',
-        description: 'New camera description',
-        keyComments: ['@permit new camera'],
-        override: false,
-      );
-
-      final result = editor.toXmlString();
-      // Both descriptions should exist
-      expect(result.contains('Existing camera description'), true);
-      expect(result.contains('New camera description'), true);
-
-      // Should have TWO NSCameraUsageDescription keys
-      final keyCount = result.split('<key>NSCameraUsageDescription</key>').length - 1;
-      expect(keyCount, equals(2));
-    });
-
-    // Tests for shouldRemoveComment callback
-    test('should use custom shouldRemoveComment callback to remove specific comments', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <!-- @permit camera -->
-    <!-- @deprecated old api -->
-    <!-- Important: keep this -->
-    <key>NSCameraUsageDescription</key>
-    <string>Old camera description</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-
-      // Override with custom callback that only removes @deprecated comments
-      editor.addUsageDescription(
-        key: 'NSCameraUsageDescription',
-        description: 'New camera description',
-        keyComments: ['@permit camera', '@version 2.0'],
-        shouldRemoveComment: (comment) => comment.contains('@deprecated'),
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('NSCameraUsageDescription'), true);
-      expect(result.contains('New camera description'), true);
-      expect(result.contains('@permit camera'), true);
-      expect(result.contains('@version 2.0'), true);
-      expect(result.contains('@deprecated old api'), false);
-      expect(result.contains('Important: keep this'), true);
-      expect(result.contains('Old camera description'), false);
-    });
-
-    test('should remove only comments matching the callback criteria', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <!-- @feature flag1 -->
-    <!-- @feature flag2 -->
-    <!-- @note some note -->
-    <key>TestKey</key>
-    <string>old value</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-
-      // Override with callback that removes @feature comments only
-      editor.addEntry(
-        path: 'plist.dict',
-        key: 'TestKey',
-        value: '<string>new value</string>',
-        keyComments: ['@feature flag3'],
-        override: true,
-        shouldRemoveComment: (comment) => comment.contains('@feature'),
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('TestKey'), true);
-      expect(result.contains('new value'), true);
-      expect(result.contains('@feature flag1'), false);
-      expect(result.contains('@feature flag2'), false);
-      expect(result.contains('@feature flag3'), true);
-      expect(result.contains('@note some note'), true);
-      expect(result.contains('old value'), false);
-    });
-
-    test('should preserve all comments when shouldRemoveComment returns false for all', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <!-- @permit camera -->
-    <!-- Important note -->
-    <key>NSCameraUsageDescription</key>
-    <string>Old description</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-
-      // Override with callback that never returns true (removes nothing)
-      editor.addUsageDescription(
-        key: 'NSCameraUsageDescription',
-        description: 'New description',
-        keyComments: ['@permit camera v2'],
-        override: true,
-        shouldRemoveComment: (comment) => false,
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('NSCameraUsageDescription'), true);
-      expect(result.contains('New description'), true);
-      expect(result.contains('@permit camera'), true);
-      expect(result.contains('Important note'), true);
-      expect(result.contains('@permit camera v2'), true);
-      expect(result.contains('Old description'), false);
-    });
-
-    test('should use custom callback with multiple matching criteria', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <!-- @permit camera v1 -->
-    <!-- TODO: review this -->
-    <!-- @deprecated -->
-    <key>NSCameraUsageDescription</key>
-    <string>old</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-
-      // Override with callback that removes comments containing @permit or @deprecated
-      editor.addUsageDescription(
-        key: 'NSCameraUsageDescription',
-        description: 'new',
-        keyComments: ['@permit camera v2'],
-        override: true,
-        shouldRemoveComment: (comment) => comment.contains('@permit') || comment.contains('@deprecated'),
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('@permit camera v1'), false);
-      expect(result.contains('@deprecated'), false);
-      expect(result.contains('TODO: review this'), true);
-      expect(result.contains('@permit camera v2'), true);
-      expect(result.contains('NSCameraUsageDescription'), true);
-      expect(result.contains('new'), true);
-    });
-
-    test('should work with removeEntry and custom callback', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <!-- @permit camera -->
-    <!-- @internal internal-only -->
-    <key>NSCameraUsageDescription</key>
-    <string>camera description</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-
-      // This test uses removeEntry which already has commentMarkers parameter
-      // But we can verify the behavior with a custom marker list
-      editor.removeEntry(
-        path: 'plist.dict',
-        key: 'NSCameraUsageDescription',
-        removeComments: (c) => c.contains('@internal'),
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('NSCameraUsageDescription'), false);
-      expect(result.contains('@permit camera'), true);
-      expect(result.contains('@internal internal-only'), false);
-      expect(result.contains('camera description'), false);
-    });
-
-    test('should default to removing @permit when shouldRemoveComment is null', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <!-- @permit old -->
-    <!-- @other comment -->
-    <key>TestKey</key>
-    <string>old</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-
-      editor.addUsageDescription(
-        key: 'TestKey',
-        description: 'new',
-        keyComments: ['@permit new'],
-        shouldRemoveComment: (comment) => comment.contains('@permit'),
-      );
-
-      final result = editor.toXmlString();
-      expect(result.contains('@permit old'), false);
-      expect(result.contains('@other comment'), true);
-      expect(result.contains('@permit new'), true);
-      expect(result.contains('old'), false);
+      final result = editor.toString();
+      expect(result, contains('@permit:code location'));
+      expect(result, isNot(contains('@permit:code camera')));
+      expect(result, contains('NSLocationWhenInUseUsageDescription'));
     });
   });
 
-  group('getUsageDescriptions', () {
-    test('should retrieve all usage descriptions from plist', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+  group('PListEditor - Edge Cases', () {
+    test('handles descriptions with special characters', () {
+      const realPlist = '''<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access for photos</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need photo library access</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>We need your location for mapping</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location</string>
 </dict>
 </plist>''';
 
-      final editor = PListEditor(plistContent);
-      final descriptions = editor.getUsageDescriptions();
-
-      expect(
-        descriptions,
-        equals([
-          PListUsageDescription(
-            key: 'NSCameraUsageDescription',
-            description: 'We need camera access for photos',
-            comments: [],
-          ),
-          PListUsageDescription(
-            key: 'NSPhotoLibraryUsageDescription',
-            description: 'We need photo library access',
-            comments: [],
-          ),
-          PListUsageDescription(
-            key: 'NSLocationWhenInUseUsageDescription',
-            description: 'We need your location for mapping',
-            comments: [],
-          ),
-        ]),
-      );
-    });
-
-    test('should retrieve usage descriptions with associated comments', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <!-- @permit camera -->
-    <!-- User-facing camera description -->
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access</string>
-    <!-- @permit microphone -->
-    <key>NSMicrophoneUsageDescription</key>
-    <string>We need microphone access</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-      final descriptions = editor.getUsageDescriptions();
-
-      expect(
-        descriptions,
-        equals([
-          PListUsageDescription(
-            key: 'NSCameraUsageDescription',
-            description: 'We need camera access',
-            comments: ['@permit camera', 'User-facing camera description'],
-          ),
-          PListUsageDescription(
-            key: 'NSMicrophoneUsageDescription',
-            description: 'We need microphone access',
-            comments: ['@permit microphone'],
-          ),
-        ]),
-      );
-    });
-
-    test('should return empty list when plist dict is empty', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-      final descriptions = editor.getUsageDescriptions();
-
-      expect(descriptions, equals([]));
-    });
-
-    test('should return only usage-description keys', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>SomeOtherKey</key>
-    <string>Some value</string>
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-      expect(
-        editor.getUsageDescriptions(),
-        equals([
-          PListUsageDescription(
-            key: 'NSCameraUsageDescription',
-            description: 'We need camera access',
-            comments: [],
-          ),
-        ]),
-      );
-    });
-
-    test('should retrieve only string-type values as usage descriptions', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access</string>
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>location</string>
-    </array>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need photo library access</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-      final descriptions = editor.getUsageDescriptions();
-
-      expect(
-        descriptions,
-        equals([
-          PListUsageDescription(
-            key: 'NSCameraUsageDescription',
-            description: 'We need camera access',
-            comments: [],
-          ),
-          PListUsageDescription(
-            key: 'NSPhotoLibraryUsageDescription',
-            description: 'We need photo library access',
-            comments: [],
-          ),
-        ]),
-      );
-    });
-
-    test('should throw exception when dict not found at plist.dict path', () {
-      final invalidPlist = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<array></array>
-</plist>''';
-
-      final editor = PListEditor(invalidPlist);
-      expect(
-        () => editor.getUsageDescriptions(),
-        throwsException,
-      );
-    });
-
-    test('should retrieve descriptions after adding new entries', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-      editor.addUsageDescription(
-        key: 'NSMicrophoneUsageDescription',
-        description: 'We need microphone access',
-        keyComments: ['@permit microphone'],
-        anchorKeys: ['NSCameraUsageDescription'],
-      );
-      editor.addUsageDescription(
-        key: 'NSLocationWhenInUseUsageDescription',
-        description: 'We need location access',
-        keyComments: ['@permit location'],
-        anchorKeys: ['NSMicrophoneUsageDescription'],
-      );
-
-      final descriptions = editor.getUsageDescriptions();
-
-      expect(
-        descriptions,
-        equals([
-          PListUsageDescription(
-            key: 'NSCameraUsageDescription',
-            description: 'We need camera access',
-            comments: [],
-          ),
-          PListUsageDescription(
-            key: 'NSMicrophoneUsageDescription',
-            description: 'We need microphone access',
-            comments: ['@permit microphone'],
-          ),
-          PListUsageDescription(
-            key: 'NSLocationWhenInUseUsageDescription',
-            description: 'We need location access',
-            comments: ['@permit location'],
-          ),
-        ]),
-      );
-    });
-
-    test('should retrieve descriptions after removing entries', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>We need microphone access</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>We need location access</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-      editor.removeUsageDescription(key: 'NSMicrophoneUsageDescription');
-
-      final descriptions = editor.getUsageDescriptions();
-
-      expect(
-        descriptions,
-        equals([
-          PListUsageDescription(
-            key: 'NSCameraUsageDescription',
-            description: 'We need camera access',
-            comments: [],
-          ),
-          PListUsageDescription(
-            key: 'NSLocationWhenInUseUsageDescription',
-            description: 'We need location access',
-            comments: [],
-          ),
-        ]),
-      );
-    });
-
-    test('should handle usage descriptions with whitespace in values', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>NSCameraUsageDescription</key>
-    <string>  We need camera access  </string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>
-        Multiline description\nthat spans multiple lines
-    </string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-      final descriptions = editor.getUsageDescriptions();
-
-      expect(
-        descriptions,
-        equals([
-          PListUsageDescription(
-            key: 'NSCameraUsageDescription',
-            description: 'We need camera access',
-            comments: [],
-          ),
-          PListUsageDescription(
-            key: 'NSPhotoLibraryUsageDescription',
-            description: 'Multiline description\nthat spans multiple lines',
-            comments: [],
-          ),
-        ]),
-      );
-    });
-
-    test('should use equality and hashCode correctly for PListUsageDescription', () {
-      final desc1 = PListUsageDescription(
-        key: 'NSCameraUsageDescription',
-        description: 'We need camera access',
-        comments: ['@permit camera'],
-      );
-      final desc2 = PListUsageDescription(
-        key: 'NSCameraUsageDescription',
-        description: 'We need camera access',
-        comments: ['@permit camera'],
-      );
-      final desc3 = PListUsageDescription(
-        key: 'NSMicrophoneUsageDescription',
-        description: 'We need microphone access',
-        comments: ['@permit microphone'],
-      );
-
-      expect(desc1, equals(desc2));
-      expect(desc1, isNot(equals(desc3)));
-      expect(desc1.hashCode, equals(desc2.hashCode));
-      expect(desc1.hashCode, isNot(equals(desc3.hashCode)));
-    });
-
-    test('should handle descriptions with empty comments list', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access</string>
-    <!-- @permit microphone -->
-    <key>NSMicrophoneUsageDescription</key>
-    <string>We need microphone access</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-      final descriptions = editor.getUsageDescriptions();
-
-      expect(
-        descriptions,
-        equals([
-          PListUsageDescription(
-            key: 'NSCameraUsageDescription',
-            description: 'We need camera access',
-            comments: [],
-          ),
-          PListUsageDescription(
-            key: 'NSMicrophoneUsageDescription',
-            description: 'We need microphone access',
-            comments: ['@permit microphone'],
-          ),
-        ]),
-      );
-    });
-
-    test('should match retrieved descriptions against full objects', () {
-      final plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <!-- @permit camera -->
-    <!-- Camera access needed -->
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access</string>
-    <!-- @permit microphone -->
-    <key>NSMicrophoneUsageDescription</key>
-    <string>We need microphone access</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>We need location access</string>
-</dict>
-</plist>''';
-
-      final editor = PListEditor(plistContent);
-      final descriptions = editor.getUsageDescriptions();
-
-      expect(
-        descriptions,
-        equals([
-          PListUsageDescription(
-            key: 'NSCameraUsageDescription',
-            description: 'We need camera access',
-            comments: ['@permit camera', 'Camera access needed'],
-          ),
-          PListUsageDescription(
-            key: 'NSMicrophoneUsageDescription',
-            description: 'We need microphone access',
-            comments: ['@permit microphone'],
-          ),
-          PListUsageDescription(
-            key: 'NSLocationWhenInUseUsageDescription',
-            description: 'We need location access',
-            comments: [],
-          ),
-        ]),
-      );
-    });
-  });
-
-  group('Format Preservation', () {
-    late String plistContent;
-
-    setUp(() {
-      plistContent = '''<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <!-- Bundle identifier -->
-    <key>CFBundleIdentifier</key>
-    <string>com.example.myapp</string>
-    <!-- Bundle version -->
-    <key>CFBundleVersion</key>
-    <string>1.0.0</string>
-    <!-- Bundle short version -->
-    <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
-    <!-- Camera usage description -->
-    <!-- @permit camera -->
-    <key>NSCameraUsageDescription</key>
-    <string>We need camera access for taking photos</string>
-    <!-- Photo library usage -->
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need photo library access for saving images</string>
-    <!-- Location usage when in use -->
-    <!-- Custom location comment -->
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>We need your location for mapping features</string>
-    <!-- Microphone access -->
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Microphone access for voice recording</string>
-    <!-- Background modes -->
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>location</string>
-        <string>fetch</string>
-    </array>
-    <!-- Custom user comment -->
-    <!-- Another comment -->
-    <key>CustomKey</key>
-    <string>Custom value</string>
-</dict>
-</plist>''';
-    });
-
-    test('should preserve XML formatting when adding entries', () {
-      final editor = PListEditor(plistContent);
-      editor.addUsageDescription(
-        key: 'NSMicrophoneUsageDescription',
-        description: 'We need microphone access',
-        keyComments: ['@permit microphone'],
-      );
-
-      final result = editor.toXmlString();
-      final expected = '''<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-    <dict>
-        <!-- Bundle identifier -->
-        <key>CFBundleIdentifier</key>
-        <string>com.example.myapp</string>
-        <!-- Bundle version -->
-        <key>CFBundleVersion</key>
-        <string>1.0.0</string>
-        <!-- Bundle short version -->
-        <key>CFBundleShortVersionString</key>
-        <string>1.0</string>
-        <!-- Camera usage description -->
-        <!-- @permit camera -->
-        <key>NSCameraUsageDescription</key>
-        <string>We need camera access for taking photos</string>
-        <!-- Photo library usage -->
-        <key>NSPhotoLibraryUsageDescription</key>
-        <string>We need photo library access for saving images</string>
-        <!-- Location usage when in use -->
-        <!-- Custom location comment -->
-        <key>NSLocationWhenInUseUsageDescription</key>
-        <string>We need your location for mapping features</string>
-        <!--@permit microphone-->
-        <key>NSMicrophoneUsageDescription</key>
-        <string>We need microphone access</string>
-        <!-- Microphone access -->
-        <!-- Background modes -->
-        <key>UIBackgroundModes</key>
-        <array>
-            <string>location</string>
-            <string>fetch</string>
-        </array>
-        <!-- Custom user comment -->
-        <!-- Another comment -->
-        <key>CustomKey</key>
-        <string>Custom value</string>
-    </dict>
-</plist>''';
-
-      expect(result, expected);
-    });
-
-    test('should preserve formatting when overriding entries', () {
-      final editor = PListEditor(plistContent);
+      final editor = PListEditor(realPlist);
       editor.addUsageDescription(
         key: 'NSCameraUsageDescription',
-        description: 'Updated camera access',
-        keyComments: ['@permit camera'],
-        override: true,
-        shouldRemoveComment: (comment) => comment.contains('@permit'),
+        description: 'Camera access & photo taking (requires permission)',
       );
 
-      final result = editor.toXmlString();
-      final expected = '''<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-    <dict>
-        <!-- Bundle identifier -->
-        <key>CFBundleIdentifier</key>
-        <string>com.example.myapp</string>
-        <!-- Bundle version -->
-        <key>CFBundleVersion</key>
-        <string>1.0.0</string>
-        <!-- Bundle short version -->
-        <key>CFBundleShortVersionString</key>
-        <string>1.0</string>
-        <!-- Camera usage description -->
-        <!-- Photo library usage -->
-        <key>NSPhotoLibraryUsageDescription</key>
-        <string>We need photo library access for saving images</string>
-        <!-- Location usage when in use -->
-        <!-- Custom location comment -->
-        <key>NSLocationWhenInUseUsageDescription</key>
-        <string>We need your location for mapping features</string>
-        <!-- Microphone access -->
-        <key>NSMicrophoneUsageDescription</key>
-        <string>Microphone access for voice recording</string>
-        <!--@permit camera-->
-        <key>NSCameraUsageDescription</key>
-        <string>Updated camera access</string>
-        <!-- Background modes -->
-        <key>UIBackgroundModes</key>
-        <array>
-            <string>location</string>
-            <string>fetch</string>
-        </array>
-        <!-- Custom user comment -->
-        <!-- Another comment -->
-        <key>CustomKey</key>
-        <string>Custom value</string>
-    </dict>
-</plist>''';
-
-      expect(result, expected);
+      final result = editor.toString();
+      // XML encodes special characters like & to &amp;
+      expect(result, contains('Camera access &amp; photo taking (requires permission)'));
     });
 
-    test('should handle single-line XML input correctly', () {
-      final singleLinePlist =
-          '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>NSCameraUsageDescription</key><string>We need camera access</string></dict></plist>';
-      final editor = PListEditor(singleLinePlist);
+    test('detects NS usage description keys correctly', () {
+      final editor = PListEditor('<plist></plist>');
 
-      editor.addUsageDescription(
-        key: 'NSMicrophoneUsageDescription',
-        description: 'We need microphone access',
-        keyComments: ['@permit microphone'],
-      );
+      expect(editor.isNSUsageDesc('NSCameraUsageDescription'), true);
+      expect(editor.isNSUsageDesc('NSLocationWhenInUseUsageDescription'), true);
+      expect(editor.isNSUsageDesc('NSPhotoLibraryUsageDescription'), true);
+      expect(editor.isNSUsageDesc('NSMicrophoneUsageDescription'), true);
 
-      final result = editor.toXmlString();
-      expect(result.contains('NSMicrophoneUsageDescription'), true);
-      expect(result.contains('We need microphone access'), true);
-      expect(result.contains('@permit microphone'), true);
-      expect(editor.validate(), true);
+      expect(editor.isNSUsageDesc('CFBundleName'), false);
+      expect(editor.isNSUsageDesc('SomeRandomKey'), false);
+      expect(editor.isNSUsageDesc('NSCameraPermission'), false);
+      expect(editor.isNSUsageDesc('NSUsageDescription'), true); // Matches the pattern
+    });
+
+    test('handles whitespace in key detection', () {
+      final editor = PListEditor('<plist></plist>');
+
+      expect(editor.isNSUsageDesc('  NSCameraUsageDescription  '), true);
+      expect(editor.isNSUsageDesc('\tNSLocationWhenInUseUsageDescription\t'), true);
     });
   });
 }

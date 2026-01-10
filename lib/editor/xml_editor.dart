@@ -1,338 +1,395 @@
 import 'dart:io';
-import 'package:collection/collection.dart';
-import 'package:xml/xml.dart';
+import 'dart:math';
+
+import 'package:xml/xml_events.dart';
 
 import 'models.dart';
 part 'plist_editor.dart';
 part 'manifest_editor.dart';
 
-typedef CommentRemoverPredicate = bool Function(String comment);
+typedef RemoveComment = bool Function(String comment);
 
-/// Represents a single edit operation on the source text
-class SourceEdit {
-  final int offset;
-  final int length;
-  final String replacement;
+class XmlEditor {
+  final String _source;
+  final List<XmlEvent> _events;
 
-  SourceEdit({
-    required this.offset,
-    required this.length,
-    required this.replacement,
-  });
+  XmlEditor(this._source) : _events = _parseIntoEvents(_source);
+
+  static List<XmlEvent> _parseIntoEvents(String source) {
+    final events = parseEvents(
+      source,
+      withLocation: true,
+      withParent: true,
+      validateDocument: true,
+      validateNesting: true,
+    );
+    final eventList = <XmlEvent>[];
+    for (final event in events) {
+      if (event is XmlTextEvent) {
+        final text = event.value;
+        if (text.codeUnits.toSet().length != text.length) {
+          final currentLine = <int>[];
+          for (final char in text.codeUnits) {
+            if (char == 10) {
+              if (currentLine.isNotEmpty) {
+                eventList.add(XmlTextEvent(String.fromCharCodes(currentLine)));
+                currentLine.clear();
+              }
+              currentLine.add(char);
+            } else {
+              currentLine.add(char);
+            }
+          }
+          if (currentLine.isNotEmpty) {
+            eventList.add(XmlTextEvent(String.fromCharCodes(currentLine)));
+          }
+        } else {
+          eventList.add(event);
+        }
+      } else {
+        eventList.add(event);
+      }
+    }
+    return eventList;
+  }
+
+  void insert(XmlInsertElementEdit insert) {
+    final (anchor, indent) = _getInsertionAnchor(insert);
+    if (anchor == -1) {
+      throw ArgumentError('Insertion path not found: ${insert.path}');
+    }
+
+    _events.insertAll(anchor, insert.buildEvents(indent));
+  }
+
+  bool remove(XmlRemoveElementEdit remove) {
+    final indices = _getRemovableIndices(remove).toSet().toList()..sort();
+    if (indices.isEmpty) {
+      return false;
+    } else {
+      for (final index in indices.reversed) {
+        _events.removeAt(index);
+      }
+    }
+    return true;
+  }
+
+  bool hasElement(String path, XmlElementInfo element) {
+    final range = _getElementScope(path);
+    if (range == null) return false;
+    for (var i = range.start; i <= range.end; i++) {
+      final event = _events[i];
+      if (event is XmlStartElementEvent) {
+        if (element.matches(event)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  void _append(XmlEvent event, StringBuffer buffer) {
+    if (event.start != null && event.stop != null) {
+      buffer.write(_source.substring(event.start!, event.stop!));
+    } else {
+      buffer.write(event.toString());
+    }
+  }
 
   @override
-  String toString() => 'Edit($offset, -$length, +${replacement.length})';
-}
-
-/// Tracks the position of an element in the original source text
-class ElementPosition {
-  final int startOffset;
-  final int endOffset;
-
-  ElementPosition({required this.startOffset, required this.endOffset});
-}
-
-/// A source-edit-based XML editor that preserves formatting
-class XmlEditor {
-  final String originalText;
-  late XmlDocument document;
-  final List<SourceEdit> edits = [];
-  late Map<XmlElement, ElementPosition> elementPositions;
-
-  XmlEditor(this.originalText) {
-    document = XmlDocument.parse(originalText);
-    elementPositions = _mapElementPositions();
+  String toString() {
+    final buffer = StringBuffer();
+    for (final event in _events) {
+      _append(event, buffer);
+    }
+    return buffer.toString();
   }
 
-  /// Map all elements to their positions in the source text
-  Map<XmlElement, ElementPosition> _mapElementPositions() {
-    final positions = <XmlElement, ElementPosition>{};
-    _mapElementsRecursive(document.rootElement, positions);
-    return positions;
-  }
-
-  void _mapElementsRecursive(XmlElement element, Map<XmlElement, ElementPosition> positions) {
-    // Find the opening tag
-    final tagName = element.name.local;
-    final openingTagPattern = RegExp(r'<' + tagName + r'(?:\s|>)');
-
-    int searchStart = 0;
-    final match = openingTagPattern.firstMatch(originalText);
-    if (match != null) {
-      final startOffset = match.start;
-      // Find closing tag
-      final closingTagPattern = '</$tagName>';
-      final closeIndex = originalText.lastIndexOf(closingTagPattern);
-      if (closeIndex != -1) {
-        final endOffset = closeIndex + closingTagPattern.length;
-        positions[element] = ElementPosition(startOffset: startOffset, endOffset: endOffset);
+  Range? _getElementScope(String path) {
+    int startIndex = -1;
+    int endIndex = -1;
+    final pathParts = <String>[];
+    for (var i = 0; i < _events.length; i++) {
+      final event = _events[i];
+      if (event is XmlStartElementEvent) {
+        pathParts.add(event.name);
+        if (pathParts.join('.') == path) {
+          startIndex = i;
+          if (event.isSelfClosing) {
+            pathParts.removeLast();
+            endIndex = i;
+            break;
+          }
+        } else if (event.isSelfClosing) {
+          pathParts.removeLast();
+        }
+      } else if (event is XmlEndElementEvent) {
+        if (pathParts.join('.') == path) {
+          endIndex = i;
+          break;
+        } else {
+          pathParts.removeLast();
+        }
       }
     }
-
-    // Map children
-    for (final child in element.children.whereType<XmlElement>()) {
-      _mapElementsRecursive(child, positions);
-    }
-  }
-
-  /// Find all tags by name within a specific path
-  List<XmlElement> findTags({
-    required String path,
-    required String name,
-  }) {
-    final parent = _findElementByPath(path);
-    if (parent == null) {
-      return [];
-    }
-
-    return parent.findElements(name).toList();
-  }
-
-  /// Find all tags by tag name
-  List<XmlElement> findTagsByName(String tagName) {
-    return document.findAllElements(tagName).toList();
-  }
-
-  /// Find tags by name and attribute value
-  List<XmlElement> findTagsByAttribute({
-    String? tagName,
-    required String attributeName,
-    required String attributeValue,
-  }) {
-    final elements = tagName != null ? document.findAllElements(tagName) : document.descendants.whereType<XmlElement>();
-
-    return elements.where((e) => e.getAttribute(attributeName) == attributeValue).toList();
-  }
-
-  /// Get comments associated with an XML element
-  List<String> getCommentsOf(XmlElement element) {
-    final parent = element.parent;
-    if (parent == null) return [];
-
-    final comments = <String>[];
-    final elementIndex = parent.children.indexOf(element);
-
-    // Look backwards from the element for comment nodes
-    for (int i = elementIndex - 1; i >= 0; i--) {
-      final node = parent.children[i];
-
-      if (node is XmlComment) {
-        comments.insert(0, node.value.trim());
-      } else if (node is XmlText && node.value.trim().isEmpty) {
-        // Skip whitespace
-        continue;
-      } else {
-        // Hit a non-comment, non-whitespace node
-        break;
-      }
-    }
-
-    return comments;
-  }
-
-  /// Convert the document to XML string with custom formatting
-  String toXmlString() {
-    return _toXmlString(document.rootElement, 0);
-  }
-
-  String _toXmlString(XmlNode node, int depth) {
-    if (node is XmlElement) {
-      final indent = '    ' * depth;
-      final attributes = node.attributes;
-      final children = node.children.where((c) => c is! XmlText || c.value.trim().isNotEmpty);
-
-      // For certain elements, put attributes on new lines
-      final multiLineAttributes = [
-        'application',
-        'activity',
-        'service',
-        'intent-filter',
-        'action',
-        'category',
-      ].contains(node.name.local);
-
-      final attrString = attributes.isEmpty
-          ? ''
-          : multiLineAttributes
-          ? '\n${attributes.map((a) => '$indent    ${a.name}="${a.value}"').join('\n')}\n$indent'
-          : ' ${attributes.map((a) => '${a.name}="${a.value}"').join(' ')}';
-
-      if (children.isEmpty) {
-        return '$indent<${node.name}$attrString/>';
-      } else {
-        final childStrings = children.map((c) => _toXmlString(c, depth + 1)).where((s) => s.isNotEmpty).toList();
-        final content = childStrings.isEmpty ? '' : '\n${childStrings.join('\n')}\n$indent';
-        return '$indent<${node.name}$attrString>$content</${node.name}>';
-      }
-    } else if (node is XmlText) {
-      return node.value.trim().isEmpty ? '' : '${'    ' * depth}${node.value.trim()}';
-    } else if (node is XmlComment) {
-      return '${'    ' * depth}<!--${node.value}-->';
-    } else if (node is XmlProcessing) {
-      return node.toXmlString();
-    } else {
-      return node.toXmlString();
-    }
-  }
-
-  /// Validate that the modified content is still valid XML
-  bool validate() {
-    try {
-      XmlDocument.parse(_applyEdits());
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// Find an element by dot-separated path
-  XmlElement? _findElementByPath(String path) {
-    final parts = path.split('.');
-    XmlElement? current;
-
-    for (var i = 0; i < parts.length; i++) {
-      final part = parts[i];
-
-      if (i == 0) {
-        current = document.findElements(part).firstOrNull;
-      } else {
-        current = current?.findElements(part).firstOrNull;
-      }
-
-      if (current == null) break;
-    }
-
-    return current;
-  }
-
-  /// Get the next sibling element
-  XmlElement? _getNextSiblingElement(XmlElement element) {
-    final parent = element.parent;
-    if (parent == null) return null;
-
-    bool foundCurrent = false;
-    for (final child in parent.children) {
-      if (foundCurrent && child is XmlElement) {
-        return child;
-      }
-      if (child == element) {
-        foundCurrent = true;
-      }
+    if (startIndex != -1 && endIndex != -1) {
+      return Range(startIndex + 1, endIndex - 1);
     }
     return null;
   }
 
-  /// Add an element to a parent with proper formatting
-  void _addElement(
-    XmlElement parent,
-    String elementString, {
-    List<String>? comments,
-    XmlElement? afterSibling,
-  }) {
-    // Parse the element
-    final fragment = XmlDocumentFragment.parse(elementString);
-    final nodesToAdd = fragment.children.map((c) => c.copy()).toList();
+  List<int> _getRemovableIndices(XmlRemoveElementEdit remove) {
+    final removedIndices = <int>[];
+    final range = _getElementScope(remove.path);
+    if (range == null) return removedIndices;
 
-    // Find insertion index
-    int insertIndex;
-    if (afterSibling != null) {
-      insertIndex = parent.children.indexOf(afterSibling) + 1;
-    } else {
-      // Insert at the beginning (after any existing comments/whitespace at start)
-      insertIndex = 0;
-      for (var i = 0; i < parent.children.length; i++) {
-        final child = parent.children[i];
-        if (child is XmlElement) {
-          insertIndex = i;
-          break;
-        }
-        if (child is XmlText && child.value.trim().isNotEmpty) {
-          insertIndex = i;
-          break;
-        }
-      }
+    final mainTagIndices = _removeElement(range, remove)..sort();
+    removedIndices.addAll(mainTagIndices);
+    if (remove.removeNextTag != null && mainTagIndices.isNotEmpty) {
+      final newTagRange = Range(
+        mainTagIndices.last + 1,
+        range.end,
+      );
+      final nextTagIndices = _removeElement(
+        newTagRange,
+        XmlRemoveElementEdit(
+          tag: remove.removeNextTag!,
+          path: remove.path,
+          commentRemover: remove.commentRemover,
+        ),
+        checkOnlyNext: true,
+      );
+      removedIndices.addAll(nextTagIndices);
+      return removedIndices;
     }
 
-    // Add whitespace before comments/element
-    parent.children.insert(insertIndex++, XmlText('\n    '));
-
-    // Add comments if provided
-    if (comments != null && comments.isNotEmpty) {
-      for (final comment in comments) {
-        parent.children.insert(insertIndex++, XmlComment(comment));
-        parent.children.insert(insertIndex++, XmlText('\n    '));
-      }
-    }
-
-    // Add the nodes
-    for (final node in nodesToAdd) {
-      parent.children.insert(insertIndex++, node);
-    }
+    return removedIndices;
   }
 
-  /// Remove an element and optionally its preceding comments
-  void _removeElement(XmlElement element, {CommentRemoverPredicate? shouldRemoveComment}) {
-    final parent = element.parent;
-    if (parent == null) return;
-
-    final elementIndex = parent.children.indexOf(element);
-    final nodesToRemove = <XmlNode>[element];
-
-    // Find preceding whitespace
-    if (elementIndex > 0 && parent.children[elementIndex - 1] is XmlText) {
-      final text = parent.children[elementIndex - 1] as XmlText;
-      if (text.value.trim().isEmpty) {
-        nodesToRemove.insert(0, text);
-      }
-    }
-
-    // Find and remove matching comments
-    if (shouldRemoveComment != null) {
-      for (int i = elementIndex - 1; i >= 0; i--) {
-        final node = parent.children[i];
-
-        if (node is XmlComment) {
-          if (shouldRemoveComment(node.value.trim())) {
-            nodesToRemove.insert(0, node);
-            // Also remove whitespace before comment
-            if (i > 0 && parent.children[i - 1] is XmlText) {
-              final text = parent.children[i - 1] as XmlText;
-              if (text.value.trim().isEmpty) {
-                nodesToRemove.insert(0, text);
+  List<int> _removeElement(Range range, XmlRemoveElementEdit remove, {bool checkOnlyNext = false}) {
+    final removedIndices = <int>[];
+    for (var i = range.start; i <= range.end; i++) {
+      final event = _events[i];
+      if (event is XmlStartElementEvent) {
+        final content = (i + 1 < range.end && _events[i + 1] is XmlTextEvent) ? _events[i + 1] as XmlTextEvent : null;
+        if (remove.matches(event, content)) {
+          removedIndices.add(i);
+          if (content != null) {
+            removedIndices.add(i + 1);
+          }
+          // remove comments and whitespace before
+          if (remove.commentRemover != null) {
+            for (var j = i - 1; j >= range.start; j--) {
+              final prevEvent = _events[j];
+              if (prevEvent is XmlCommentEvent) {
+                if (remove.commentRemover!(prevEvent.value)) {
+                  removedIndices.add(j);
+                }
+              } else if (prevEvent is XmlTextEvent && prevEvent.value.trim().isEmpty) {
+                removedIndices.add(j);
+              } else {
+                break;
               }
             }
           }
-        } else if (node is XmlText && node.value.trim().isEmpty) {
-          continue;
-        } else {
+          // remove element end if not self-closing
+          if (!event.isSelfClosing) {
+            for (var j = i + 1; j <= range.end; j++) {
+              final nextEvent = _events[j];
+              if (nextEvent is XmlEndElementEvent && nextEvent.name == remove.tag) {
+                removedIndices.add(j);
+                break;
+              }
+            }
+          }
+          break;
+        } else if (checkOnlyNext) {
           break;
         }
       }
     }
-
-    // Remove all collected nodes
-    for (final node in nodesToRemove) {
-      parent.children.remove(node);
-    }
+    return removedIndices;
   }
 
-  /// Find the last sibling of a specific tag name
-  XmlElement? _findLastSiblingOfType(XmlElement parent, String tagName) {
-    XmlElement? lastOfType;
-    for (final child in parent.children.whereType<XmlElement>()) {
-      if (child.name.qualified == tagName) {
-        lastOfType = child;
+  (int, String) _getInsertionAnchor(XmlInsertElementEdit insert) {
+    String indent = '    ';
+    int anchor = -1;
+
+    final range = _getElementScope(insert.path);
+    if (range == null) {
+      return (-1, indent);
+    }
+
+    for (var i = range.start; i <= range.end; i++) {
+      final event = _events[i];
+      if (event is XmlStartElementEvent) {
+        if (anchor == -1) {
+          anchor = i;
+          if (insert.insertBefore == null) break;
+        }
+
+        if (insert.insertBefore != null) {
+          final content = (i + 1 < range.end && _events[i + 1] is XmlTextEvent) ? _events[i + 1] as XmlTextEvent : null;
+          if (insert.insertBefore!(event.name, content?.value)) {
+            anchor = i;
+            break;
+          }
+        }
+      }
+
+      // Stop at the end of the range
+      if (i == range.end) break;
+    }
+
+    if (anchor != -1) {
+      if (anchor - 1 > 0) {
+        final precedingEvent = _events[anchor - 1];
+        if (precedingEvent is XmlTextEvent && precedingEvent.value.startsWith('\n')) {
+          anchor = anchor - 1;
+        }
+      }
+
+      return (anchor, _getNextElementIndent(anchor));
+    }
+    return (range.end, indent);
+  }
+
+  String _getNextElementIndent(int startIndex) {
+    if (startIndex >= _events.length) return '';
+    for (var i = startIndex; i < _events.length; i++) {
+      final event = _events[i];
+      if (event is XmlTextEvent && event.value.trim().isEmpty) {
+        return event.value.split('\n').lastOrNull ?? '';
       }
     }
-    return lastOfType;
+    return '';
   }
 
   bool save(File file) {
     try {
-      file.writeAsStringSync(toXmlString());
+      file.writeAsStringSync(toString());
       return true;
     } catch (e) {
       return false;
     }
+  }
+}
+
+typedef ElementAnchorPredicate = bool Function(String key, String? content);
+
+abstract class XmlEdit {
+  final String path;
+
+  XmlEdit({required this.path});
+}
+
+class XmlElementInfo {
+  final String name;
+  final String? content;
+  final List<String>? comments;
+  final bool isSelfClosing;
+  final Map<String, String> attributes;
+
+  XmlElementInfo({
+    required this.name,
+    this.attributes = const {},
+    this.content,
+    this.comments,
+    this.isSelfClosing = false,
+  });
+
+  bool matches(XmlStartElementEvent event) {
+    if (event.name.trim() != name) return false;
+    final eventAttrs = Map.fromEntries(event.attributes.map((e) => MapEntry(e.name, e.value)));
+    for (final entry in attributes.entries) {
+      if (eventAttrs[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  List<XmlEvent> buildEvents(String indent) {
+    return [
+      for (final comment in [...?comments]) ...[
+        XmlTextEvent('\n$indent'),
+        XmlCommentEvent(comment),
+      ],
+      XmlTextEvent('\n$indent'),
+      XmlStartElementEvent(
+        name,
+        [
+          for (final entry in attributes.entries)
+            XmlEventAttribute(
+              entry.key,
+              entry.value,
+              XmlAttributeType.DOUBLE_QUOTE,
+            ),
+        ],
+        isSelfClosing,
+      ),
+      if (content != null) XmlTextEvent(content!),
+      if (!isSelfClosing) XmlEndElementEvent(name),
+    ];
+  }
+}
+
+class XmlInsertElementEdit extends XmlEdit {
+  final List<XmlElementInfo> tags;
+  final ElementAnchorPredicate? insertBefore;
+
+  XmlInsertElementEdit({
+    required super.path,
+    required this.tags,
+    this.insertBefore,
+  });
+
+  List<XmlEvent> buildEvents(String indent) {
+    return [for (final tag in tags) ...tag.buildEvents(indent)];
+  }
+}
+
+class XmlRemoveElementEdit extends XmlEdit {
+  final String tag;
+  final String? content;
+  final Map<String, String>? attributes;
+  final RemoveComment? commentRemover;
+  final String? removeNextTag;
+
+  XmlRemoveElementEdit({
+    required super.path,
+    required this.tag,
+    this.content,
+    this.attributes,
+    this.removeNextTag,
+    this.commentRemover,
+  });
+
+  bool matches(XmlStartElementEvent event, XmlTextEvent? contentEvent) {
+    if (event.name != tag) return false;
+    if (content != null && (contentEvent == null || contentEvent.value.trim() != content)) {
+      return false;
+    }
+    if (attributes != null) {
+      final eventAttrs = Map.fromEntries(event.attributes.map((e) => MapEntry(e.name, e.value)));
+      for (final entry in attributes!.entries) {
+        if (eventAttrs[entry.key] != entry.value) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+}
+
+class Range {
+  final int start;
+  final int end;
+
+  Range(this.start, this.end);
+
+  @override
+  String toString() {
+    return 'Range($start, $end)';
   }
 }

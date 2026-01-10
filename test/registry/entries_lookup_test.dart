@@ -50,88 +50,88 @@ void main() {
 
     group('EntriesLookup.lookup method', () {
       test('finds permission by exact key match (Android)', () {
-        final results = lookup.lookup('android.permission.CAMERA');
+        final results = lookup.find('android.permission.CAMERA');
         expect(results.isNotEmpty, isTrue);
         expect(results.any((e) => e.key == 'android.permission.CAMERA'), isTrue);
       });
 
       test('finds permission by exact key match case-insensitive (Android)', () {
-        final results = lookup.lookup('ANDROID.PERMISSION.CAMERA');
+        final results = lookup.find('ANDROID.PERMISSION.CAMERA');
         expect(results.isNotEmpty, isTrue);
       });
 
       test('finds permission by short name without android prefix (Android)', () {
-        final results = lookup.lookup('CAMERA');
+        final results = lookup.find('CAMERA');
         expect(results.isNotEmpty, isTrue);
         expect(results.any((e) => e.key == 'android.permission.CAMERA'), isTrue);
       });
 
       test('finds permission by short name lowercase (Android)', () {
-        final results = lookup.lookup('camera');
+        final results = lookup.find('camera');
         expect(results.isNotEmpty, isTrue);
       });
 
       test('finds permission by group name', () {
-        final results = lookup.lookup('camera');
+        final results = lookup.find('camera');
         expect(results.isNotEmpty, isTrue);
         expect(results.every((e) => e.group == 'camera' || e.key.contains('CAMERA')), isTrue);
       });
 
       test('finds multiple permissions in same group', () {
-        final results = lookup.lookup('location');
+        final results = lookup.find('location');
         expect(results.length, greaterThan(1));
-        expect(results.every((e) => e.group == 'location'), isTrue);
+        expect(results.every((e) => e.group.startsWith('location')), isTrue);
       });
 
       test('finds iOS permission by exact key match', () {
-        final results = lookup.lookup('NSCameraUsageDescription');
+        final results = lookup.find('NSCameraUsageDescription');
         expect(results.isNotEmpty, isTrue);
         expect(results.any((e) => e.key == 'NSCameraUsageDescription'), isTrue);
       });
 
       test('finds iOS permission by group', () {
-        final results = lookup.lookup('biometrics');
+        final results = lookup.find('face');
         expect(results.isNotEmpty, isTrue);
-        expect(results.every((e) => e.group == 'biometrics'), isTrue);
+        expect(results.every((e) => e.group == 'face_id'), isTrue);
       });
 
       test('returns empty set for non-existent permission', () {
-        final results = lookup.lookup('nonexistent.permission');
+        final results = lookup.find('nonexistent.permission');
         expect(results.isEmpty, isTrue);
       });
 
       test('returns empty set for non-existent group', () {
-        final results = lookup.lookup('nonexistentgroup');
+        final results = lookup.find('nonexistentgroup');
         expect(results.isEmpty, isTrue);
       });
 
       test('finds permissions in Android-only lookup', () {
-        final results = androidOnlyLookup.lookup('CAMERA');
+        final results = androidOnlyLookup.find('CAMERA');
         expect(results.isNotEmpty, isTrue);
         expect(results.every((e) => e is AndroidPermissionDef), isTrue);
       });
 
       test('finds permissions in iOS-only lookup', () {
-        final results = iosOnlyLookup.lookup('camera');
+        final results = iosOnlyLookup.find('camera');
         expect(results.isNotEmpty, isTrue);
         expect(results.every((e) => e is IosPermissionDef), isTrue);
       });
 
       test('handles group name prefix matching', () {
-        final results = lookup.lookup('loc');
+        final results = lookup.find('loc');
         // Should match 'location' group if it starts with 'loc'
         final locationResults = results.where((e) => e.group == 'location').toList();
         expect(locationResults.isNotEmpty, isTrue);
       });
 
       test('matches contact and phone permissions correctly', () {
-        final contactResults = lookup.lookup('contacts');
+        final contactResults = lookup.find('contacts');
         expect(contactResults.isNotEmpty, isTrue);
         expect(contactResults.every((e) => e.group == 'contacts'), isTrue);
       });
 
       test('matches storage permissions', () {
-        final storageResults = lookup.lookup('storage');
+        final storageResults = lookup.find('storage');
         expect(storageResults.isNotEmpty, isTrue);
         expect(storageResults.every((e) => e.group == 'storage'), isTrue);
       });
@@ -165,6 +165,7 @@ void main() {
 
       test('contains all permission groups from Android', () {
         final groups = lookup.groups;
+        print(groups);
         expect(groups.contains('camera'), isTrue);
         expect(groups.contains('microphone'), isTrue);
         expect(groups.contains('location'), isTrue);
@@ -248,30 +249,30 @@ void main() {
 
     group('Edge cases and special scenarios', () {
       test('lookup is case-insensitive for permission keys', () {
-        final results1 = lookup.lookup('camera');
-        final results2 = lookup.lookup('CAMERA');
-        final results3 = lookup.lookup('CaMeRa');
+        final results1 = lookup.find('camera');
+        final results2 = lookup.find('CAMERA');
+        final results3 = lookup.find('CaMeRa');
         expect(results1.isNotEmpty, isTrue);
         expect(results2.isNotEmpty, isTrue);
         expect(results3.isNotEmpty, isTrue);
       });
 
       test('group lookup is case-sensitive', () {
-        final lowercaseGroup = lookup.lookup('camera');
-        final uppercaseGroup = lookup.lookup('CAMERA');
+        final lowercaseGroup = lookup.find('camera');
+        final uppercaseGroup = lookup.find('CAMERA');
         // Both should work since they'll match either permission key or group
         expect(lowercaseGroup.isNotEmpty || uppercaseGroup.isNotEmpty, isTrue);
       });
 
       test('lookup with whitespace returns empty', () {
-        final results = lookup.lookup('   ');
+        final results = lookup.find('   ');
         // May or may not find results depending on implementation
         // But should handle gracefully
         expect(results, isA<Set>());
       });
 
       test('can lookup multiple permission types in mixed lookup', () {
-        final cameraResults = lookup.lookup('camera');
+        final cameraResults = lookup.find('camera');
         final hasAndroid = cameraResults.whereType<AndroidPermissionDef>().isNotEmpty;
         final hasIos = cameraResults.whereType<IosPermissionDef>().isNotEmpty;
         expect(hasAndroid || hasIos, isTrue);

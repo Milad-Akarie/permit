@@ -46,7 +46,7 @@ class AddPermissionCommand extends PermitCommand {
       return;
     }
 
-    final entries = entriesLookup.lookup(key);
+    final entries = entriesLookup.find(key);
 
     if (entries.isNotEmpty) {
       final resolved = _resolveEntries(List.of(entries));
@@ -83,7 +83,7 @@ class AddPermissionCommand extends PermitCommand {
       manifestEditor.addPermission(
         name: entry.key,
         comments: entry.comments,
-        shouldRemoveComment: (c) => c.startsWith('@permit'),
+        removeCommentsOnUpdate: (c) => c.startsWith('@permit'),
       );
     }
 
@@ -106,7 +106,7 @@ class AddPermissionCommand extends PermitCommand {
         key: entry.key,
         description: entry.description,
         keyComments: entry.comments,
-        shouldRemoveComment: (c) => c.startsWith('@permit'),
+        removeCommentsOnUpdate: (c) => c.startsWith('@permit'),
       );
     }
     if (plistEditor.save(file)) {

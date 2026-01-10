@@ -84,7 +84,7 @@ class DeletePermissionCommand extends PermitCommand {
       iosOnly: argResults?['ios'] == true,
     );
 
-    final definitions = entriesLookup.lookup(key);
+    final definitions = entriesLookup.find(key);
 
     if (definitions.isEmpty) {
       Logger.info('No permission definitions found for: $key');
@@ -120,7 +120,7 @@ class DeletePermissionCommand extends PermitCommand {
     for (var entry in entries) {
       try {
         manifestEditor.removePermission(
-          permissionName: entry.key,
+          name: entry.key,
           removeComments: (c) => c.startsWith('@permit'),
         );
       } catch (e) {
@@ -139,7 +139,7 @@ class DeletePermissionCommand extends PermitCommand {
     for (var entry in entries) {
       try {
         plistEditor.removeUsageDescription(
-          key: entry.key,
+          name: entry.key,
           removeComments: (c) => c.startsWith('@permit'),
         );
       } catch (e) {
