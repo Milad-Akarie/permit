@@ -85,6 +85,7 @@ class PluginGenerator {
         .toSet()
         .map((e) => swiftPermissionHandlers[e]?.call())
         .nonNulls;
+
     if (handlers.isEmpty) return null;
 
     return [
@@ -138,18 +139,28 @@ class PluginGenerator {
       ),
     );
 
-    final kotlinSnippets = [...?androidTemplates?.whereType<PluginKotlinClassTemp>().firstOrNull?.handlers];
+    final kotlinSnippets = androidTemplates?.whereType<PluginKotlinClassTemp>().firstOrNull?.handlers ?? [];
+    final swiftSnippets = iosTemplates?.whereType<PluginSwiftClassTemp>().firstOrNull?.handlers ?? [];
 
-    final snippets = <PermissionGetterSnippet>[];
-    for (var handler in kotlinSnippets) {
-      snippets.add(
-        PermissionGetterSnippet(
-          handler.key,
-          null, //tODO: iOS support
-          hasService: handler.permissions.any((e) => e.service != null),
-        ),
+    final allKeys = {...kotlinSnippets.map((e) => e.key), ...swiftSnippets.map((e) => e.key)};
+
+    final snippets = allKeys.map((key) {
+      final kotlinHandler = kotlinSnippets.firstWhereOrNull((h) => h.key == key);
+      final swiftHandler = swiftSnippets.firstWhereOrNull((h) => h.key == key);
+
+      final platform = (kotlinHandler != null && swiftHandler != null)
+          ? null
+          : (kotlinHandler != null ? 'android' : 'ios');
+
+      return PermissionGetterSnippet(
+        key,
+        platform,
+        hasService:
+            kotlinHandler?.permissions.any((e) => e.service != null) == true ||
+            swiftHandler?.entry.service != null ||
+            false,
       );
-    }
+    }).toList();
 
     templates.add(PluginDartTemp(snippets));
 

@@ -12,30 +12,33 @@ class MicrophonePermissionHandler extends SwiftHandlerSnippet {
   String generate() {
     return '''class $className: PermissionHandler {
     func checkStatus() -> Int {
-        switch AVAudioSession.sharedInstance().recordPermission {
-        case .granted:
-            return 1 // granted
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .notDetermined:
+            return 0 // not requested yet
+        case .restricted:
+            return 2 // restricted
         case .denied:
             return 4 // permanently denied
-        case .undetermined:
-            return 0 // not requested yet
+        case .authorized:
+            return 1 // granted
         @unknown default:
             return 0
         }
     } 
     
     func request(result: @escaping FlutterResult) {
+        let status = checkStatus()
         // If already granted, return immediately
-        if checkStatus() == 1 {
-            result(1)
+         if status != 0 {
+            result(status)
             return
         }
         
-        AVAudioSession.sharedInstance().requestRecordPermission { granted in
-            DispatchQueue.main.async {
-                result(granted ? 1 : self.checkStatus())
-            }
-        }
+        AVCaptureDevice.requestAccess(for: .audio) { granted in
+           DispatchQueue.main.async {
+              result(granted ? 1 : self.checkStatus())
+          }
+       }
     }
 }
 ''';

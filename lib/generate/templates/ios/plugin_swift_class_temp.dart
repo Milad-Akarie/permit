@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_string_escapes
+
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/generate/templates/template.dart';
@@ -14,6 +16,9 @@ class PluginSwiftClassTemp extends Template {
   @override
   String generate() {
     final imports = handlers.expand((e) => e.imports).toSet();
+    final uniqueHandlers = {
+      for (var handler in handlers) handler.className: handler,
+    }.values;
 
     return '''
 // GENERATED FILE - DO NOT MODIFY BY HAND
@@ -35,13 +40,12 @@ public class PermitPlugin: NSObject, FlutterPlugin {
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        // Handle open_settings separately (no permission arg needed)
+    
         if call.method == "open_settings" {
             openSettings(result: result)
             return
         }
         
-        // For other methods, require permission argument
         guard let args = call.arguments as? [String: Any],
               let permission = args["permission"] as? String else {
             result(FlutterError(
@@ -117,7 +121,6 @@ extension PermissionHandler {
     }
 }
 
-// Lazy singleton registry
 class PermissionRegistry {
     static let shared = PermissionRegistry()
     
@@ -134,7 +137,7 @@ class PermissionRegistry {
         // Create handler lazily based on key
         let handler: PermissionHandler? = {
             switch key {
-            ${handlers.map((e) => 'case "${e.key}":\n                return ${e.className}()').join('\n            ')}
+            ${handlers.map((e) => 'case "${e.key}":\n                return ${e.constructor}').join('\n            ')}
             default:
                 return nil
             }
@@ -149,9 +152,7 @@ class PermissionRegistry {
     }
 }
 
-// MARK: - Generated Handlers
-
-${handlers.map((e) => e.generate()).join('\n')}
+${uniqueHandlers.map((e) => e.generate()).join('\n')}
 ''';
   }
 }

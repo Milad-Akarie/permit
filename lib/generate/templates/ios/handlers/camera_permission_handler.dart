@@ -25,9 +25,9 @@ class CameraPermissionHandler extends SwiftHandlerSnippet {
     } 
     
     func request(result: @escaping FlutterResult) {
-        // If already granted, return immediately
-        if checkStatus() == 1 {
-            result(1)
+        let status = checkStatus()
+        if status != 0 {
+            result(status)
             return
         }
         

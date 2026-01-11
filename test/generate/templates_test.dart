@@ -15,7 +15,8 @@ void main() {
         final content = template.generate();
 
         expect(content, contains('name: $kDartPackageName'));
-        expect(content, contains('sdk: $kDefaultDartConstraint'));
+        // YamlEditor formats this as `sdk: ">=..."`.
+        expect(content, contains('sdk: "$kDefaultDartConstraint"'));
         expect(content, contains('package: $kAndroidPackageName'));
         expect(content, contains('pluginClass: PermitPlugin'));
       });
@@ -29,7 +30,7 @@ void main() {
         final content = template.generate();
 
         expect(content, contains('name: custom_plugin'));
-        expect(content, contains('sdk: ^2.19.0'));
+        expect(content, contains('sdk: "^2.19.0"'));
         expect(content, contains('package: com.custom.plugin'));
       });
 
