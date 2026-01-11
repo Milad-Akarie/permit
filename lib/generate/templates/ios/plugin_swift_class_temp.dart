@@ -1,5 +1,5 @@
 import 'package:permit/generate/templates/constants.dart';
-import 'package:permit/generate/templates/ios/swift_handler_snippet.dart';
+import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/generate/templates/template.dart';
 
 class PluginSwiftClassTemp extends Template {
@@ -74,26 +74,31 @@ public class PermitPlugin: NSObject, FlutterPlugin {
     }
     
     private func openSettings(result: @escaping FlutterResult) {
-        guard let url = URL(string: UIApplication.openSettingsURLString),
-              UIApplication.shared.canOpenURL(url) else {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else {
             result(FlutterError(
-                code: "CANNOT_OPEN_SETTINGS",
-                message: "Cannot open settings",
+                code: "INVALID_URL",
+                message: "Settings URL is invalid",
                 details: nil
             ))
             return
         }
-        
-        UIApplication.shared.open(url) { success in
-            if success {
-                result(nil)
-            } else {
-                result(FlutterError(
-                    code: "OPEN_FAILED",
-                    message: "Failed to open settings",
-                    details: nil
-                ))
+    
+        if #available(iOS 10.0, *) {
+            UIApplication.shared.open(url, options: [:]) { success in
+                if success {
+                    result(true)
+                } else {
+                    result(FlutterError(
+                        code: "OPEN_FAILED",
+                        message: "Failed to open settings",
+                        details: nil
+                    ))
+                }
             }
+        } else {
+            // Fallback for iOS 9 and earlier (if you need to support it)
+            UIApplication.shared.openURL(url)
+            result(true)
         }
     }
 }
@@ -129,7 +134,7 @@ class PermissionRegistry {
         // Create handler lazily based on key
         let handler: PermissionHandler? = {
             switch key {
-            ${handlers.map((e) => 'case "${e.key}":\n                return ${e.runtimeType}()').join('\n            ')}
+            ${handlers.map((e) => 'case "${e.key}":\n                return ${e.className}()').join('\n            ')}
             default:
                 return nil
             }
@@ -146,7 +151,7 @@ class PermissionRegistry {
 
 // MARK: - Generated Handlers
 
-${handlers.map((e) => e.generate()).join('\n\n')}
+${handlers.map((e) => e.generate()).join('\n')}
 ''';
   }
 }

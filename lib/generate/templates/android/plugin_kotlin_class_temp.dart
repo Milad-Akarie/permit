@@ -83,16 +83,17 @@ class PermitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwa
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         val act = activity ?: run { result.error("NO_ACTIVITY", "Activity is null", null); return }
-
+        if(call.method == "open_settings") {
+            openSettings(act, result)
+            return
+        }
+        val handler = getHandler(call, result) ?: return
+        
         when (call.method) {
-            "open_settings" -> openSettings(act, result)
-            "check_permission_status" -> getHandler(call, result)?.handleCheck(act, result)
-            "request_permission" -> getHandler(call, result)?.handleRequest(act, result)
-            "check_service_status" -> getHandler(call, result)
-                ?.handleServiceStatus(act, result)
-            "should_show_rationale" -> getHandler(call, result)
-                ?.handleShouldShowRationale(act, result)
-
+            "check_permission_status" -> handler.handleCheck(act, result)
+            "request_permission" -> handler.handleRequest(act, result)
+            "check_service_status" -> handler.handleServiceStatus(act, result)
+            "should_show_rationale" -> handler.handleShouldShowRationale(act, result)
             else -> result.notImplemented()
         }
     }

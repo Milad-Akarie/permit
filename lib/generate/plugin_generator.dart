@@ -10,7 +10,7 @@ import 'package:permit/generate/templates/android/plugin_manifest_temp.dart';
 import 'package:permit/generate/templates/ios/plugin_pod_temp.dart';
 import 'package:permit/generate/templates/ios/plugin_privacy_manifest.dart';
 import 'package:permit/generate/templates/ios/plugin_swift_class_temp.dart';
-import 'package:permit/generate/templates/ios/swift_handler_snippet.dart';
+import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/generate/templates/plugin_dart_temp.dart';
 import 'package:permit/generate/templates/plugin_pubspec_temp.dart';
 import 'package:permit/generate/templates/template.dart';
@@ -81,7 +81,9 @@ class PluginGenerator {
     final handlers = permissionsInPlist
         .map((e) => entryLookUp.lookupByKey(e.key))
         .whereType<IosPermissionDef>()
-        .map((e) => swiftHandlers[e.group]?.call())
+        .map((e) => e.group)
+        .toSet()
+        .map((e) => swiftPermissionHandlers[e]?.call())
         .nonNulls;
     if (handlers.isEmpty) return null;
 

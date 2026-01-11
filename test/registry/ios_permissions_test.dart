@@ -109,7 +109,7 @@ void main() {
     });
 
     test('bluetoothAlways permission has minimumIosVersion and successorOf', () {
-      final p = IosPermissions.bluetoothAlways;
+      final p = IosPermissions.bluetooth;
       expect(p.key, 'NSBluetoothAlwaysUsageDescription');
       expect(p.group, 'bluetooth');
       expect(p.minimumIosVersion, '13.0');

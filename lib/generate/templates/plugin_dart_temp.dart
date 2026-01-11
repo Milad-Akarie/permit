@@ -25,9 +25,10 @@ abstract class Permit {
   /// Opens the app settings page.
   ///
   /// Returns [true] if the app settings page could be opened, otherwise [false].
-  static Future<bool> openAppSettings() async {
+  static Future<bool> openSettings() async {
     try {
-      return await _channel.invokeMethod<bool>('open_settings') ?? false;
+      await _channel.invokeMethod<bool>('open_settings');
+      return true;
     } on PlatformException {
       return false;
     }

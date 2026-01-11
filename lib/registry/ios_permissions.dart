@@ -82,7 +82,7 @@ abstract class IosPermissions {
   );
 
   // BLUETOOTH
-  static const bluetoothAlways = IosPermissionDef(
+  static const bluetooth = IosPermissionDef(
     'NSBluetoothAlwaysUsageDescription',
     minimumIosVersion: '13.0',
     successorOf: 'NSBluetoothPeripheralUsageDescription',
@@ -170,7 +170,7 @@ abstract class IosPermissions {
     calendarsWriteOnly,
     calendars,
     reminders,
-    bluetoothAlways,
+    bluetooth,
     motion,
     healthShare,
     healthUpdate,
