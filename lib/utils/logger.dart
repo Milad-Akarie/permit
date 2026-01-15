@@ -9,11 +9,6 @@ import 'package:permit/generate/utils.dart';
 class Logger {
   static final Logger _instance = Logger._internal();
 
-  /// Factory constructor that returns the singleton instance.
-  factory Logger() {
-    return _instance;
-  }
-
   /// Private constructor for singleton pattern.
   Logger._internal();
 

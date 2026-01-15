@@ -106,5 +106,51 @@ void main() {
       expect(p.group, 'tracking');
       expect(p.scope, AccessScope.standardOrFull);
     });
+
+    test('bluetooth permission properties', () {
+      final p = IosPermissions.bluetooth;
+      expect(p.key, contains('Bluetooth'));
+      expect(p.group, equals('bluetooth'));
+      expect(p.service, equals(AssociatedService.bluetooth));
+      expect(p.sinceApi, equals(13.0));
+      expect(p.keywords, contains('peripheral'));
+    });
+
+    test('bluetoothPeripheralDeprecated is deprecated with untilApi', () {
+      final p = IosPermissions.bluetoothPeripheralDeprecated;
+      expect(p.untilApi, equals(13.0));
+      expect(p.isDeprecated, isTrue);
+    });
+
+    test('calendarsDeprecated and remindersDeprecated are deprecated and present in all', () {
+      final calDeprecated = IosPermissions.calendarsDeprecated;
+      final remDeprecated = IosPermissions.remindersDeprecated;
+
+      expect(calDeprecated.untilApi, equals(17.0));
+      expect(calDeprecated.isDeprecated, isTrue);
+
+      expect(remDeprecated.untilApi, equals(17.0));
+      expect(remDeprecated.isDeprecated, isTrue);
+
+      // Ensure they are included in the all set
+      expect(IosPermissions.all.contains(calDeprecated), isTrue);
+      expect(IosPermissions.all.contains(remDeprecated), isTrue);
+    });
+
+    test('sensors keywords are present', () {
+      final p = IosPermissions.sensors;
+      expect(p.keywords, contains('accelerometer'));
+      expect(p.sinceApi, equals(7.0));
+    });
+
+    test('all set contains expected permissions and has unique keys', () {
+      final all = IosPermissions.all;
+      expect(all.contains(IosPermissions.camera), isTrue);
+      expect(all.contains(IosPermissions.bluetooth), isTrue);
+      expect(all.contains(IosPermissions.photoLibraryAdd), isTrue);
+
+      final keys = all.map((e) => e.key).toSet();
+      expect(keys.length, equals(all.length));
+    });
   });
 }

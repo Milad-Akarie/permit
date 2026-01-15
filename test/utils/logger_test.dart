@@ -19,11 +19,15 @@ void main() {
         Logger.info('this should NOT appear');
         Logger.warning('this should appear');
         Logger.error('error happened');
+        Logger.debug('this should NOT appear');
+        Logger.fine('this should NOT appear');
       }, zoneSpecification: spec);
 
       expect(printed.any((s) => s.contains('this should NOT appear')), isFalse);
       expect(printed.any((s) => s.contains('this should appear')), isTrue);
       expect(printed.any((s) => s.contains('error happened')), isTrue);
+      expect(printed.any((s) => s.contains('this should NOT appear')), isFalse);
+      expect(printed.any((s) => s.contains('this should NOT appear')), isFalse);
 
       // Reset to default
       Logger.level = LogLevel.info;

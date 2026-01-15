@@ -196,7 +196,7 @@ abstract class AndroidPermissions {
     sinceSDK: 33,
     runtime: true,
     group: 'photos',
-    keywords: {'images', 'media'},
+    keywords: {'images', 'media', 'storage', 'gallery'},
     legacyKeys: {
       'android.permission.READ_EXTERNAL_STORAGE': 32,
       'android.permission.WRITE_EXTERNAL_STORAGE': 29,
@@ -207,7 +207,7 @@ abstract class AndroidPermissions {
     sinceSDK: 33,
     runtime: true,
     group: 'videos',
-    keywords: {'video', 'playback'},
+    keywords: {'video', 'playback', 'media', 'storage', 'gallery'},
     legacyKeys: {
       'android.permission.READ_EXTERNAL_STORAGE': 32,
       'android.permission.WRITE_EXTERNAL_STORAGE': 29,
@@ -218,7 +218,7 @@ abstract class AndroidPermissions {
     sinceSDK: 33,
     runtime: true,
     group: 'audio',
-    keywords: {'playback', 'track'},
+    keywords: {'playback', 'track', 'media', 'storage', 'music'},
     legacyKeys: {
       'android.permission.READ_EXTERNAL_STORAGE': 32,
       'android.permission.WRITE_EXTERNAL_STORAGE': 29,
