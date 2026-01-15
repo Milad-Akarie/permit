@@ -1,14 +1,20 @@
-import 'package:permit/generate/templates/ios/handlers/bluetooth_permission_handler.dart';
 import 'package:permit/generate/utils.dart';
 import 'package:permit/registry/ios_permissions.dart';
 import 'package:permit/registry/models.dart';
 
+import 'bluetooth_permission_handler.dart';
+import 'calendar_permission_handler.dart';
 import 'camera_permission_handler.dart';
 import 'contacts_permission_handler.dart';
 import 'location_permission_handler.dart';
 import 'media_library_permission_handler.dart';
 import 'microphone_permission_handler.dart';
 import 'photos_permission_handler.dart';
+import 'reminders_permission_handler.dart';
+import 'sensors_permission_handler.dart';
+import 'speech_permission_handler.dart';
+import 'user_tracking_permission_handler.dart';
+import 'assistant_permission_handler.dart';
 
 abstract class SwiftHandlerSnippet {
   final IosPermissionDef entry;
@@ -38,4 +44,11 @@ final swiftPermissionHandlers = <String, SwiftHandlerSnippet Function()>{
   IosPermissions.bluetooth.group: () => BluetoothPermissionHandler(),
   IosPermissions.locationWhenInUse.group: () => LocationPermissionHandler(),
   IosPermissions.locationAlways.group: () => LocationPermissionHandler(forAlways: true),
+  IosPermissions.calendars.group: () => CalendarPermissionHandler(),
+  IosPermissions.calendarsWriteOnly.group: () => CalendarPermissionHandler(writeOnly: true),
+  IosPermissions.reminders.group: () => RemindersPermissionHandler(),
+  IosPermissions.sensors.group: () => SensorsPermissionHandler(),
+  IosPermissions.speech.group: () => SpeechPermissionHandler(),
+  IosPermissions.userTracking.group: () => UserTrackingPermissionHandler(),
+  IosPermissions.assistant.group: () => AssistantPermissionHandler(),
 };

@@ -55,7 +55,6 @@ class AndroidPermissionDef extends PermissionDef {
 
 /// iOS Permission class
 class IosPermissionDef extends PermissionDef {
-  final String? minimumIosVersion;
   final String? successorOf;
   final AccessScope scope;
 
@@ -64,7 +63,6 @@ class IosPermissionDef extends PermissionDef {
     super.service,
     required super.group,
     this.scope = .standardOrFull,
-    this.minimumIosVersion,
     this.successorOf,
   });
 
@@ -78,12 +76,11 @@ class IosPermissionDef extends PermissionDef {
           key == other.key &&
           group == other.group &&
           service == other.service &&
-          minimumIosVersion == other.minimumIosVersion &&
           successorOf == other.successorOf &&
           scope == other.scope;
 
   @override
-  int get hashCode => Object.hash(key, group, minimumIosVersion, successorOf, scope, service);
+  int get hashCode => Object.hash(key, group, successorOf, scope, service);
 
   @override
   bool matches(String input) {

@@ -49,13 +49,11 @@ void main() {
       const x = IosPermissionDef(
         'NSFoo',
         group: 'misc',
-        minimumIosVersion: '13.0',
         successorOf: 'NSBar',
       );
       const y = IosPermissionDef(
         'NSFoo',
         group: 'misc',
-        minimumIosVersion: '13.0',
         successorOf: 'NSBar',
       );
       expect(x, equals(y));

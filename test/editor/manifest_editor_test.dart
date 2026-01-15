@@ -650,4 +650,130 @@ void main() {
       expect(result, contains('android.permission.CAMERA'));
     });
   });
+
+  group('ManifestEditor - Reading Permissions Edge Cases', () {
+    test('retrieves permissions with extra attributes', () {
+      const realManifest = '''<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.CAMERA" android:maxSdkVersion="28" />
+
+</manifest>''';
+
+      final editor = ManifestEditor(realManifest);
+      final permissions = editor.getPermissions();
+
+      expect(permissions, hasLength(1));
+      expect(permissions[0].key, equals('android.permission.CAMERA'));
+    });
+
+    test('retrieves permissions with single quotes', () {
+      const realManifest = '''<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name='android.permission.CAMERA' />
+
+</manifest>''';
+
+      final editor = ManifestEditor(realManifest);
+      final permissions = editor.getPermissions();
+
+      expect(permissions, hasLength(1));
+      expect(permissions[0].key, equals('android.permission.CAMERA'));
+    });
+
+    test('retrieves permissions with whitespace in attribute value', () {
+      const realManifest = '''<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name=" android.permission.CAMERA " />
+
+</manifest>''';
+
+      final editor = ManifestEditor(realManifest);
+      final permissions = editor.getPermissions();
+
+      expect(permissions, hasLength(1));
+      expect(permissions[0].key, equals(' android.permission.CAMERA '));
+    });
+
+    test('ignores permissions not directly under manifest', () {
+      const realManifest = '''<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application>
+        <uses-permission android:name="android.permission.CAMERA" />
+    </application>
+
+</manifest>''';
+
+      final editor = ManifestEditor(realManifest);
+      final permissions = editor.getPermissions();
+
+      expect(permissions, hasLength(1));
+      expect(permissions[0].key, equals('android.permission.INTERNET'));
+    });
+
+    test('handles permissions with multiple android:name attributes', () {
+      const realManifest = '''<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.CAMERA" android:name="android.permission.INTERNET" />
+
+</manifest>''';
+
+      final editor = ManifestEditor(realManifest);
+      final permissions = editor.getPermissions();
+
+      expect(permissions, hasLength(1));
+      expect(permissions[0].key, equals('android.permission.INTERNET'));
+    });
+
+    test('handles permissions with empty name attribute', () {
+      const realManifest = '''<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="" />
+
+</manifest>''';
+
+      final editor = ManifestEditor(realManifest);
+      final permissions = editor.getPermissions();
+
+      expect(permissions, hasLength(1));
+      expect(permissions[0].key, equals(''));
+    });
+
+    test('retrieves permissions with special characters in comments', () {
+      const realManifest = '''<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Comment with <>&" -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+</manifest>''';
+
+      final editor = ManifestEditor(realManifest);
+      final permissions = editor.getPermissions();
+
+      expect(permissions, hasLength(1));
+      expect(permissions[0].comments, hasLength(1));
+      expect(permissions[0].comments[0], equals(' Comment with <>&" '));
+    });
+
+    test('ignores permissions with tools:node="remove" attribute', () {
+      const realManifest = '''<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.CAMERA" tools:node="remove" />
+</manifest>''';
+
+      final editor = ManifestEditor(realManifest);
+      final permissions = editor.getPermissions();
+
+      expect(permissions, isEmpty);
+    });
+  });
 }

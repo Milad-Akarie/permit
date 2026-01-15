@@ -62,22 +62,41 @@ class ManifestEditor extends XmlEditor {
     if (range == null) return permissions;
 
     final comments = <String>[];
+    var depth = 0;
     for (var i = range.start; i <= range.end; i++) {
       final event = _events[i];
       if (event is XmlCommentEvent) {
         comments.add(event.value);
         continue;
-      } else if (event is XmlStartElementEvent && event.name == 'uses-permission') {
-        final nameAttr = event.attributes.where((attr) => attr.name == 'android:name').firstOrNull;
-        if (nameAttr != null) {
-          permissions.add(
-            ManifestPermissionEntry(
-              key: nameAttr.value,
-              comments: List.from(comments),
-            ),
-          );
+      } else if (event is XmlStartElementEvent) {
+        if (event.name == 'uses-permission') {
+          // Only include permissions that are direct children of manifest (depth 0)
+          if (depth == 0) {
+            String? nameAttrValue;
+            for (final attr in event.attributes) {
+              if (attr.name == 'android:name') {
+                nameAttrValue = attr.value;
+              } else if (attr.name == 'tools:node' && attr.value == 'remove') {
+                nameAttrValue = null;
+                break;
+              }
+            }
+            if (nameAttrValue != null) {
+              permissions.add(
+                ManifestPermissionEntry(
+                  key: nameAttrValue,
+                  comments: List.from(comments),
+                ),
+              );
+            }
+            comments.clear();
+          }
         }
-        comments.clear();
+        if (!event.isSelfClosing) {
+          depth++;
+        }
+      } else if (event is XmlEndElementEvent) {
+        depth--;
       }
     }
 

@@ -55,28 +55,24 @@ abstract class IosPermissions {
 
   static const photoLibraryAdd = IosPermissionDef(
     'NSPhotoLibraryAddUsageDescription',
-    minimumIosVersion: '11.0',
     group: 'photos_add_only',
   );
 
   // CALENDARS & EVENTS
   static const calendars = IosPermissionDef(
     'NSCalendarsFullAccessUsageDescription',
-    minimumIosVersion: '17.0',
     successorOf: 'NSCalendarsUsageDescription',
     group: 'calendar',
   );
   static const calendarsWriteOnly = IosPermissionDef(
     'NSCalendarsWriteOnlyAccessUsageDescription',
     scope: AccessScope.writeOnly,
-    minimumIosVersion: '17.0',
     group: 'calendar_write_only',
   );
 
   // REMINDERS
   static const reminders = IosPermissionDef(
     'NSRemindersFullAccessUsageDescription',
-    minimumIosVersion: '17.0',
     successorOf: 'NSRemindersUsageDescription',
     group: 'reminders',
   );
@@ -84,78 +80,76 @@ abstract class IosPermissions {
   // BLUETOOTH
   static const bluetooth = IosPermissionDef(
     'NSBluetoothAlwaysUsageDescription',
-    minimumIosVersion: '13.0',
     successorOf: 'NSBluetoothPeripheralUsageDescription',
     group: 'bluetooth',
     service: AssociatedService.bluetooth,
   );
 
-  // MOTION & FITNESS
-  static const motion = IosPermissionDef(
-    'NSMotionUsageDescription',
-    group: 'sensors',
-  );
-
-  // HEALTH
-  static const healthShare = IosPermissionDef(
-    'NSHealthShareUsageDescription',
-    group: 'health_share',
-  );
-  static const healthUpdate = IosPermissionDef(
-    'NSHealthUpdateUsageDescription',
-    group: 'health_update',
-  );
-  static const healthClinicalRecords = IosPermissionDef(
-    'NSHealthClinicalHealthRecordsShareUsageDescription',
-    group: 'health_clinical_records',
-  );
-
   // SPEECH & SIRI
-  static const speechRecognition = IosPermissionDef(
+  static const speech = IosPermissionDef(
     'NSSpeechRecognitionUsageDescription',
     group: 'speech',
   );
 
-  static const siri = IosPermissionDef('NSSiriUsageDescription', group: 'assistant');
+  static const assistant = IosPermissionDef(
+    'NSSiriUsageDescription',
+    group: 'assistant',
+  );
 
-  // FACE ID & BIOMETRICS
-  static const faceId = IosPermissionDef('NSFaceIDUsageDescription', group: 'face_id');
-
-  // HOMEKIT
-  static const homeKit = IosPermissionDef('NSHomeKitUsageDescription', group: 'home_kit');
-
-  // NFC
-  static const nfcReader = IosPermissionDef(
-    'NFCReaderUsageDescription',
-    group: 'nfc',
+  // MOTION & FITNESS
+  static const sensors = IosPermissionDef(
+    'NSMotionUsageDescription',
+    group: 'sensors',
   );
 
   // TRACKING
   static const userTracking = IosPermissionDef(
     'NSUserTrackingUsageDescription',
-    minimumIosVersion: '14.5',
     group: 'tracking',
   );
 
-  // LOCAL NETWORK
-  static const localNetwork = IosPermissionDef(
-    'NSLocalNetworkUsageDescription',
-    minimumIosVersion: '14.0',
-    group: 'network',
-  );
+  // // HEALTH
+  // static const healthShare = IosPermissionDef(
+  //   'NSHealthShareUsageDescription',
+  //   group: 'health_share',
+  // );
+  // static const healthUpdate = IosPermissionDef(
+  //   'NSHealthUpdateUsageDescription',
+  //   group: 'health_update',
+  // );
+  // static const healthClinicalRecords = IosPermissionDef(
+  //   'NSHealthClinicalHealthRecordsShareUsageDescription',
+  //   group: 'health_clinical_records',
+  // );
 
-  static const nearbyInteraction = IosPermissionDef(
-    'NSNearbyInteractionUsageDescription',
-    minimumIosVersion: '14.0',
-    group: 'nearby_interaction',
-  );
-
-  // SENSORS & FOCUS
-  static const focusStatus = IosPermissionDef(
-    'NSFocusStatusUsageDescription',
-    minimumIosVersion: '15.0',
-    group: 'focus',
-  );
+  // // FACE ID & BIOMETRICS
+  // static const faceId = IosPermissionDef('NSFaceIDUsageDescription', group: 'face_id');
+  //
+  // // HOMEKIT
+  // static const homeKit = IosPermissionDef('NSHomeKitUsageDescription', group: 'home_kit');
+  //
+  // // NFC
+  // static const nfcReader = IosPermissionDef(
+  //   'NFCReaderUsageDescription',
+  //   group: 'nfc',
+  // );
+  //
+  // // LOCAL NETWORK
+  // static const localNetwork = IosPermissionDef(
+  //   'NSLocalNetworkUsageDescription',
+  //    //   group: 'network',
+  // );
+  //
+  // static const nearbyInteraction = IosPermissionDef(
+  //   'NSNearbyInteractionUsageDescription',
+  //    //   group: 'nearby_interaction',
+  // );
+  //
+  // // SENSORS & FOCUS
+  // static const focusStatus = IosPermissionDef(
+  //   'NSFocusStatusUsageDescription',
+  //    //   group: 'focus',
+  // );
 
   /// Get all permissions
   static Set<IosPermissionDef> get all => {
@@ -171,34 +165,19 @@ abstract class IosPermissions {
     calendars,
     reminders,
     bluetooth,
-    motion,
-    healthShare,
-    healthUpdate,
-    healthClinicalRecords,
-    speechRecognition,
-    siri,
-    faceId,
+    sensors,
+    speech,
+    assistant,
     mediaLibrary,
-    homeKit,
-    nfcReader,
     userTracking,
-    localNetwork,
-    nearbyInteraction,
-    focusStatus,
+    // healthShare,
+    // healthUpdate,
+    // healthClinicalRecords,
+    // faceId,
+    // homeKit,
+    // nfcReader,
+    // localNetwork,
+    // nearbyInteraction,
+    // focusStatus,
   };
-
-  /// Validate if a permission key exists
-  static bool isValidKey(String key) {
-    return all.any((permission) => permission.key == key);
-  }
-
-  /// Get permission by Info.plist key
-  static IosPermissionDef? getByKey(String key) {
-    return all.firstWhereOrNull((permission) => permission.key == key);
-  }
-
-  /// Get permissions that require specific iOS version or higher
-  static List<IosPermissionDef> getByMinimumVersion(String version) {
-    return all.where((p) => p.minimumIosVersion == version).toList();
-  }
 }

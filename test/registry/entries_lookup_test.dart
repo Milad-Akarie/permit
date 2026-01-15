@@ -228,7 +228,7 @@ void main() {
       test('creates lookup with provided entries', () {
         final entries = {
           AndroidPermissions.camera,
-          AndroidPermissions.recordAudio,
+          AndroidPermissions.microphone,
         };
         final customLookup = EntriesLookup(entries);
         expect(customLookup.entries, equals(entries));

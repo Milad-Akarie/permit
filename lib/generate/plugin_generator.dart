@@ -78,15 +78,22 @@ class PluginGenerator {
     final permissionsInPlist = editor.getUsageDescriptions();
     if (permissionsInPlist.isEmpty) return null;
     final entryLookUp = EntriesLookup.forDefaults(iosOnly: true);
-    final handlers = permissionsInPlist
+    final groups = permissionsInPlist
         .map((e) => entryLookUp.lookupByKey(e.key))
         .whereType<IosPermissionDef>()
         .map((e) => e.group)
-        .toSet()
-        .map((e) => swiftPermissionHandlers[e]?.call())
-        .nonNulls;
+        .toSet();
 
-    if (handlers.isEmpty) return null;
+    if (groups.isEmpty) return null;
+    final handlers = <SwiftHandlerSnippet>[];
+    for (var group in groups) {
+      final handler = swiftPermissionHandlers[group]?.call();
+      if (handler != null) {
+        handlers.add(handler);
+      } else {
+        throw Exception('No Swift handler found for iOS permission group: $group');
+      }
+    }
 
     return [
       PluginPodTemp(),

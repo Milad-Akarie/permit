@@ -78,33 +78,14 @@ public class PermitPlugin: NSObject, FlutterPlugin {
     }
     
     private func openSettings(result: @escaping FlutterResult) {
-        guard let url = URL(string: UIApplication.openSettingsURLString) else {
-            result(FlutterError(
-                code: "INVALID_URL",
-                message: "Settings URL is invalid",
-                details: nil
-            ))
-            return
-        }
-    
-        if #available(iOS 10.0, *) {
-            UIApplication.shared.open(url, options: [:]) { success in
-                if success {
-                    result(true)
-                } else {
-                    result(FlutterError(
-                        code: "OPEN_FAILED",
-                        message: "Failed to open settings",
-                        details: nil
-                    ))
-                }
-            }
-        } else {
-            // Fallback for iOS 9 and earlier (if you need to support it)
-            UIApplication.shared.openURL(url)
-            result(true)
-        }
-    }
+      guard let url = URL(string: UIApplication.openSettingsURLString) else {
+          result(FlutterError(code: "INVALID_URL", message: "Settings URL is invalid", details: nil))
+          return
+      }
+      UIApplication.shared.open(url, options: [:]) { success in
+          result(success ? true : FlutterError(code: "OPEN_FAILED", message: "Failed to open settings", details: nil))
+      }
+}
 }
 
 // Base handler protocol

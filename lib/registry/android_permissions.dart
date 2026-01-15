@@ -9,10 +9,18 @@ abstract class AndroidPermissions {
   );
 
   // Microphone
-  static const recordAudio = AndroidPermissionDef(
+  static const microphone = AndroidPermissionDef(
     'android.permission.RECORD_AUDIO',
     runtime: true,
     group: 'microphone',
+  );
+
+  // This is the same as microphone, but defined separately for
+  // the unified permission groups.
+  static const speech = AndroidPermissionDef(
+    'android.permission.RECORD_AUDIO',
+    runtime: true,
+    group: 'speech',
   );
 
   // Location
@@ -324,7 +332,8 @@ abstract class AndroidPermissions {
     // Camera
     camera,
     // Microphone
-    recordAudio,
+    microphone,
+    speech,
     // Location
     accessFineLocation,
     accessCoarseLocation,
