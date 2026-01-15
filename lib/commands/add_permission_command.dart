@@ -47,39 +47,32 @@ class AddPermissionCommand extends PermitCommand {
   @override
   Future<void> run() async {
     var key = argResults?.rest.isNotEmpty == true ? argResults!.rest[0] : '';
-    final entriesLookup = EntriesLookup.forDefaults(
+    final lookup = EntriesLookup.forDefaults(
       androidOnly: argResults?['android'] == true,
       iosOnly: argResults?['ios'] == true,
     );
 
     if (key.isEmpty) {
-      key = singleSelect(
-        'Select a permission group',
-        options: List.of(entriesLookup.groups),
-        display: (group) => group,
-      );
-    }
-    if (key.isEmpty) {
-      Logger.info('No permission key provided.');
+      Logger.info('No permission key or a search keyword provide. try permit add <permission_key|keyword>');
       return;
     }
 
-    final entries = entriesLookup.find(key);
+    final entries = lookup.find(key);
 
     if (entries.isNotEmpty) {
       final resolved = _resolveEntries(List.of(entries));
-      onAddEntries(resolved);
+      onAddEntries(resolved, lookup);
     } else {
       Logger.info('No permission entries found for key: $key');
       return;
     }
   }
 
-  void onAddEntries(List<XmlEntry> entries) {
+  void onAddEntries(List<XmlEntry> entries, EntriesLookup lookup) {
     final androidEntries = entries.whereType<ManifestPermissionEntry>();
     final iosEntries = entries.whereType<PListUsageDescription>();
     if (androidEntries.isNotEmpty) {
-      addAndroidPermissions(androidEntries.toList());
+      addAndroidPermissions(androidEntries.toList(), lookup);
     }
     if (iosEntries.isNotEmpty) {
       addIosPermissions(iosEntries.toList());
@@ -89,7 +82,7 @@ class AddPermissionCommand extends PermitCommand {
     PluginGenerator(pathFinder: pathFinder).generate();
   }
 
-  void addAndroidPermissions(List<ManifestPermissionEntry> entries) {
+  void addAndroidPermissions(List<ManifestPermissionEntry> entries, EntriesLookup lookup) {
     if (manifest == null) {
       Logger.error('Could not locate AndroidManifest.xml');
       return;
@@ -103,6 +96,17 @@ class AddPermissionCommand extends PermitCommand {
         comments: entry.comments,
         removeCommentsOnUpdate: (c) => c.startsWith('@permit'),
       );
+      final permissionDef = lookup.findByKey(entry.key);
+      if (permissionDef is AndroidPermissionDef && permissionDef.legacyKeys != null) {
+        for (final legacyEntry in permissionDef.legacyKeys!.entries) {
+          editor.addPermission(
+            name: legacyEntry.key,
+            comments: ['@permit:legacy DO-NOT-REMOVE'],
+            maxSdkVersion: legacyEntry.value,
+            removeCommentsOnUpdate: (c) => c.startsWith('@permit'),
+          );
+        }
+      }
     }
 
     if (editor.save(file)) {
@@ -172,7 +176,7 @@ class AddPermissionCommand extends PermitCommand {
       resolvedEntries.add(
         ManifestPermissionEntry(
           key: androidEntry.key,
-          comments: [generateCode && androidEntry.runtime ? '@permit:code' : '@permit'],
+          comments: [generateCode && androidEntry.runtime ? '@permit:code DO-NOT-REMOVE' : '@permit'],
         ),
       );
     }
@@ -185,7 +189,7 @@ class AddPermissionCommand extends PermitCommand {
         PListUsageDescription(
           key: entry.key,
           description: desc,
-          comments: [generateCode ? '@permit:code' : '@permit'],
+          comments: [generateCode ? '@permit:code DO-NOT-REMOVE' : '@permit'],
         ),
       );
       return resolvedEntries;
@@ -201,7 +205,7 @@ class AddPermissionCommand extends PermitCommand {
         PListUsageDescription(
           key: entry.key,
           description: desc,
-          comments: [generateCode ? '@permit:code' : '@permit'],
+          comments: [generateCode ? '@permit:code DO-NOT-REMOVE' : '@permit'],
         ),
       );
     }

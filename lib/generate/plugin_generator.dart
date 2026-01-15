@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:permit/editor/pubspec_editor.dart';
 import 'package:permit/editor/xml_editor.dart';
-import 'package:permit/generate/templates/android/kotlin_handler_snippet.dart';
+import 'package:permit/generate/templates/android/handlers/kotlin_handler_snippet.dart';
 import 'package:permit/generate/templates/android/plugin_gradle_temp.dart';
 import 'package:permit/generate/templates/android/plugin_kotlin_class_temp.dart';
 import 'package:permit/generate/templates/android/plugin_manifest_temp.dart';
@@ -39,7 +39,7 @@ class PluginGenerator {
     final entryLookUp = EntriesLookup.forDefaults(androidOnly: true);
 
     final runtimeEntries = permissionsInManifest
-        .map((e) => entryLookUp.lookupByKey(e.key))
+        .map((e) => entryLookUp.findByKey(e.key))
         .whereType<AndroidPermissionDef>()
         .where((e) => e.runtime);
 
@@ -48,15 +48,15 @@ class PluginGenerator {
       final entryGroups = runtimeEntries.groupListsBy((e) => e.group);
       int requestCode = 1010;
       for (var group in entryGroups.entries) {
-        if (customHandlers[group.key] != null) {
-          snippets.add(customHandlers[group.key]!(requestCode++));
+        if (customKotlinHandlers[group.key] != null) {
+          snippets.add(customKotlinHandlers[group.key]!(requestCode++));
           continue;
         }
         snippets.add(
           KotlinHandlerSnippet(
             key: group.key,
             requestCode: '${requestCode++}',
-            permissions: List.of(group.value.whereType<AndroidPermissionDef>()),
+            permissions: List.of(group.value),
           ),
         );
       }
@@ -80,7 +80,7 @@ class PluginGenerator {
     final entryLookUp = EntriesLookup.forDefaults(iosOnly: true);
     final groups = permissionsInPlist
         .where((e) => e.generatesCode)
-        .map((e) => entryLookUp.lookupByKey(e.key))
+        .map((e) => entryLookUp.findByKey(e.key))
         .whereType<IosPermissionDef>()
         .map((e) => e.group)
         .toSet();

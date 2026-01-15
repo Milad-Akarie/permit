@@ -1,4 +1,4 @@
-import 'package:permit/generate/templates/android/kotlin_handler_snippet.dart';
+import 'package:permit/generate/templates/android/handlers/kotlin_handler_snippet.dart';
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/template.dart';
 import 'package:permit/registry/models.dart';

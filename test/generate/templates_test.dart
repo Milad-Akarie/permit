@@ -1,7 +1,7 @@
 import 'package:permit/generate/templates/android/plugin_gradle_temp.dart';
 import 'package:permit/generate/templates/android/plugin_kotlin_class_temp.dart';
 import 'package:permit/generate/templates/android/plugin_manifest_temp.dart';
-import 'package:permit/generate/templates/android/kotlin_handler_snippet.dart';
+import 'package:permit/generate/templates/android/handlers/kotlin_handler_snippet.dart';
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/plugin_pubspec_temp.dart';
 import 'package:permit/registry/models.dart';

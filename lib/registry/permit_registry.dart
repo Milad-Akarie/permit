@@ -21,7 +21,7 @@ class EntriesLookup {
     for (var entry in entries) {
       if (entry.matches(input)) {
         matches.add(entry);
-      } else if (entry.group.startsWith(input)) {
+      } else if ({entry.group, ...entry.keywords}.any((e) => e.startsWith(input))) {
         matches.add(entry);
       }
     }
@@ -29,7 +29,7 @@ class EntriesLookup {
     return matches;
   }
 
-  PermissionDef? lookupByKey(String key) {
+  PermissionDef? findByKey(String key) {
     for (var entry in entries) {
       if (entry.key == key) {
         return entry;

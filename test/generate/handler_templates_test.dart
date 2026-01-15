@@ -1,6 +1,11 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
-import 'package:permit/generate/templates/android/kotlin_handler_snippet.dart';
+import 'package:permit/generate/templates/android/handlers/ignore_battery_optimizations_handler.dart';
+import 'package:permit/generate/templates/android/handlers/kotlin_handler_snippet.dart';
+import 'package:permit/generate/templates/android/handlers/manage_external_storage_handler.dart';
+import 'package:permit/generate/templates/android/handlers/request_install_packages_handler.dart';
+import 'package:permit/generate/templates/android/handlers/schedule_exact_alarm_handler.dart';
+import 'package:permit/generate/templates/android/handlers/system_alert_window_handler.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -221,47 +226,47 @@ void main() {
 
     group('customHandlers map', () {
       test('should have all 5 custom handlers', () {
-        expect(customHandlers.length, equals(5));
+        expect(customKotlinHandlers.length, equals(5));
       });
 
       test('should have system_alert_window handler', () {
-        expect(customHandlers.containsKey('system_alert_window'), isTrue);
+        expect(customKotlinHandlers.containsKey('system_alert_window'), isTrue);
       });
 
       test('should have ignore_battery_optimizations handler', () {
-        expect(customHandlers.containsKey('ignore_battery_optimizations'), isTrue);
+        expect(customKotlinHandlers.containsKey('ignore_battery_optimizations'), isTrue);
       });
 
       test('should have manage_external_storage handler', () {
-        expect(customHandlers.containsKey('manage_external_storage'), isTrue);
+        expect(customKotlinHandlers.containsKey('manage_external_storage'), isTrue);
       });
 
       test('should have request_install_packages handler', () {
-        expect(customHandlers.containsKey('request_install_packages'), isTrue);
+        expect(customKotlinHandlers.containsKey('request_install_packages'), isTrue);
       });
 
       test('should have schedule_exact_alarm handler', () {
-        expect(customHandlers.containsKey('schedule_exact_alarm'), isTrue);
+        expect(customKotlinHandlers.containsKey('schedule_exact_alarm'), isTrue);
       });
 
       test('should create correct handler instances', () {
-        final sawHandler = customHandlers['system_alert_window']!(1001);
+        final sawHandler = customKotlinHandlers['system_alert_window']!(1001);
         expect(sawHandler, isA<SystemAlertWindowHandler>());
         expect(sawHandler.className, equals('SystemAlertWindowHandler'));
 
-        final bioHandler = customHandlers['ignore_battery_optimizations']!(1002);
+        final bioHandler = customKotlinHandlers['ignore_battery_optimizations']!(1002);
         expect(bioHandler, isA<IgnoreBatteryOptimizationsHandler>());
         expect(bioHandler.className, equals('IgnoreBatteryOptimizationsHandler'));
 
-        final mesHandler = customHandlers['manage_external_storage']!(1003);
+        final mesHandler = customKotlinHandlers['manage_external_storage']!(1003);
         expect(mesHandler, isA<ManageExternalStorageHandler>());
         expect(mesHandler.className, equals('ManageExternalStorageHandler'));
 
-        final ripHandler = customHandlers['request_install_packages']!(1004);
+        final ripHandler = customKotlinHandlers['request_install_packages']!(1004);
         expect(ripHandler, isA<RequestInstallPackagesHandler>());
         expect(ripHandler.className, equals('RequestInstallPackagesHandler'));
 
-        final seaHandler = customHandlers['schedule_exact_alarm']!(1005);
+        final seaHandler = customKotlinHandlers['schedule_exact_alarm']!(1005);
         expect(seaHandler, isA<ScheduleExactAlarmHandler>());
         expect(seaHandler.className, equals('ScheduleExactAlarmHandler'));
       });

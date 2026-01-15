@@ -9,6 +9,8 @@ class ManifestEditor extends XmlEditor {
     required String name,
     List<String>? comments,
     RemoveComment? removeCommentsOnUpdate,
+    List<XmlElementInfo> extraTags = const [],
+    int? maxSdkVersion,
   }) {
     // Remove existing permission if present
     removePermission(
@@ -22,9 +24,8 @@ class ManifestEditor extends XmlEditor {
         tags: [
           XmlElementInfo(
             name: 'uses-permission',
-            content: '',
             comments: comments,
-            attributes: {'android:name': name},
+            attributes: {'android:name': name, if (maxSdkVersion != null) 'android:maxSdkVersion': '$maxSdkVersion'},
             isSelfClosing: true,
           ),
         ],

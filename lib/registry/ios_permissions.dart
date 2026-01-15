@@ -7,6 +7,7 @@ abstract class IosPermissions {
     'NSCameraUsageDescription',
     group: 'camera',
     sinceApi: 7.0,
+    keywords: {'capture', 'record'},
   );
 
   // MICROPHONE
@@ -14,6 +15,7 @@ abstract class IosPermissions {
     'NSMicrophoneUsageDescription',
     group: 'microphone',
     sinceApi: 7.0,
+    keywords: {'record', 'voice'},
   );
 
   // CONTACTS
@@ -21,6 +23,7 @@ abstract class IosPermissions {
     'NSContactsUsageDescription',
     group: 'contacts',
     sinceApi: 6.0,
+    keywords: {'address', 'phone', 'email'},
   );
 
   // LOCATION
@@ -29,6 +32,7 @@ abstract class IosPermissions {
     group: 'location',
     service: AssociatedService.location,
     sinceApi: 11.0,
+    keywords: {'gps', 'geolocation', 'maps'},
   );
 
   static const locationAlways = IosPermissionDef(
@@ -36,6 +40,7 @@ abstract class IosPermissions {
     group: 'location_always',
     service: AssociatedService.location,
     untilApi: 11.0,
+    keywords: {'gps', 'geolocation', 'maps'},
   );
 
   static const locationAlwaysAndWhenInUse = IosPermissionDef(
@@ -43,6 +48,7 @@ abstract class IosPermissions {
     group: 'location_always',
     service: AssociatedService.location,
     sinceApi: 11.0,
+    keywords: {'gps', 'geolocation', 'maps'},
   );
 
   // MEDIA LIBRARY & MUSIC
@@ -50,6 +56,7 @@ abstract class IosPermissions {
     'NSAppleMusicUsageDescription',
     group: 'media',
     sinceApi: 2.0,
+    keywords: {'music', 'library'},
   );
 
   // PHOTOS & MEDIA
@@ -57,12 +64,14 @@ abstract class IosPermissions {
     'NSPhotoLibraryUsageDescription',
     group: 'photos',
     sinceApi: 6.0,
+    keywords: {'roll', 'gallery', 'picker'},
   );
 
   static const photoLibraryAdd = IosPermissionDef(
     'NSPhotoLibraryAddUsageDescription',
     group: 'photos_add_only',
     sinceApi: 11.0,
+    keywords: {'roll', 'gallery', 'picker'},
   );
 
   // CALENDARS & EVENTS
@@ -70,18 +79,21 @@ abstract class IosPermissions {
     'NSCalendarsFullAccessUsageDescription',
     group: 'calendar',
     sinceApi: 17.0,
+    keywords: {'events'},
   );
 
   static const calendarsDeprecated = IosPermissionDef(
     'NSCalendarsUsageDescription',
     group: 'calendar',
     untilApi: 17.0,
+    keywords: {'events'},
   );
   static const calendarsWriteOnly = IosPermissionDef(
     'NSCalendarsWriteOnlyAccessUsageDescription',
     scope: AccessScope.writeOnly,
     group: 'calendar_write_only',
     sinceApi: 17.0,
+    keywords: {'events'},
   );
 
   // REMINDERS
@@ -89,12 +101,14 @@ abstract class IosPermissions {
     'NSRemindersFullAccessUsageDescription',
     group: 'reminders',
     sinceApi: 17.0,
+    keywords: {'tasks', 'todo'},
   );
 
   static const remindersDeprecated = IosPermissionDef(
     'NSRemindersUsageDescription',
     group: 'reminders',
     untilApi: 17.0,
+    keywords: {'tasks', 'todo'},
   );
 
   // BLUETOOTH
@@ -103,6 +117,7 @@ abstract class IosPermissions {
     group: 'bluetooth',
     service: AssociatedService.bluetooth,
     sinceApi: 13.0,
+    keywords: {'peripheral', 'connect'},
   );
 
   static const bluetoothPeripheralDeprecated = IosPermissionDef(
@@ -110,6 +125,7 @@ abstract class IosPermissions {
     group: 'bluetooth',
     service: AssociatedService.bluetooth,
     untilApi: 13.0,
+    keywords: {'peripheral', 'connect'},
   );
 
   // SPEECH & SIRI
@@ -117,12 +133,14 @@ abstract class IosPermissions {
     'NSSpeechRecognitionUsageDescription',
     group: 'speech',
     sinceApi: 10.0,
+    keywords: {'recognition', 'voice'},
   );
 
   static const assistant = IosPermissionDef(
     'NSSiriUsageDescription',
     group: 'assistant',
     sinceApi: 10.0,
+    keywords: {'siri', 'shortcut', 'voice'},
   );
 
   // MOTION & FITNESS
@@ -130,6 +148,7 @@ abstract class IosPermissions {
     'NSMotionUsageDescription',
     group: 'sensors',
     sinceApi: 7.0,
+    keywords: {'accelerometer', 'gyroscope', 'motion'},
   );
 
   // TRACKING
@@ -137,6 +156,7 @@ abstract class IosPermissions {
     'NSUserTrackingUsageDescription',
     group: 'tracking',
     sinceApi: 14.5,
+    keywords: {'ads', 'idfa', 'analytics'},
   );
 
   // // HEALTH
