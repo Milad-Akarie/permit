@@ -79,7 +79,7 @@ class AndroidPermissionDef extends PermissionDef {
   @override
   String? get promptNote {
     if (sinceSDK != null) {
-      return 'API $sinceSDK+';
+      return 'SDK $sinceSDK+';
     }
     return null;
   }
