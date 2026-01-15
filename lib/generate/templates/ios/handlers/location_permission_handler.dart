@@ -103,8 +103,8 @@ class LocationPermissionHandler extends SwiftHandlerSnippet {
         }
     }
 
-    func checkServiceStatus() -> Int {
-        return CLLocationManager.locationServicesEnabled() ? 1 : 0
+    func checkServiceStatus(result: @escaping FlutterResult){
+         result(CLLocationManager.locationServicesEnabled() ? 1 : 0)
     }
 
     func locationManager(

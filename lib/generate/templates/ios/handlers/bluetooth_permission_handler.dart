@@ -13,6 +13,7 @@ class BluetoothPermissionHandler extends SwiftHandlerSnippet {
     return '''class $className: NSObject, PermissionHandler, CBCentralManagerDelegate {
     private var centralManager: CBCentralManager?
     private var requestResult: FlutterResult?
+    private var serviceStatusResult: FlutterResult?
     
     func checkStatus() -> Int {
         if #available(iOS 13.1, *) {
@@ -51,28 +52,42 @@ class BluetoothPermissionHandler extends SwiftHandlerSnippet {
         centralManager = CBCentralManager(delegate: self, queue: nil, options: options)
     }
     
-    func checkServiceStatus() -> Int {
+    func checkServiceStatus(result: @escaping FlutterResult) {
         // Create manager if needed, but only if permission already determined
         if centralManager == nil {
             if #available(iOS 13.1, *) {
                 // Only create manager if permission not undetermined
                 if CBCentralManager.authorization == .notDetermined {
                     // Can't check service without triggering permission
-                    return 0
+                    result(0)
+                    return
                 }
             }
             
             // Permission determined or pre-iOS 13 - safe to create manager
+            serviceStatusResult = result
             let options = [CBCentralManagerOptionShowPowerAlertKey: false]
             centralManager = CBCentralManager(delegate: self, queue: nil, options: options)
+            return
         }
         
         guard let manager = centralManager else {
-            return 0
+            result(0)
+            return
         }
         
-        // Return enabled only if powered on, disabled for all other states
-        switch manager.state {
+        // If state is unknown/resetting, wait for update
+        if manager.state == .unknown || manager.state == .resetting {
+            serviceStatusResult = result
+            return
+        }
+        
+        // Return current state
+        result(getServiceStatusFromState(manager.state))
+    }
+    
+    private func getServiceStatusFromState(_ state: CBManagerState) -> Int {
+        switch state {
         case .poweredOn:
             return 1 // enabled
         case .poweredOff:
@@ -87,9 +102,15 @@ class BluetoothPermissionHandler extends SwiftHandlerSnippet {
     }
     
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        guard let result = requestResult else { return }
-        result(checkStatus())
-        requestResult = nil
+        if let result = requestResult {
+            result(checkStatus())
+            requestResult = nil
+        }
+        
+        if let result = serviceStatusResult {
+            result(getServiceStatusFromState(central.state))
+            serviceStatusResult = nil
+        }
     }
 }
 ''';

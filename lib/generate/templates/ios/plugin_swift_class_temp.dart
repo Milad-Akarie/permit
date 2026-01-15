@@ -71,7 +71,7 @@ public class PermitPlugin: NSObject, FlutterPlugin {
         case "request_permission":
             handler.request(result: result)
         case "check_service_status":
-            result(handler.checkServiceStatus())
+            handler.checkServiceStatus(result: result)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -92,13 +92,13 @@ public class PermitPlugin: NSObject, FlutterPlugin {
 protocol PermissionHandler {
     func checkStatus() -> Int
     func request(result: @escaping FlutterResult)
-    func checkServiceStatus() -> Int
+    func checkServiceStatus(result: @escaping FlutterResult)
 }
 
 // Default implementations
 extension PermissionHandler {
-    func checkServiceStatus() -> Int {
-        return 2 // Not applicable
+    func checkServiceStatus(result: @escaping FlutterResult){
+        result(2) // Not applicable
     }
 }
 
