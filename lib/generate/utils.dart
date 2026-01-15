@@ -21,3 +21,13 @@ extension StringExtensions on String {
     return capitalizedWords.join();
   }
 }
+
+extension DoubleExt on double {
+  String toShortString() {
+    if (this % 1 == 0) {
+      return toInt().toString();
+    } else {
+      return toString();
+    }
+  }
+}

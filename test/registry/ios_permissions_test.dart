@@ -8,7 +8,6 @@ void main() {
       final p = IosPermissions.camera;
       expect(p.key, equals('NSCameraUsageDescription'));
       expect(p.group, equals('camera'));
-      expect(p.successorOf, isNull);
       expect(p.scope, equals(AccessScope.standardOrFull));
     });
 
@@ -28,7 +27,6 @@ void main() {
       final p = IosPermissions.microphone;
       expect(p.key, 'NSMicrophoneUsageDescription');
       expect(p.group, 'microphone');
-      expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
     });
 
@@ -36,7 +34,6 @@ void main() {
       final p = IosPermissions.contacts;
       expect(p.key, 'NSContactsUsageDescription');
       expect(p.group, 'contacts');
-      expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
     });
 
@@ -44,7 +41,6 @@ void main() {
       final p = IosPermissions.locationWhenInUse;
       expect(p.key, 'NSLocationWhenInUseUsageDescription');
       expect(p.group, 'location');
-      expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
     });
 
@@ -52,7 +48,6 @@ void main() {
       final p = IosPermissions.locationAlways;
       expect(p.key, 'NSLocationAlwaysUsageDescription');
       expect(p.group, 'location_always');
-      expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
     });
 
@@ -60,7 +55,6 @@ void main() {
       final p = IosPermissions.locationAlwaysAndWhenInUse;
       expect(p.key, 'NSLocationAlwaysAndWhenInUseUsageDescription');
       expect(p.group, 'location_always');
-      expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
     });
 
@@ -68,7 +62,6 @@ void main() {
       final p = IosPermissions.mediaLibrary;
       expect(p.key, 'NSAppleMusicUsageDescription');
       expect(p.group, 'media');
-      expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
     });
 
@@ -76,7 +69,6 @@ void main() {
       final p = IosPermissions.photoLibrary;
       expect(p.key, 'NSPhotoLibraryUsageDescription');
       expect(p.group, 'photos');
-      expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
     });
 
@@ -84,7 +76,6 @@ void main() {
       final p = IosPermissions.calendars;
       expect(p.key, 'NSCalendarsFullAccessUsageDescription');
       expect(p.group, 'calendar');
-      expect(p.successorOf, 'NSCalendarsUsageDescription');
       expect(p.scope, AccessScope.standardOrFull);
     });
 
@@ -92,7 +83,6 @@ void main() {
       final p = IosPermissions.reminders;
       expect(p.key, 'NSRemindersFullAccessUsageDescription');
       expect(p.group, 'reminders');
-      expect(p.successorOf, 'NSRemindersUsageDescription');
       expect(p.scope, AccessScope.standardOrFull);
     });
 
@@ -100,7 +90,6 @@ void main() {
       final p = IosPermissions.speech;
       expect(p.key, 'NSSpeechRecognitionUsageDescription');
       expect(p.group, 'speech');
-      expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
     });
 
@@ -108,7 +97,6 @@ void main() {
       final p = IosPermissions.assistant;
       expect(p.key, 'NSSiriUsageDescription');
       expect(p.group, 'assistant');
-      expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
     });
 
@@ -116,7 +104,6 @@ void main() {
       final p = IosPermissions.userTracking;
       expect(p.key, 'NSUserTrackingUsageDescription');
       expect(p.group, 'tracking');
-      expect(p.successorOf, isNull);
       expect(p.scope, AccessScope.standardOrFull);
     });
   });

@@ -79,6 +79,7 @@ class PluginGenerator {
     if (permissionsInPlist.isEmpty) return null;
     final entryLookUp = EntriesLookup.forDefaults(iosOnly: true);
     final groups = permissionsInPlist
+        .where((e) => e.generatesCode)
         .map((e) => entryLookUp.lookupByKey(e.key))
         .whereType<IosPermissionDef>()
         .map((e) => e.group)

@@ -49,12 +49,10 @@ void main() {
       const x = IosPermissionDef(
         'NSFoo',
         group: 'misc',
-        successorOf: 'NSBar',
       );
       const y = IosPermissionDef(
         'NSFoo',
         group: 'misc',
-        successorOf: 'NSBar',
       );
       expect(x, equals(y));
       expect(x.hashCode, equals(y.hashCode));

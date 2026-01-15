@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:permit/commands/permit_runner.dart';
 import 'package:permit/generate/plugin_generator.dart';
 import 'package:permit/registry/models.dart';
@@ -25,6 +27,22 @@ class AddPermissionCommand extends PermitCommand {
     argParser.addFlag('android', abbr: 'a', help: 'Add permission for Android platform', defaultsTo: false);
     argParser.addFlag('ios', abbr: 'i', help: 'Add permission for iOS platform', defaultsTo: false);
   }
+
+  late final (PListEditor editor, File file)? infoPlist = () {
+    final file = pathFinder.getInfoPlist();
+    if (file == null) {
+      return null;
+    }
+    return (PListEditor(file.readAsStringSync()), file);
+  }();
+
+  late final (ManifestEditor editor, File file)? manifest = () {
+    final file = pathFinder.getManifest();
+    if (file == null) {
+      return null;
+    }
+    return (ManifestEditor(file.readAsStringSync()), file);
+  }();
 
   @override
   Future<void> run() async {
@@ -72,22 +90,22 @@ class AddPermissionCommand extends PermitCommand {
   }
 
   void addAndroidPermissions(List<ManifestPermissionEntry> entries) {
-    final file = pathFinder.getManifest();
-    if (file == null) {
+    if (manifest == null) {
       Logger.error('Could not locate AndroidManifest.xml');
       return;
     }
-    final manifestEditor = ManifestEditor(file.readAsStringSync());
+
+    final (editor, file) = manifest!;
 
     for (var entry in entries) {
-      manifestEditor.addPermission(
+      editor.addPermission(
         name: entry.key,
         comments: entry.comments,
         removeCommentsOnUpdate: (c) => c.startsWith('@permit'),
       );
     }
 
-    if (manifestEditor.save(file)) {
+    if (editor.save(file)) {
       for (var entry in entries) {
         Logger.android('Added Android permission: ${Logger.mutedPen.write(entry.key)}');
       }
@@ -95,21 +113,20 @@ class AddPermissionCommand extends PermitCommand {
   }
 
   void addIosPermissions(List<PListUsageDescription> entries) {
-    final file = pathFinder.getInfoPlist();
-    if (file == null) {
+    if (infoPlist == null) {
       Logger.error('Could not locate Info.plist');
       return;
     }
-    final plistEditor = PListEditor(file.readAsStringSync());
+    final (editor, file) = infoPlist!;
     for (var entry in entries) {
-      plistEditor.addUsageDescription(
+      editor.addUsageDescription(
         key: entry.key,
         description: entry.description,
         keyComments: entry.comments,
         removeCommentsOnUpdate: (c) => c.startsWith('@permit'),
       );
     }
-    if (plistEditor.save(file)) {
+    if (editor.save(file)) {
       for (var entry in entries) {
         Logger.ios('Added iOS usage description: ${Logger.mutedPen.write(entry.key)}');
       }
@@ -120,12 +137,32 @@ class AddPermissionCommand extends PermitCommand {
     final generateCode = argResults?['code'] == true;
     final desc = argResults?['desc'] as String?;
     var selectedEntries = entries;
+
+    final existingUsageDescriptions = Map<String, PListUsageDescription>.fromEntries(
+      infoPlist?.$1.getUsageDescriptions().map((e) => MapEntry(e.key, e)) ?? [],
+    );
+
+    final canUpdateInfoPlist = entries.whereType<IosPermissionDef>().any(
+      (e) => existingUsageDescriptions.containsKey(e.key),
+    );
     if (entries.length > 1) {
+      final maxLineLength = entries.map((e) => e.name.length).reduce((a, b) => a > b ? a : b);
+
       selectedEntries = multiSelect(
-        'Select the permission to add',
+        'Select permissions to add${canUpdateInfoPlist ? ' or update' : ''}',
         options: entries,
         display: (entry) {
-          return '${entry is AndroidPermissionDef ? 'Android' : 'iOS'}: ${entry.key}';
+          final platform = entry is AndroidPermissionDef ? 'Android: ' : 'iOS: ';
+          var note = entry.promptNote != null ? '(${entry.promptNote})' : '';
+          final option = platform + entry.name;
+          if (entry is IosPermissionDef && existingUsageDescriptions.containsKey(entry.key)) {
+            note += ' (Update)';
+          }
+
+          if (note.isEmpty) {
+            return option;
+          }
+          return option.padRight(maxLineLength + 13) + Logger.mutedPen.write(note);
         },
       );
     }
@@ -156,8 +193,8 @@ class AddPermissionCommand extends PermitCommand {
 
     for (var entry in iosEntries) {
       final desc = prompt(
-        'Enter usage description for "${entry.key}"',
-        defaultValue: argResults?['desc'] ?? '',
+        'Usage description for "${entry.name}"',
+        defaultValue: existingUsageDescriptions[entry.key]?.description ?? argResults?['desc'] ?? '',
         validatorErrorMessage: 'Description cannot be empty',
       );
       resolvedEntries.add(

@@ -12,6 +12,8 @@ abstract class PermissionDef {
   });
 
   bool matches(String input);
+  String get name => key;
+  String? get promptNote;
 }
 
 class AndroidPermissionDef extends PermissionDef {
@@ -51,19 +53,31 @@ class AndroidPermissionDef extends PermissionDef {
     }
     return false;
   }
+
+  // @override
+  // String get name => key.replaceAll('android.permission.', '');
+
+  @override
+  String? get promptNote {
+    if (sinceApi != null) {
+      return 'api $sinceApi+';
+    }
+    return null;
+  }
 }
 
 /// iOS Permission class
 class IosPermissionDef extends PermissionDef {
-  final String? successorOf;
   final AccessScope scope;
-
+  final double? sinceApi;
+  final double? untilApi;
   const IosPermissionDef(
     super.key, {
     super.service,
     required super.group,
     this.scope = .standardOrFull,
-    this.successorOf,
+    this.sinceApi,
+    this.untilApi,
   });
 
   @override
@@ -76,15 +90,28 @@ class IosPermissionDef extends PermissionDef {
           key == other.key &&
           group == other.group &&
           service == other.service &&
-          successorOf == other.successorOf &&
+          sinceApi == other.sinceApi &&
+          untilApi == other.untilApi &&
           scope == other.scope;
 
+  bool get isDeprecated => untilApi != null;
+
   @override
-  int get hashCode => Object.hash(key, group, successorOf, scope, service);
+  int get hashCode => Object.hash(key, group, sinceApi, untilApi, scope, service);
 
   @override
   bool matches(String input) {
     return key.toLowerCase() == input.toLowerCase();
+  }
+
+  @override
+  String? get promptNote {
+    if (sinceApi != null && sinceApi! > 10.0) {
+      return 'iOS ${sinceApi!.toShortString()}+';
+    } else if (untilApi != null) {
+      return 'deprecated, ios < ${untilApi!.toShortString()}';
+    }
+    return null;
   }
 }
 
