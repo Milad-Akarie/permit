@@ -59,7 +59,7 @@ void main() {
         final handler = SystemAlertWindowHandler(2001);
         final code = handler.generate();
 
-        expect(code, contains('Permission(android.Manifest.permission.SYSTEM_ALERT_WINDOW)'));
+        expect(code, contains('Permission(android.Manifest.permission.SYSTEM_ALERT_WINDOW, sinceSDK = 23)'));
       });
 
       test('should have valid Kotlin syntax structure', () {

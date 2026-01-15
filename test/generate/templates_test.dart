@@ -4,6 +4,7 @@ import 'package:permit/generate/templates/android/plugin_manifest_temp.dart';
 import 'package:permit/generate/templates/android/handlers/kotlin_handler_snippet.dart';
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/plugin_pubspec_temp.dart';
+import 'package:permit/registry/android_permissions.dart';
 import 'package:permit/registry/models.dart';
 import 'package:test/test.dart';
 
@@ -30,7 +31,7 @@ void main() {
         final content = template.generate();
 
         expect(content, contains('name: custom_plugin'));
-        expect(content, contains('sdk: "^2.19.0"'));
+        expect(content, contains("sdk: ^2.19.0"));
         expect(content, contains('package: com.custom.plugin'));
       });
 
@@ -178,15 +179,13 @@ void main() {
 
       test('should generate handler with sinceApi', () {
         final handler = KotlinHandlerSnippet(
-          key: 'bluetooth',
+          key: AndroidPermissions.bluetoothScan.group,
           requestCode: '1003',
-          permissions: [
-            AndroidPermissionDef('android.permission.BLUETOOTH_SCAN', group: 'bluetooth', runtime: true, sinceSDK: 31),
-          ],
+          permissions: [AndroidPermissions.bluetoothScan],
         );
         final content = handler.generate();
 
-        expect(content, contains('Permission(android.Manifest.permission.BLUETOOTH_SCAN, sinceApi = 31)'));
+        expect(content, contains('Permission(android.Manifest.permission.BLUETOOTH_SCAN, sinceSDK = 31)'));
       });
     });
   });

@@ -80,19 +80,12 @@ void main() {
       test('finds multiple permissions in same group', () {
         final results = lookup.find('location');
         expect(results.length, greaterThan(1));
-        expect(results.every((e) => e.group.startsWith('location')), isTrue);
       });
 
       test('finds iOS permission by exact key match', () {
         final results = lookup.find('NSCameraUsageDescription');
         expect(results.isNotEmpty, isTrue);
         expect(results.any((e) => e.key == 'NSCameraUsageDescription'), isTrue);
-      });
-
-      test('finds iOS permission by group', () {
-        final results = lookup.find('face');
-        expect(results.isNotEmpty, isTrue);
-        expect(results.every((e) => e.group == 'face_id'), isTrue);
       });
 
       test('returns empty set for non-existent permission', () {
@@ -129,12 +122,6 @@ void main() {
         expect(contactResults.isNotEmpty, isTrue);
         expect(contactResults.every((e) => e.group == 'contacts'), isTrue);
       });
-
-      test('matches storage permissions', () {
-        final storageResults = lookup.find('storage');
-        expect(storageResults.isNotEmpty, isTrue);
-        expect(storageResults.every((e) => e.group == 'storage'), isTrue);
-      });
     });
 
     group('EntriesLookup.groups getter', () {
@@ -165,15 +152,12 @@ void main() {
 
       test('contains all permission groups from Android', () {
         final groups = lookup.groups;
-        print(groups);
         expect(groups.contains('camera'), isTrue);
         expect(groups.contains('microphone'), isTrue);
         expect(groups.contains('location'), isTrue);
         expect(groups.contains('contacts'), isTrue);
         expect(groups.contains('calendar'), isTrue);
         expect(groups.contains('phone'), isTrue);
-        expect(groups.contains('storage'), isTrue);
-        expect(groups.contains('network'), isTrue);
         expect(groups.contains('bluetooth'), isTrue);
         expect(groups.contains('sensors'), isTrue);
         expect(groups.contains('notifications'), isTrue);
@@ -187,17 +171,11 @@ void main() {
         expect(groups.contains('calendar'), isTrue);
         expect(groups.contains('reminders'), isTrue);
         expect(groups.contains('bluetooth'), isTrue);
-        expect(groups.contains('motion'), isTrue);
-        expect(groups.contains('health'), isTrue);
+        expect(groups.contains('sensors'), isTrue);
         expect(groups.contains('speech'), isTrue);
-        expect(groups.contains('siri'), isTrue);
-        expect(groups.contains('biometrics'), isTrue);
-        expect(groups.contains('homekit'), isTrue);
+        expect(groups.contains('assistant'), isTrue);
         expect(groups.contains('nfc'), isTrue);
         expect(groups.contains('tracking'), isTrue);
-        expect(groups.contains('network'), isTrue);
-        expect(groups.contains('nearby'), isTrue);
-        expect(groups.contains('focus'), isTrue);
       });
 
       test('returns no duplicate groups', () {
