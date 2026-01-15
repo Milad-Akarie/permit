@@ -44,7 +44,7 @@ abstract class AndroidPermissions {
   static const accessBackgroundLocation = AndroidPermissionDef(
     'android.permission.ACCESS_BACKGROUND_LOCATION',
     runtime: true,
-    sinceApi: 29,
+    sinceSDK: 29,
     group: 'location_always',
     service: AssociatedService.location,
     keywords: {'gps', 'maps', 'geolocation'},
@@ -96,7 +96,7 @@ abstract class AndroidPermissions {
   );
   static const readPhoneNumbers = AndroidPermissionDef(
     'android.permission.READ_PHONE_NUMBERS',
-    sinceApi: 26,
+    sinceSDK: 26,
     runtime: true,
     group: 'phone',
     service: AssociatedService.phone,
@@ -114,7 +114,7 @@ abstract class AndroidPermissions {
   );
   static const answerPhoneCalls = AndroidPermissionDef(
     'android.permission.ANSWER_PHONE_CALLS',
-    sinceApi: 26,
+    sinceSDK: 26,
     runtime: true,
     group: 'phone',
     service: AssociatedService.phone,
@@ -126,7 +126,7 @@ abstract class AndroidPermissions {
   static const readCallLog = AndroidPermissionDef(
     'android.permission.READ_CALL_LOG',
     runtime: true,
-    sinceApi: 16,
+    sinceSDK: 16,
     group: 'phone',
     service: AssociatedService.phone,
     keywords: {'history', 'log', 'missed'},
@@ -141,7 +141,7 @@ abstract class AndroidPermissions {
   static const addVoicemail = AndroidPermissionDef(
     'android.permission.ADD_VOICEMAIL',
     runtime: true,
-    sinceApi: 14,
+    sinceSDK: 14,
     group: 'phone',
     service: AssociatedService.phone,
     keywords: {'voicemail', 'message', 'voice'},
@@ -182,7 +182,7 @@ abstract class AndroidPermissions {
   static const accessMediaLocation = AndroidPermissionDef(
     'android.permission.ACCESS_MEDIA_LOCATION',
     runtime: true,
-    sinceApi: 29,
+    sinceSDK: 29,
     group: 'media_location',
     keywords: {'metadata', 'location', 'geotag'},
     legacyKeys: {
@@ -193,7 +193,7 @@ abstract class AndroidPermissions {
   // Media
   static const readMediaImages = AndroidPermissionDef(
     'android.permission.READ_MEDIA_IMAGES',
-    sinceApi: 33,
+    sinceSDK: 33,
     runtime: true,
     group: 'photos',
     keywords: {'images', 'media'},
@@ -204,7 +204,7 @@ abstract class AndroidPermissions {
   );
   static const readMediaVideo = AndroidPermissionDef(
     'android.permission.READ_MEDIA_VIDEO',
-    sinceApi: 33,
+    sinceSDK: 33,
     runtime: true,
     group: 'videos',
     keywords: {'video', 'playback'},
@@ -215,7 +215,7 @@ abstract class AndroidPermissions {
   );
   static const readMediaAudio = AndroidPermissionDef(
     'android.permission.READ_MEDIA_AUDIO',
-    sinceApi: 33,
+    sinceSDK: 33,
     runtime: true,
     group: 'audio',
     keywords: {'playback', 'track'},
@@ -229,7 +229,7 @@ abstract class AndroidPermissions {
   static const manageExternalStorage = AndroidPermissionDef(
     'android.permission.MANAGE_EXTERNAL_STORAGE',
     runtime: true,
-    sinceApi: 30,
+    sinceSDK: 30,
     group: 'manage_external_storage',
     keywords: {'files', 'manage', 'access'},
     legacyKeys: {
@@ -241,7 +241,7 @@ abstract class AndroidPermissions {
   // Battery
   static const ignoreBatteryOptimizations = AndroidPermissionDef(
     'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
-    sinceApi: 23,
+    sinceSDK: 23,
     group: 'ignore_battery_optimizations',
     keywords: {'battery', 'opt_out', 'power'},
   );
@@ -271,7 +271,7 @@ abstract class AndroidPermissions {
   static const nearbyWifiDevices = AndroidPermissionDef(
     'android.permission.NEARBY_WIFI_DEVICES',
     runtime: true,
-    sinceApi: 33,
+    sinceSDK: 33,
     group: 'nearby_wifi_devices',
     keywords: {'nearby', 'scan', 'wifi'},
   );
@@ -279,7 +279,7 @@ abstract class AndroidPermissions {
   // Bluetooth
   static const bluetoothConnect = AndroidPermissionDef(
     'android.permission.BLUETOOTH_CONNECT',
-    sinceApi: 31,
+    sinceSDK: 31,
     runtime: true,
     group: 'bluetooth_connect',
     service: AssociatedService.bluetooth,
@@ -291,7 +291,7 @@ abstract class AndroidPermissions {
   );
   static const bluetoothScan = AndroidPermissionDef(
     'android.permission.BLUETOOTH_SCAN',
-    sinceApi: 31,
+    sinceSDK: 31,
     runtime: true,
     group: 'bluetooth_scan',
     service: AssociatedService.bluetooth,
@@ -302,7 +302,7 @@ abstract class AndroidPermissions {
   );
   static const bluetoothAdvertise = AndroidPermissionDef(
     'android.permission.BLUETOOTH_ADVERTISE',
-    sinceApi: 31,
+    sinceSDK: 31,
     runtime: true,
     group: 'bluetooth_advertise',
     service: AssociatedService.bluetooth,
@@ -316,14 +316,14 @@ abstract class AndroidPermissions {
   static const bodySensors = AndroidPermissionDef(
     'android.permission.BODY_SENSORS',
     runtime: true,
-    sinceApi: 20,
+    sinceSDK: 20,
     group: 'sensors',
     keywords: {'heart', 'bio', 'bpm'},
   );
   static const bodySensorsBackground = AndroidPermissionDef(
     'android.permission.BODY_SENSORS_BACKGROUND',
     runtime: true,
-    sinceApi: 33,
+    sinceSDK: 33,
     group: 'body_sensors_background',
     keywords: {'motion', 'activity', 'sensor'},
   );
@@ -342,32 +342,32 @@ abstract class AndroidPermissions {
   static const systemAlertWindow = AndroidPermissionDef(
     'android.permission.SYSTEM_ALERT_WINDOW',
     runtime: true,
-    sinceApi: 23,
+    sinceSDK: 23,
     group: 'system_alert_window',
     keywords: {'overlay', 'draw', 'window'},
   );
   static const foregroundService = AndroidPermissionDef(
     'android.permission.FOREGROUND_SERVICE',
-    sinceApi: 28,
+    sinceSDK: 28,
     group: 'foreground_service',
     keywords: {'service', 'persistent', 'foreground'},
   );
   static const scheduleExactAlarm = AndroidPermissionDef(
     'android.permission.SCHEDULE_EXACT_ALARM',
-    sinceApi: 31,
+    sinceSDK: 31,
     group: 'schedule_exact_alarm',
     keywords: {'alarm', 'timer', 'exact'},
   );
   static const postNotifications = AndroidPermissionDef(
     'android.permission.POST_NOTIFICATIONS',
-    sinceApi: 33,
+    sinceSDK: 33,
     runtime: true,
     group: 'notifications',
     keywords: {'push', 'alerts'},
   );
   static const requestInstallPackages = AndroidPermissionDef(
     'android.permission.REQUEST_INSTALL_PACKAGES',
-    sinceApi: 26,
+    sinceSDK: 26,
     group: 'request_install_packages',
     keywords: {'installer', 'apk', 'sideload'},
   );
@@ -381,7 +381,7 @@ abstract class AndroidPermissions {
   static const activityRecognition = AndroidPermissionDef(
     'android.permission.ACTIVITY_RECOGNITION',
     runtime: true,
-    sinceApi: 29,
+    sinceSDK: 29,
     group: 'activity_recognition',
     keywords: {'activity', 'fitness', 'motion'},
   );

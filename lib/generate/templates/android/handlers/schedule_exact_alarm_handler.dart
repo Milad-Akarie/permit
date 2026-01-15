@@ -13,7 +13,7 @@ class ScheduleExactAlarmHandler extends KotlinHandlerSnippet {
 
   @override
   String generate() {
-    return '''
+    return '''@SuppressLint("InlinedApi")
 class $className : PermissionHandler(
     $requestCode,
     arrayOf(${permissionsArray.join(',\n$indent$indent')})

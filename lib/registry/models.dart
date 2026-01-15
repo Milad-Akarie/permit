@@ -23,7 +23,7 @@ abstract class PermissionDef {
 
 class AndroidPermissionDef extends PermissionDef {
   final bool runtime;
-  final int? sinceApi;
+  final int? sinceSDK;
   final int? untilApi;
   final Map<String, int>? legacyKeys;
 
@@ -34,7 +34,7 @@ class AndroidPermissionDef extends PermissionDef {
     super.keywords = const {},
     required super.group,
     this.untilApi,
-    this.sinceApi,
+    this.sinceSDK,
     this.legacyKeys,
   });
 
@@ -47,7 +47,7 @@ class AndroidPermissionDef extends PermissionDef {
           service == other.service &&
           runtime == other.runtime &&
           runtimeType == other.runtimeType &&
-          sinceApi == other.sinceApi &&
+          sinceSDK == other.sinceSDK &&
           untilApi == other.untilApi &&
           const SetEquality().equals(keywords, keywords) &&
           const MapEquality().equals(legacyKeys, other.legacyKeys);
@@ -55,7 +55,7 @@ class AndroidPermissionDef extends PermissionDef {
   @override
   int get hashCode => Object.hash(
     runtime,
-    sinceApi,
+    sinceSDK,
     untilApi,
     key,
     group,
@@ -78,8 +78,8 @@ class AndroidPermissionDef extends PermissionDef {
 
   @override
   String? get promptNote {
-    if (sinceApi != null) {
-      return 'API $sinceApi+';
+    if (sinceSDK != null) {
+      return 'API $sinceSDK+';
     }
     return null;
   }

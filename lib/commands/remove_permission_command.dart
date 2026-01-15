@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:permit/commands/permit_runner.dart';
 import 'package:permit/generate/plugin_generator.dart';
@@ -8,14 +9,14 @@ import 'package:permit/utils/utils.dart';
 import 'package:permit/editor/models.dart';
 import 'package:permit/editor/xml_editor.dart';
 
-class DeletePermissionCommand extends PermitCommand {
+class RemovePermissionCommand extends PermitCommand {
   @override
   String get name => 'remove';
 
   @override
   String get description => 'Remove an existing permission';
 
-  DeletePermissionCommand() {
+  RemovePermissionCommand() {
     argParser.addFlag('android', abbr: 'a', help: 'Remove permission from Android platform only', defaultsTo: false);
     argParser.addFlag('ios', abbr: 'i', help: 'Remove permission from iOS platform only', defaultsTo: false);
   }
@@ -60,12 +61,19 @@ class DeletePermissionCommand extends PermitCommand {
 
     // If no key provided, show multi-select of all existing permissions
     if (key.isEmpty) {
+      final maxLineLength = existingEntries.map((e) => e.key.length).reduce(max);
+
       final selectedEntries = multiSelect(
         'Select permissions to remove',
         options: existingEntries,
         display: (entry) {
           final platform = entry is ManifestPermissionEntry ? 'Android' : 'iOS';
-          return '$platform: ${entry.key}';
+          final option = '$platform: ${entry.key}';
+          if (entry.isLegacy) {
+            return option.padRight(maxLineLength + 12) + Logger.mutedPen.write('(legacy)');
+          } else {
+            return option;
+          }
         },
       );
 

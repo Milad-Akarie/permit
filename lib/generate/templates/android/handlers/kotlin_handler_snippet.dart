@@ -27,20 +27,29 @@ class KotlinHandlerSnippet {
 
   String get className => '${key.toPascalCase()}Handler';
 
-  late final permissionsArray = permissions.map((perm) {
-    final sinceApiParam = perm.sinceApi != null ? ', sinceApi = ${perm.sinceApi}' : '';
-    return 'Permission(${perm.key.replaceFirst('android.permission', 'android.Manifest.permission')}$sinceApiParam)';
-  });
+  late final permissionsArray = permissions
+      .map<List<String>>((perm) {
+        final sinceSDKParam = perm.sinceSDK != null ? ', sinceSDK = ${perm.sinceSDK}' : '';
+        final array = [
+          'Permission(${perm.key.replaceFirst('android.permission', 'android.Manifest.permission')}$sinceSDKParam)',
+        ];
+        if (perm.legacyKeys != null) {
+          for (final legacyEntry in perm.legacyKeys!.entries) {
+            final untilSdk = ', untilSDK = ${legacyEntry.value}';
+            array.add(
+              'Permission(${legacyEntry.key.replaceFirst('android.permission', 'android.Manifest.permission')}$untilSdk)',
+            );
+          }
+        }
+        return array;
+      })
+      .expand((e) => e);
 
   String generate() {
     final buffer = StringBuffer();
+    buffer.writeln('@SuppressLint("InlinedApi")');
     buffer.writeln('class $className : PermissionHandler(');
     buffer.writeln('$indent$requestCode, arrayOf(');
-
-    final permissionsArray = permissions.map((perm) {
-      final sinceApiParam = perm.sinceApi != null ? ', sinceApi = ${perm.sinceApi}' : '';
-      return 'Permission(${perm.key.replaceFirst('android.permission', 'android.Manifest.permission')}$sinceApiParam)';
-    });
 
     for (final perm in permissionsArray) {
       buffer.writeln('$indent$indent$perm,');

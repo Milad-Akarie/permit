@@ -181,7 +181,7 @@ void main() {
           key: 'bluetooth',
           requestCode: '1003',
           permissions: [
-            AndroidPermissionDef('android.permission.BLUETOOTH_SCAN', group: 'bluetooth', runtime: true, sinceApi: 31),
+            AndroidPermissionDef('android.permission.BLUETOOTH_SCAN', group: 'bluetooth', runtime: true, sinceSDK: 31),
           ],
         );
         final content = handler.generate();

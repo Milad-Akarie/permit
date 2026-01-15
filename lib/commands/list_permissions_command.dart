@@ -70,8 +70,9 @@ class ListPermissionsCommand extends PermitCommand {
       Logger.android('Uses Permissions (${androidEntries.length}):');
       for (final entry in androidEntries) {
         final codeIndicator = entry.generatesCode ? ' [CODE]' : '';
+        final legacyIndicator = entry.isLegacy ? ' [LEGACY]' : '';
 
-        Logger.listed('${Logger.mutedPen.write(entry.key)}$codeIndicator');
+        Logger.listed('${Logger.mutedPen.write(entry.key)}$codeIndicator$legacyIndicator');
       }
       if (iosEntries.isNotEmpty) print('');
     }

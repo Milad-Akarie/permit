@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:permit/commands/delete_permission_command.dart';
+import 'package:permit/commands/remove_permission_command.dart';
 import 'package:permit/commands/permit_runner.dart';
 import 'package:test/test.dart';
 
@@ -21,13 +21,13 @@ void main() {
 
   group('DeletePermissionCommand', () {
     test('should have correct name and description', () {
-      final command = DeletePermissionCommand();
+      final command = RemovePermissionCommand();
       expect(command.name, equals('remove'));
       expect(command.description, equals('Remove an existing permission'));
     });
 
     test('should support all expected flags', () {
-      final command = DeletePermissionCommand();
+      final command = RemovePermissionCommand();
       expect(command.argParser.options.containsKey('android'), isTrue);
       expect(command.argParser.options.containsKey('ios'), isTrue);
 
@@ -37,7 +37,7 @@ void main() {
     });
 
     test('should have correct default values', () {
-      final command = DeletePermissionCommand();
+      final command = RemovePermissionCommand();
       expect(command.argParser.options['android']?.defaultsTo, isFalse);
       expect(command.argParser.options['ios']?.defaultsTo, isFalse);
     });
@@ -54,7 +54,7 @@ void main() {
 ''',
       );
 
-      final runner = PermitRunner(pathFinder)..addCommand(DeletePermissionCommand());
+      final runner = PermitRunner(pathFinder)..addCommand(RemovePermissionCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
@@ -90,7 +90,7 @@ void main() {
 ''',
       );
 
-      final runner = PermitRunner(pathFinder)..addCommand(DeletePermissionCommand());
+      final runner = PermitRunner(pathFinder)..addCommand(RemovePermissionCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
@@ -114,7 +114,7 @@ void main() {
       File('${pathFinder.root.path}/AndroidManifest.xml').deleteSync();
       File('${pathFinder.root.path}/Info.plist').deleteSync();
 
-      final runner = PermitRunner(pathFinder)..addCommand(DeletePermissionCommand());
+      final runner = PermitRunner(pathFinder)..addCommand(RemovePermissionCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));

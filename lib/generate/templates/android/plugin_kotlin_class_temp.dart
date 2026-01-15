@@ -41,6 +41,7 @@ class PluginKotlinClassTemp extends Template {
 // ---- GENERATED CODE - DO NOT MODIFY BY HAND ----
 package $packageName
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -50,7 +51,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-${allImports.map((e) => 'import $e').join('\n')}
+import androidx.core.content.edit${allImports.map((e) => '\nimport $e').join()}
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -161,14 +162,20 @@ class PermitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAwa
 
 }
 
-data class Permission(val name: String, val sinceApi: Int? = null)
+// Permission data class
+data class Permission(val name: String, val sinceSDK: Int? = null, val untilSDK: Int? = null)
 
+// Base PermissionHandler class
 abstract class PermissionHandler(val requestCode: Int, permissions: Array<Permission>) {
      val prefs = "permit_plugin_prefs"
      var pendingResult: MethodChannel.Result? = null
 
     val applicablePermissions: Array<String> = permissions
-        .filter { it.sinceApi?.let { api -> android.os.Build.VERSION.SDK_INT >= api } ?: true }
+        .filter { permission ->
+            val meetsMinVersion = permission.sinceSDK?.let { api -> Build.VERSION.SDK_INT >= api } ?: true
+            val meetsMaxVersion = permission.untilSDK?.let { api -> Build.VERSION.SDK_INT <= api } ?: true
+            meetsMinVersion && meetsMaxVersion
+        }
         .map { it.name }
         .toTypedArray()
 
@@ -179,10 +186,11 @@ abstract class PermissionHandler(val requestCode: Int, permissions: Array<Permis
 
     private fun markAsked(context: Context) {
         context.getSharedPreferences(prefs, Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean("perm_asked_\${applicablePermissions.joinToString("-")}", true)
-            .apply()
+            .edit {
+                putBoolean("perm_asked_\${applicablePermissions.joinToString("-")}", true)
+            }
     }
+
 
    open fun getStatus(activity: Activity): Int {
         applicablePermissions.ifEmpty { return 1 } // granted if no permissions to check

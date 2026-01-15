@@ -7,6 +7,7 @@ abstract class XmlEntry {
   XmlEntry({required this.key, required this.comments});
 
   bool get generatesCode => comments.any((comment) => comment.contains('@permit:code'));
+  bool get isLegacy => comments.any((comment) => comment.contains('@permit:legacy'));
 }
 
 class PListUsageDescription extends XmlEntry {
