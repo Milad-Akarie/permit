@@ -218,7 +218,7 @@ abstract class AndroidPermissions {
     sinceSDK: 33,
     runtime: true,
     group: 'audio',
-    keywords: {'playback', 'track', 'media', 'storage', 'music'},
+    keywords: {'playback', 'media', 'storage', 'music'},
     legacyKeys: {
       'android.permission.READ_EXTERNAL_STORAGE': 32,
       'android.permission.WRITE_EXTERNAL_STORAGE': 29,

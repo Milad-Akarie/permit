@@ -11,6 +11,7 @@ class UserTrackingPermissionHandler extends SwiftHandlerSnippet {
   @override
   String generate() {
     return '''class $className: PermissionHandler {
+    @available(iOS 14, *)
     func determinePermissionStatus(_ status: ATTrackingManager.AuthorizationStatus) -> Int {
         switch status {
         case .notDetermined:

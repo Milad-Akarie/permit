@@ -28,7 +28,7 @@ class MicrophonePermissionHandler extends SwiftHandlerSnippet {
     
     func request(result: @escaping FlutterResult) {
         let status = checkStatus()
-        // If already granted, return immediately
+
          if status != 0 {
             result(status)
             return

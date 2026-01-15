@@ -64,14 +64,14 @@ abstract class IosPermissions {
     'NSPhotoLibraryUsageDescription',
     group: 'photos',
     sinceApi: 6.0,
-    keywords: {'roll', 'gallery', 'picker'},
+    keywords: {'roll', 'gallery', 'picker', 'photo'},
   );
 
   static const photoLibraryAdd = IosPermissionDef(
     'NSPhotoLibraryAddUsageDescription',
     group: 'photos_add_only',
     sinceApi: 11.0,
-    keywords: {'roll', 'gallery', 'picker'},
+    keywords: {'roll', 'gallery', 'picker', 'photo'},
   );
 
   // CALENDARS & EVENTS
@@ -88,6 +88,7 @@ abstract class IosPermissions {
     untilApi: 17.0,
     keywords: {'events'},
   );
+
   static const calendarsWriteOnly = IosPermissionDef(
     'NSCalendarsWriteOnlyAccessUsageDescription',
     scope: AccessScope.writeOnly,
