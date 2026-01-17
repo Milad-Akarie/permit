@@ -3,15 +3,14 @@ import 'package:permit/registry/android_permissions.dart';
 import 'kotlin_handler_snippet.dart';
 
 class RequestInstallPackagesHandler extends KotlinHandlerSnippet {
-  RequestInstallPackagesHandler(int requestCode)
+  RequestInstallPackagesHandler()
     : super(
         key: 'request_install_packages',
-        requestCode: '$requestCode',
         permissions: [AndroidPermissions.requestInstallPackages],
       );
 
   @override
-  String generate() {
+  String generate(int requestCode) {
     return '''@SuppressLint("InlinedApi")
 class $className : PermissionHandler(
     $requestCode,

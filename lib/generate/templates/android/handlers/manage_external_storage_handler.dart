@@ -3,16 +3,15 @@ import 'package:permit/registry/android_permissions.dart';
 import 'kotlin_handler_snippet.dart';
 
 class ManageExternalStorageHandler extends KotlinHandlerSnippet {
-  ManageExternalStorageHandler(int requestCode)
+  ManageExternalStorageHandler()
     : super(
         key: 'manage_external_storage',
-        requestCode: '$requestCode',
         permissions: [AndroidPermissions.manageExternalStorage],
         imports: {'android.os.Environment'},
       );
 
   @override
-  String generate() {
+  String generate(int requestCode) {
     return '''@SuppressLint("InlinedApi")
 class $className : PermissionHandler(
     $requestCode,

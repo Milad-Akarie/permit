@@ -3,16 +3,15 @@ import 'package:permit/registry/android_permissions.dart';
 import 'kotlin_handler_snippet.dart';
 
 class ScheduleExactAlarmHandler extends KotlinHandlerSnippet {
-  ScheduleExactAlarmHandler(int requestCode)
+  ScheduleExactAlarmHandler()
     : super(
         key: 'schedule_exact_alarm',
-        requestCode: '$requestCode',
         permissions: [AndroidPermissions.scheduleExactAlarm],
         imports: {'android.app.AlarmManager'},
       );
 
   @override
-  String generate() {
+  String generate(int requestCode) {
     return '''@SuppressLint("InlinedApi")
 class $className : PermissionHandler(
     $requestCode,

@@ -12,13 +12,11 @@ const indent = '    ';
 
 class KotlinHandlerSnippet {
   final String key;
-  final String requestCode;
   final List<AndroidPermissionDef> permissions;
   final Set<String>? imports;
 
   KotlinHandlerSnippet({
     required this.key,
-    required this.requestCode,
     required this.permissions,
     this.imports,
   });
@@ -45,7 +43,7 @@ class KotlinHandlerSnippet {
       })
       .expand((e) => e);
 
-  String generate() {
+  String generate(int requestCode) {
     final buffer = StringBuffer();
     buffer.writeln('@SuppressLint("InlinedApi")');
     buffer.writeln('class $className : PermissionHandler(');
@@ -67,10 +65,10 @@ class KotlinHandlerSnippet {
   }
 }
 
-final customKotlinHandlers = <String, KotlinHandlerSnippet Function(int requestCode)>{
-  AndroidPermissions.systemAlertWindow.group: (requestCode) => SystemAlertWindowHandler(requestCode),
-  AndroidPermissions.ignoreBatteryOptimizations.group: (requestCode) => IgnoreBatteryOptimizationsHandler(requestCode),
-  AndroidPermissions.manageExternalStorage.group: (requestCode) => ManageExternalStorageHandler(requestCode),
-  AndroidPermissions.requestInstallPackages.group: (requestCode) => RequestInstallPackagesHandler(requestCode),
-  AndroidPermissions.scheduleExactAlarm.group: (requestCode) => ScheduleExactAlarmHandler(requestCode),
+final customKotlinHandlers = <String, KotlinHandlerSnippet Function()>{
+  AndroidPermissions.systemAlertWindow.group: () => SystemAlertWindowHandler(),
+  AndroidPermissions.ignoreBatteryOptimizations.group: () => IgnoreBatteryOptimizationsHandler(),
+  AndroidPermissions.manageExternalStorage.group: () => ManageExternalStorageHandler(),
+  AndroidPermissions.requestInstallPackages.group: () => RequestInstallPackagesHandler(),
+  AndroidPermissions.scheduleExactAlarm.group: () => ScheduleExactAlarmHandler(),
 };

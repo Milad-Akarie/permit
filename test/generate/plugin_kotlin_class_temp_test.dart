@@ -18,7 +18,6 @@ void main() {
     test('generate includes handler, service imports, and ServiceChecker for location', () {
       final handler = KotlinHandlerSnippet(
         key: 'location',
-        requestCode: '1010',
         permissions: [AndroidPermissions.accessFineLocation],
         imports: {'android.location.LocationManager'},
       );
@@ -52,7 +51,6 @@ void main() {
     test('generate includes bluetooth and phone service snippets when provided', () {
       final h1 = KotlinHandlerSnippet(
         key: 'bluetooth',
-        requestCode: '2000',
         permissions: [AndroidPermissions.bluetoothConnect],
         imports: {'android.bluetooth.BluetoothAdapter'},
       );
@@ -60,7 +58,6 @@ void main() {
       // Use accessFineLocation for phone? actually use readPhoneState for phone service
       final h2 = KotlinHandlerSnippet(
         key: 'phone',
-        requestCode: '3000',
         permissions: [AndroidPermissions.readPhoneState],
         imports: {'android.telephony.TelephonyManager'},
       );

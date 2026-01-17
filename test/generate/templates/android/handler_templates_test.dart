@@ -19,8 +19,8 @@ void main() {
   group('Handler Templates - Code Generation', () {
     group('SystemAlertWindowHandler', () {
       test('should generate valid Kotlin code with getStatus and handleRequest', () {
-        final handler = SystemAlertWindowHandler(1001);
-        final code = handler.generate();
+        final handler = SystemAlertWindowHandler();
+        final code = handler.generate(1001);
 
         expect(code, contains('class SystemAlertWindowHandler : PermissionHandler('));
         expect(code, contains('override fun getStatus(activity: Activity): Int {'));
@@ -33,8 +33,8 @@ void main() {
       });
 
       test('should write valid Kotlin code to file', () {
-        final handler = SystemAlertWindowHandler(1001);
-        final code = handler.generate();
+        final handler = SystemAlertWindowHandler();
+        final code = handler.generate(1001);
         final filePath = path.join(tempDir.path, 'SystemAlertWindowHandler.kt');
 
         File(filePath).writeAsStringSync(code);
@@ -44,22 +44,22 @@ void main() {
       });
 
       test('should use correct request code', () {
-        final handler = SystemAlertWindowHandler(1001);
-        final code = handler.generate();
+        final handler = SystemAlertWindowHandler();
+        final code = handler.generate(1001);
 
         expect(code, contains('1001,'));
       });
 
       test('should include correct permission', () {
-        final handler = SystemAlertWindowHandler(2001);
-        final code = handler.generate();
+        final handler = SystemAlertWindowHandler();
+        final code = handler.generate(2001);
 
         expect(code, contains('Permission(android.Manifest.permission.SYSTEM_ALERT_WINDOW, sinceSDK = 23)'));
       });
 
       test('should have valid Kotlin syntax structure', () {
-        final handler = SystemAlertWindowHandler(1001);
-        final code = handler.generate();
+        final handler = SystemAlertWindowHandler();
+        final code = handler.generate(1001);
 
         // Check balanced braces
         final openBraces = '{'.allMatches(code).length;

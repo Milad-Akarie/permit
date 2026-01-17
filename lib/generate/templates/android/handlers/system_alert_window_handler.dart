@@ -3,15 +3,14 @@ import 'package:permit/registry/android_permissions.dart';
 import 'kotlin_handler_snippet.dart';
 
 class SystemAlertWindowHandler extends KotlinHandlerSnippet {
-  SystemAlertWindowHandler(int requestCode)
+  SystemAlertWindowHandler()
     : super(
         key: 'system_alert_window',
-        requestCode: '$requestCode',
         permissions: [AndroidPermissions.systemAlertWindow],
       );
 
   @override
-  String generate() {
+  String generate(int requestCode) {
     return '''@SuppressLint("InlinedApi")
 class $className : PermissionHandler(
     $requestCode,

@@ -15,6 +15,8 @@ import 'package:permit/generate/templates/plugin_dart_temp.dart';
 import 'package:permit/generate/templates/plugin_pubspec_temp.dart';
 import 'package:permit/generate/templates/template.dart';
 import 'package:permit/path/path_finder.dart';
+import 'package:permit/registry/android_permissions.dart';
+import 'package:permit/registry/ios_permissions.dart';
 import 'package:permit/registry/models.dart';
 import 'package:permit/registry/permit_registry.dart';
 import 'package:permit/utils/logger.dart';
@@ -29,12 +31,13 @@ class PluginGenerator {
 
   PluginGenerator({required this.pathFinder});
 
-  List<Template>? _getAndroidTemplates() {
+  List<KotlinHandlerSnippet> _getKotlinHandlers() {
     final manifest = pathFinder.getManifest();
-    if (manifest == null) return null;
+    final handlers = <KotlinHandlerSnippet>[];
+    if (manifest == null) return handlers;
     final editor = ManifestEditor(manifest.readAsStringSync());
     final permissionsInManifest = editor.getPermissions().where((e) => e.generatesCode);
-    if (permissionsInManifest.isEmpty) return null;
+    if (permissionsInManifest.isEmpty) return handlers;
 
     final entryLookUp = EntriesLookup.forDefaults(androidOnly: true);
 
@@ -44,39 +47,39 @@ class PluginGenerator {
         .where((e) => e.runtime);
 
     if (runtimeEntries.isNotEmpty) {
-      final snippets = <KotlinHandlerSnippet>[];
+      final allKeys = runtimeEntries.map((e) => e.key).toSet();
       final entryGroups = runtimeEntries.groupListsBy((e) => e.group);
-      int requestCode = 1010;
       for (var group in entryGroups.entries) {
         if (customKotlinHandlers[group.key] != null) {
-          snippets.add(customKotlinHandlers[group.key]!(requestCode++));
+          handlers.add(customKotlinHandlers[group.key]!());
           continue;
         }
-        snippets.add(
+
+        final permissions = List.of(group.value);
+        if (group.key == AndroidPermissions.readCalendar.group &&
+            allKeys.contains(AndroidPermissions.writeCalendar.key)) {
+          permissions.add(AndroidPermissions.writeCalendar);
+        }
+
+        handlers.add(
           KotlinHandlerSnippet(
             key: group.key,
-            requestCode: '${requestCode++}',
-            permissions: List.of(group.value),
+            permissions: permissions,
           ),
         );
       }
-      if (snippets.isNotEmpty) {
-        return [
-          PluginManifestTemp(),
-          PluginGradleTemp(),
-          PluginKotlinClassTemp(handlers: snippets),
-        ];
-      }
     }
-    return null;
+    return handlers;
   }
 
-  List<Template>? _getIosTemplates() {
+  List<SwiftHandlerSnippet> _getSwiftHandlers() {
+    final handlers = <SwiftHandlerSnippet>[];
     final plist = pathFinder.getInfoPlist();
-    if (plist == null) return null;
+
+    if (plist == null) return handlers;
     final editor = PListEditor(plist.readAsStringSync());
     final permissionsInPlist = editor.getUsageDescriptions();
-    if (permissionsInPlist.isEmpty) return null;
+    if (permissionsInPlist.isEmpty) return handlers;
     final entryLookUp = EntriesLookup.forDefaults(iosOnly: true);
     final groups = permissionsInPlist
         .where((e) => e.generatesCode)
@@ -85,8 +88,6 @@ class PluginGenerator {
         .map((e) => e.group)
         .toSet();
 
-    if (groups.isEmpty) return null;
-    final handlers = <SwiftHandlerSnippet>[];
     for (var group in groups) {
       final handler = swiftPermissionHandlers[group]?.call();
       if (handler != null) {
@@ -96,28 +97,32 @@ class PluginGenerator {
       }
     }
 
-    return [
-      PluginPodTemp(),
-      PluginPrivacyManifestTemp(),
-      PluginSwiftClassTemp(List.of(handlers)),
-    ];
+    return handlers;
   }
 
   void generate() {
-    final androidTemplates = _getAndroidTemplates();
-
     final templates = <Template>[];
-    if (androidTemplates != null) {
-      templates.addAll(androidTemplates);
-    } else {
-      _deleteDir(_androidDir);
-    }
-
-    final iosTemplates = _getIosTemplates();
-    if (iosTemplates != null) {
-      templates.addAll(iosTemplates);
+    final swiftHandlers = _getSwiftHandlers();
+    if (swiftHandlers.isNotEmpty) {
+      templates.addAll([
+        PluginPodTemp(),
+        PluginPrivacyManifestTemp(),
+        PluginSwiftClassTemp(List.of(swiftHandlers)),
+      ]);
     } else {
       _deleteDir(_iosDir);
+    }
+
+    final kotlinHandlers = _getKotlinHandlers();
+
+    if (kotlinHandlers.isNotEmpty) {
+      templates.addAll([
+        PluginManifestTemp(),
+        PluginGradleTemp(),
+        PluginKotlinClassTemp(handlers: kotlinHandlers),
+      ]);
+    } else {
+      _deleteDir(_androidDir);
     }
 
     final rootPath = pathFinder.root.path;
@@ -142,27 +147,25 @@ class PluginGenerator {
 
     templates.add(
       PluginPubspecTemp(
-        android: androidTemplates != null,
-        ios: iosTemplates != null,
+        android: kotlinHandlers.isNotEmpty,
+        ios: swiftHandlers.isNotEmpty,
       ),
     );
 
-    final kotlinSnippets = androidTemplates?.whereType<PluginKotlinClassTemp>().firstOrNull?.handlers ?? [];
-    final swiftSnippets = iosTemplates?.whereType<PluginSwiftClassTemp>().firstOrNull?.handlers ?? [];
-
-    final allKeys = {...kotlinSnippets.map((e) => e.key), ...swiftSnippets.map((e) => e.key)};
+    final allKeys = {...kotlinHandlers.map((e) => e.key), ...swiftHandlers.map((e) => e.key)};
 
     final snippets = allKeys.map((key) {
-      final kotlinHandler = kotlinSnippets.firstWhereOrNull((h) => h.key == key);
-      final swiftHandler = swiftSnippets.firstWhereOrNull((h) => h.key == key);
+      final kotlinHandler = kotlinHandlers.firstWhereOrNull((h) => h.key == key);
+      final swiftHandler = swiftHandlers.firstWhereOrNull((h) => h.key == key);
 
-      final platform = (kotlinHandler != null && swiftHandler != null)
-          ? null
-          : (kotlinHandler != null ? 'android' : 'ios');
+      final platforms = {
+        if (kotlinHandler != null) 'android',
+        if (swiftHandler != null) 'ios',
+      };
 
       return PermissionGetterSnippet(
         key,
-        platform,
+        platforms,
         hasService:
             kotlinHandler?.permissions.any((e) => e.service != null) == true ||
             swiftHandler?.entry.service != null ||

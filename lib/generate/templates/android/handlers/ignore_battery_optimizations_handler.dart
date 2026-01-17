@@ -3,16 +3,15 @@ import 'package:permit/registry/android_permissions.dart';
 import 'kotlin_handler_snippet.dart';
 
 class IgnoreBatteryOptimizationsHandler extends KotlinHandlerSnippet {
-  IgnoreBatteryOptimizationsHandler(int requestCode)
+  IgnoreBatteryOptimizationsHandler()
     : super(
         key: 'ignore_battery_optimizations',
-        requestCode: '$requestCode',
         permissions: [AndroidPermissions.ignoreBatteryOptimizations],
         imports: {'android.os.PowerManager'},
       );
 
   @override
-  String generate() {
+  String generate(int requestCode) {
     return '''@SuppressLint("InlinedApi")
 class $className : PermissionHandler(
     $requestCode,

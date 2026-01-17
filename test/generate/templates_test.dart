@@ -59,12 +59,10 @@ void main() {
       final handlers = [
         KotlinHandlerSnippet(
           key: 'camera',
-          requestCode: '1001',
           permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
         ),
         KotlinHandlerSnippet(
           key: 'microphone',
-          requestCode: '1002',
           permissions: [AndroidPermissionDef('android.permission.RECORD_AUDIO', group: 'microphone', runtime: true)],
         ),
       ];
@@ -142,7 +140,6 @@ void main() {
       test('should have correct className', () {
         final handler = KotlinHandlerSnippet(
           key: 'camera',
-          requestCode: '1001',
           permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
         );
         expect(handler.className, equals('CameraHandler'));
@@ -151,10 +148,9 @@ void main() {
       test('should generate Kotlin handler class', () {
         final handler = KotlinHandlerSnippet(
           key: 'camera',
-          requestCode: '1001',
           permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
         );
-        final content = handler.generate();
+        final content = handler.generate(1001);
 
         expect(content, contains('class CameraHandler : PermissionHandler('));
         expect(content, contains('1001, arrayOf('));
@@ -164,13 +160,12 @@ void main() {
       test('should generate handler with multiple permissions', () {
         final handler = KotlinHandlerSnippet(
           key: 'location',
-          requestCode: '1002',
           permissions: [
             AndroidPermissionDef('android.permission.ACCESS_FINE_LOCATION', group: 'location', runtime: true),
             AndroidPermissionDef('android.permission.ACCESS_COARSE_LOCATION', group: 'location', runtime: true),
           ],
         );
-        final content = handler.generate();
+        final content = handler.generate(1002);
 
         expect(content, contains('class LocationHandler : PermissionHandler('));
         expect(content, contains('Permission(android.Manifest.permission.ACCESS_FINE_LOCATION),'));
@@ -180,10 +175,9 @@ void main() {
       test('should generate handler with sinceApi', () {
         final handler = KotlinHandlerSnippet(
           key: AndroidPermissions.bluetoothScan.group,
-          requestCode: '1003',
           permissions: [AndroidPermissions.bluetoothScan],
         );
-        final content = handler.generate();
+        final content = handler.generate(1003);
 
         expect(content, contains('Permission(android.Manifest.permission.BLUETOOTH_SCAN, sinceSDK = 31)'));
       });

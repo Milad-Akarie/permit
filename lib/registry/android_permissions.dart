@@ -6,7 +6,7 @@ abstract class AndroidPermissions {
     'android.permission.CAMERA',
     runtime: true,
     group: 'camera',
-    keywords: {'capture'},
+    keywords: {'capture', 'record'},
   );
 
   // Microphone
@@ -14,16 +14,7 @@ abstract class AndroidPermissions {
     'android.permission.RECORD_AUDIO',
     runtime: true,
     group: 'microphone',
-    keywords: {'record', 'voice'},
-  );
-
-  // This is the same as microphone, but defined separately for
-  // the unified permission groups.
-  static const speech = AndroidPermissionDef(
-    'android.permission.RECORD_AUDIO',
-    runtime: true,
-    group: 'speech',
-    keywords: {'recognition', 'voice'},
+    keywords: {'record', 'voice', 'speech', 'recognition'},
   );
 
   // Location
@@ -79,10 +70,11 @@ abstract class AndroidPermissions {
     group: 'calendar',
     keywords: {'events'},
   );
+  // this is grouped with calendar if readCalendar is also requested
   static const writeCalendar = AndroidPermissionDef(
     'android.permission.WRITE_CALENDAR',
     runtime: true,
-    group: 'calendar',
+    group: 'calendar_write_only',
     keywords: {'events'},
   );
 
@@ -391,7 +383,6 @@ abstract class AndroidPermissions {
     camera,
     // Microphone
     microphone,
-    speech,
     // Location
     accessFineLocation,
     accessCoarseLocation,

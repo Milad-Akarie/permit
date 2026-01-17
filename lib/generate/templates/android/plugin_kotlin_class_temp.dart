@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:permit/generate/templates/android/handlers/kotlin_handler_snippet.dart';
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/template.dart';
@@ -265,7 +266,7 @@ object PermissionRegistry {
         cache.values.find { it.requestCode == requestCode }
 }
 
-${handlers.map((e) => e.generate()).join('\n')}
+${handlers.mapIndexed((index, e) => e.generate(1010 + index)).join('\n')}
 
 ${_generateServiceSnippet()}
     

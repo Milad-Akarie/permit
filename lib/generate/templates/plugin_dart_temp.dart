@@ -42,13 +42,18 @@ ${getterSnippets.map((snippet) => snippet.generate()).join('\n')}
 class Permission {
   final String name;
   final MethodChannel _channel;
-  final String? platform;
+  final Set<String> platforms;
+
   // ignore: unused_element_parameter
-  const Permission._(this.name, this._channel, {this.platform});
+  const Permission._(this.name, this._channel, {this.platforms = const {}});
+
+  bool get _isPlatformSupported {
+    return platforms.contains(Platform.operatingSystem);
+  }
 
   Future<PermissionStatus> get status async {
-    if (platform != null && platform != Platform.operatingSystem) {
-      return PermissionStatus.denied;
+    if (!_isPlatformSupported) {
+      return PermissionStatus.notApplicable;
     }
     final int statusValue = await _channel.invokeMethod<int>(
           'check_permission_status',
@@ -59,8 +64,8 @@ class Permission {
   }
 
   Future<PermissionStatus> request() async {
-    if (platform != null && platform != Platform.operatingSystem) {
-      return PermissionStatus.denied;
+    if (!_isPlatformSupported) {
+      return PermissionStatus.notApplicable;
     }
     final int statusValue = await _channel.invokeMethod<int>(
           'request_permission',
@@ -93,7 +98,9 @@ enum PermissionStatus {
   // Permission is permanently denied, the permission dialog will not be shown when requesting this permission.
   permanentlyDenied(4),
   // Permission is provisionally granted.   *Only supported on iOS.*
-  provisional(5);
+  provisional(5),
+  // Platform does not support this permission.
+  notApplicable(6);
 
   final int value;
 
@@ -102,11 +109,18 @@ enum PermissionStatus {
   factory PermissionStatus.fromValue(int value) => values[value];
 
   bool get isDenied => this == PermissionStatus.denied;
+
   bool get isGranted => this == PermissionStatus.granted;
+
   bool get isRestricted => this == PermissionStatus.restricted;
+
   bool get isLimited => this == PermissionStatus.limited;
+
   bool get isPermanentlyDenied => this == PermissionStatus.permanentlyDenied;
+
   bool get isProvisional => this == PermissionStatus.provisional;
+
+  bool get isNotApplicable => this == PermissionStatus.notApplicable;
 }
 
 ${getterSnippets.any((e) => e.hasService) ? _serviceStatusSnippet : ''}
@@ -116,11 +130,11 @@ ${getterSnippets.any((e) => e.hasService) ? _serviceStatusSnippet : ''}
 const _serviceStatusSnippet = '''
 /// Represents a specific permission that has an associated service status.
 class PermissionWithService extends Permission {
-  const PermissionWithService._(String name, MethodChannel channel, {String? platform})
-      : super._(name, channel, platform: platform);
+  const PermissionWithService._(String name, MethodChannel channel, {Set<String> platforms = const {}})
+      : super._(name, channel, platforms: platforms);
 
   Future<ServiceStatus> get serviceStatus async {
-    if (platform != null && platform != Platform.operatingSystem) {
+    if (!_isPlatformSupported) {
       return ServiceStatus.notApplicable;
     }
     final int statusValue = await _channel.invokeMethod<int>(
@@ -155,13 +169,13 @@ enum ServiceStatus {
 
 class PermissionGetterSnippet {
   final String name;
-  final String? platform;
+  final Set<String>? platforms;
   final bool hasService;
 
-  PermissionGetterSnippet(this.name, this.platform, {this.hasService = false});
+  PermissionGetterSnippet(this.name, this.platforms, {this.hasService = false});
 
   String generate() {
-    final plat = platform != null ? ", platform: '$platform'" : '';
+    final plat = platforms != null ? ", platforms: {${platforms!.map((e) => "'$e'").join(', ')}}" : '';
     final className = hasService ? 'PermissionWithService' : 'Permission';
     return '''
   /// Permission to access $name

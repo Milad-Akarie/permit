@@ -15,7 +15,7 @@ abstract class IosPermissions {
     'NSMicrophoneUsageDescription',
     group: 'microphone',
     sinceApi: 7.0,
-    keywords: {'record', 'voice'},
+    keywords: {'record', 'voice', 'speech'},
   );
 
   // CONTACTS
