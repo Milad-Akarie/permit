@@ -1,6 +1,8 @@
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/template.dart';
 import 'package:permit/generate/utils.dart';
+import 'package:permit/registry/models.dart';
+import 'package:permit/registry/permit_registry.dart';
 
 class PluginDartTemp extends Template {
   @override
@@ -169,16 +171,44 @@ enum ServiceStatus {
 
 class PermissionGetterSnippet {
   final String name;
-  final Set<String>? platforms;
-  final bool hasService;
+  final List<PermissionDef> entries;
 
-  PermissionGetterSnippet(this.name, this.platforms, {this.hasService = false});
+  PermissionGetterSnippet(this.name, {required this.entries});
+  bool get hasService => entries.any((e) => e.service != null);
+  late final Set<String> platforms = entries.map((e) => e.platform).toSet();
 
   String generate() {
-    final plat = platforms != null ? ", platforms: {${platforms!.map((e) => "'$e'").join(', ')}}" : '';
+    final docs = <String>[];
+    docs.add('Permission to access $name.');
+
+    if (entries.hasIos) {
+      docs.add('');
+      docs.add('**iOS:**');
+    }
+    for (final entry in entries.ios) {
+      docs.add('- Info.plist key: ${entry.key} ${entry.promptNote ?? ''}');
+      if (entry.docNotes != null) {
+        for (final note in entry.docNotes!) {
+          docs.add('- Note: $note');
+        }
+      }
+    }
+    if (entries.hasAndroid) {
+      docs.add('');
+      docs.add('**Android:**');
+    }
+    for (final entry in entries.android) {
+      docs.add('- Manifest permission: ${entry.key} ${entry.promptNote ?? ''}');
+      if (entry.docNotes != null) {
+        for (final note in entry.docNotes!) {
+          docs.add('- Note: $note');
+        }
+      }
+    }
+
+    final plat = platforms.isNotEmpty ? ", platforms: {${platforms.map((e) => "'$e'").join(', ')}}" : '';
     final className = hasService ? 'PermissionWithService' : 'Permission';
-    return '''
-  /// Permission to access $name
+    return '''${docs.map((e) => '  /// $e').join('\n')}
   static const ${name.toCamelCase()} = $className._('$name', _channel$plat);
 ''';
   }

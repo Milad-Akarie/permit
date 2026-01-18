@@ -115,6 +115,27 @@ class PluginGenerator {
 
     final kotlinHandlers = _getKotlinHandlers();
 
+    // adds Bluetooth handler if iOS Bluetooth permission is requested
+    // granular handlers will still be generated
+    if (swiftHandlers.any((e) => e.key == IosPermissions.bluetooth.group)) {
+      final androidPermissionKeys = kotlinHandlers.expand((handler) => handler.permissions.map((e) => e.key)).toSet();
+      final androidBluetoothPermissions = <AndroidPermissionDef>{};
+      if (androidPermissionKeys.contains(AndroidPermissions.bluetoothScan.key)) {
+        androidBluetoothPermissions.add(AndroidPermissions.bluetoothScan);
+      }
+      if (androidPermissionKeys.contains(AndroidPermissions.bluetoothConnect.key)) {
+        androidBluetoothPermissions.add(AndroidPermissions.bluetoothConnect);
+      }
+      if (androidBluetoothPermissions.isNotEmpty) {
+        kotlinHandlers.add(
+          KotlinHandlerSnippet(
+            key: IosPermissions.bluetooth.group,
+            permissions: List.of(androidBluetoothPermissions),
+          ),
+        );
+      }
+    }
+
     if (kotlinHandlers.isNotEmpty) {
       templates.addAll([
         PluginManifestTemp(),
@@ -157,19 +178,12 @@ class PluginGenerator {
     final snippets = allKeys.map((key) {
       final kotlinHandler = kotlinHandlers.firstWhereOrNull((h) => h.key == key);
       final swiftHandler = swiftHandlers.firstWhereOrNull((h) => h.key == key);
-
-      final platforms = {
-        if (kotlinHandler != null) 'android',
-        if (swiftHandler != null) 'ios',
-      };
-
       return PermissionGetterSnippet(
         key,
-        platforms,
-        hasService:
-            kotlinHandler?.permissions.any((e) => e.service != null) == true ||
-            swiftHandler?.entry.service != null ||
-            false,
+        entries: [
+          ...?kotlinHandler?.permissions,
+          if (swiftHandler != null) swiftHandler.entry,
+        ],
       );
     }).toList();
 

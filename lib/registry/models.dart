@@ -6,11 +6,15 @@ abstract class PermissionDef {
   final String group;
   final Set<String> keywords;
   final AssociatedService? service;
+  final String platform;
+  final Set<String>? docNotes;
 
   const PermissionDef(
     this.key, {
     required this.group,
     required this.keywords,
+    required this.platform,
+    this.docNotes,
     this.service,
   });
 
@@ -36,7 +40,8 @@ class AndroidPermissionDef extends PermissionDef {
     this.untilApi,
     this.sinceSDK,
     this.legacyKeys,
-  });
+    super.docNotes,
+  }) : super(platform: 'android');
 
   @override
   bool operator ==(Object other) =>
@@ -49,6 +54,7 @@ class AndroidPermissionDef extends PermissionDef {
           runtimeType == other.runtimeType &&
           sinceSDK == other.sinceSDK &&
           untilApi == other.untilApi &&
+          const SetEquality().equals(docNotes, other.docNotes) &&
           const SetEquality().equals(keywords, keywords) &&
           const MapEquality().equals(legacyKeys, other.legacyKeys);
 
@@ -62,6 +68,7 @@ class AndroidPermissionDef extends PermissionDef {
     service,
     const SetEquality().hash(keywords),
     const MapEquality().hash(legacyKeys),
+    const SetEquality().hash(docNotes),
   );
 
   @override
@@ -99,7 +106,8 @@ class IosPermissionDef extends PermissionDef {
     super.keywords = const {},
     this.sinceApi,
     this.untilApi,
-  });
+    super.docNotes,
+  }) : super(platform: 'ios');
 
   @override
   String toString() => key;
@@ -115,6 +123,7 @@ class IosPermissionDef extends PermissionDef {
           untilApi == other.untilApi &&
           scope == other.scope &&
           runtimeType == other.runtimeType &&
+          const SetEquality().equals(docNotes, other.docNotes) &&
           const SetEquality().equals(keywords, other.keywords);
 
   bool get isDeprecated => untilApi != null;
@@ -128,6 +137,7 @@ class IosPermissionDef extends PermissionDef {
     scope,
     service,
     const SetEquality().hash(keywords),
+    const SetEquality().hash(docNotes),
   );
 
   @override

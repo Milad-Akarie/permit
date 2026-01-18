@@ -95,6 +95,9 @@ abstract class IosPermissions {
     group: 'calendar_write_only',
     sinceApi: 17.0,
     keywords: {'events'},
+    docNotes: {
+      'iOS 17+ distinguishes between full access and write-only access',
+    },
   );
 
   // REMINDERS
