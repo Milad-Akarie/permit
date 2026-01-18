@@ -4,6 +4,7 @@ import 'package:args/command_runner.dart';
 import 'package:permit/commands/add_permission_command.dart';
 import 'package:permit/commands/build_code_command.dart';
 import 'package:permit/commands/list_permissions_command.dart';
+import 'package:permit/commands/localize/localize_permissions_command.dart';
 import 'package:permit/commands/permit_runner.dart';
 import 'package:permit/commands/remove_permission_command.dart';
 import 'package:permit/path/path_finder.dart';
@@ -19,7 +20,8 @@ Future<void> main(List<String> args) async {
     ..addCommand(AddPermissionCommand())
     ..addCommand(RemovePermissionCommand())
     ..addCommand(BuildCodeCommand())
-    ..addCommand(ListPermissionsCommand());
+    ..addCommand(ListPermissionsCommand())
+    ..addCommand(LocalizePermissionsCommand());
   try {
     await runner.run(args);
   } on UsageException catch (e) {
