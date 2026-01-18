@@ -4,10 +4,10 @@ import 'package:permit/generate/templates/template.dart';
 class PluginPodTemp extends Template {
   PluginPodTemp({
     this.pluginName = kDartPackageName,
-    this.minSdkVersion = '13.0',
+    this.minIosVersion = '12.0',
   });
   final String pluginName;
-  final String minSdkVersion;
+  final String minIosVersion;
 
   @override
   String get path => 'ios/$pluginName.podspec';
@@ -25,7 +25,7 @@ Pod::Spec.new do |s|
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
-  s.platform = :ios, '$minSdkVersion'
+  s.platform = :ios, '$minIosVersion'
 
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'

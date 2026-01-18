@@ -8,6 +8,7 @@ abstract class IosPermissions {
     group: 'camera',
     sinceApi: 7.0,
     keywords: {'capture', 'record'},
+    docNotes: {'Required to access the device camera for photo and video capture'},
   );
 
   // MICROPHONE
@@ -16,6 +17,7 @@ abstract class IosPermissions {
     group: 'microphone',
     sinceApi: 7.0,
     keywords: {'record', 'voice', 'speech'},
+    docNotes: {'Required to access the device microphone for audio recording'},
   );
 
   // CONTACTS
@@ -24,6 +26,7 @@ abstract class IosPermissions {
     group: 'contacts',
     sinceApi: 6.0,
     keywords: {'address', 'phone', 'email'},
+    docNotes: {'Required to access the user\'s AddressBook'},
   );
 
   // LOCATION
@@ -33,6 +36,9 @@ abstract class IosPermissions {
     service: AssociatedService.location,
     sinceApi: 11.0,
     keywords: {'gps', 'geolocation', 'maps'},
+    docNotes: {
+      'iOS 11.0+: CoreLocation - WhenInUse. Allows location access only while app is in the foreground',
+    },
   );
 
   static const locationAlways = IosPermissionDef(
@@ -41,6 +47,9 @@ abstract class IosPermissions {
     service: AssociatedService.location,
     untilApi: 11.0,
     keywords: {'gps', 'geolocation', 'maps'},
+    docNotes: {
+      'Deprecated in iOS 11+. Use locationAlwaysAndWhenInUse instead',
+    },
   );
 
   static const locationAlwaysAndWhenInUse = IosPermissionDef(
@@ -49,14 +58,22 @@ abstract class IosPermissions {
     service: AssociatedService.location,
     sinceApi: 11.0,
     keywords: {'gps', 'geolocation', 'maps'},
+    docNotes: {
+      'Required for accessing location in the background',
+      'Requires NSLocationWhenInUseUsageDescription for pre ios 11 compatibility',
+      'Before requesting "Always" authorization, you must first request "When In Use" authorization',
+    },
   );
 
   // MEDIA LIBRARY & MUSIC
   static const mediaLibrary = IosPermissionDef(
     'NSAppleMusicUsageDescription',
     group: 'media',
-    sinceApi: 2.0,
+    sinceApi: 9.3,
     keywords: {'music', 'library'},
+    docNotes: {
+      'iOS 9.3+: Required to access the user\'s media library and Apple Music',
+    },
   );
 
   // PHOTOS & MEDIA
@@ -65,6 +82,9 @@ abstract class IosPermissions {
     group: 'photos',
     sinceApi: 6.0,
     keywords: {'roll', 'gallery', 'picker', 'photo'},
+    docNotes: {
+      'iOS 14+ presents limited/full photo library access options to users',
+    },
   );
 
   static const photoLibraryAdd = IosPermissionDef(
@@ -72,6 +92,9 @@ abstract class IosPermissions {
     group: 'photos_add_only',
     sinceApi: 11.0,
     keywords: {'roll', 'gallery', 'picker', 'photo'},
+    docNotes: {
+      'Write-only access: users cannot select existing photos, only add new ones',
+    },
   );
 
   // CALENDARS & EVENTS
@@ -80,6 +103,10 @@ abstract class IosPermissions {
     group: 'calendar',
     sinceApi: 17.0,
     keywords: {'events'},
+    docNotes: {
+      'iOS 17+: Full access includes read and write permissions.',
+      'Prior versions use NSCalendarsUsageDescription',
+    },
   );
 
   static const calendarsDeprecated = IosPermissionDef(
@@ -87,6 +114,9 @@ abstract class IosPermissions {
     group: 'calendar',
     untilApi: 17.0,
     keywords: {'events'},
+    docNotes: {
+      'Deprecated in iOS 17+. Use calendars or calendarsWriteOnly instead',
+    },
   );
 
   static const calendarsWriteOnly = IosPermissionDef(
@@ -96,6 +126,7 @@ abstract class IosPermissions {
     sinceApi: 17.0,
     keywords: {'events'},
     docNotes: {
+      'Required for write-only access to calendars',
       'iOS 17+ distinguishes between full access and write-only access',
     },
   );
@@ -106,6 +137,11 @@ abstract class IosPermissions {
     group: 'reminders',
     sinceApi: 17.0,
     keywords: {'tasks', 'todo'},
+    docNotes: {
+      'Required for full access to reminders',
+      'iOS 17+: Full access includes read and write permissions.',
+      'Prior versions use NSRemindersUsageDescription',
+    },
   );
 
   static const remindersDeprecated = IosPermissionDef(
@@ -113,6 +149,9 @@ abstract class IosPermissions {
     group: 'reminders',
     untilApi: 17.0,
     keywords: {'tasks', 'todo'},
+    docNotes: {
+      'Deprecated in iOS 17+. Use reminders instead',
+    },
   );
 
   // BLUETOOTH
@@ -122,6 +161,10 @@ abstract class IosPermissions {
     service: AssociatedService.bluetooth,
     sinceApi: 13.0,
     keywords: {'peripheral', 'connect'},
+    docNotes: {
+      'Required for Bluetooth access',
+      'iOS 13+: Replaces NSBluetoothPeripheralUsageDescription',
+    },
   );
 
   static const bluetoothPeripheralDeprecated = IosPermissionDef(
@@ -130,6 +173,9 @@ abstract class IosPermissions {
     service: AssociatedService.bluetooth,
     untilApi: 13.0,
     keywords: {'peripheral', 'connect'},
+    docNotes: {
+      'iOS 13+: Requires NSBluetoothAlwaysUsageDescription instead of NSBluetoothPeripheralUsageDescription',
+    },
   );
 
   // SPEECH & SIRI
@@ -138,6 +184,9 @@ abstract class IosPermissions {
     group: 'speech',
     sinceApi: 10.0,
     keywords: {'recognition', 'voice'},
+    docNotes: {
+      'iOS 10.0+: Requests speech access (different from requesting microphone)',
+    },
   );
 
   static const assistant = IosPermissionDef(
@@ -145,6 +194,9 @@ abstract class IosPermissions {
     group: 'assistant',
     sinceApi: 10.0,
     keywords: {'siri', 'shortcut', 'voice'},
+    docNotes: {
+      'iOS 10.0+: Required to integrate with Siri and Siri Shortcuts',
+    },
   );
 
   // MOTION & FITNESS
@@ -153,58 +205,21 @@ abstract class IosPermissions {
     group: 'sensors',
     sinceApi: 7.0,
     keywords: {'accelerometer', 'gyroscope', 'motion'},
+    docNotes: {
+      'Required to access motion and fitness data from device sensors',
+    },
   );
 
   // TRACKING
   static const userTracking = IosPermissionDef(
     'NSUserTrackingUsageDescription',
-    group: 'tracking',
+    group: 'user_tracking',
     sinceApi: 14.5,
     keywords: {'ads', 'idfa', 'analytics'},
+    docNotes: {
+      'iOS 14.5+: App Tracking Transparency - Required to track users across other apps and websites',
+    },
   );
-
-  // // HEALTH
-  // static const healthShare = IosPermissionDef(
-  //   'NSHealthShareUsageDescription',
-  //   group: 'health_share',
-  // );
-  // static const healthUpdate = IosPermissionDef(
-  //   'NSHealthUpdateUsageDescription',
-  //   group: 'health_update',
-  // );
-  // static const healthClinicalRecords = IosPermissionDef(
-  //   'NSHealthClinicalHealthRecordsShareUsageDescription',
-  //   group: 'health_clinical_records',
-  // );
-
-  // // FACE ID & BIOMETRICS
-  // static const faceId = IosPermissionDef('NSFaceIDUsageDescription', group: 'face_id');
-  //
-  // // HOMEKIT
-  // static const homeKit = IosPermissionDef('NSHomeKitUsageDescription', group: 'home_kit');
-  //
-  // // NFC
-  // static const nfcReader = IosPermissionDef(
-  //   'NFCReaderUsageDescription',
-  //   group: 'nfc',
-  // );
-  //
-  // // LOCAL NETWORK
-  // static const localNetwork = IosPermissionDef(
-  //   'NSLocalNetworkUsageDescription',
-  //    //   group: 'network',
-  // );
-  //
-  // static const nearbyInteraction = IosPermissionDef(
-  //   'NSNearbyInteractionUsageDescription',
-  //    //   group: 'nearby_interaction',
-  // );
-  //
-  // // SENSORS & FOCUS
-  // static const focusStatus = IosPermissionDef(
-  //   'NSFocusStatusUsageDescription',
-  //    //   group: 'focus',
-  // );
 
   /// Get all permissions
   static Set<IosPermissionDef> get all => {
@@ -228,14 +243,5 @@ abstract class IosPermissions {
     assistant,
     mediaLibrary,
     userTracking,
-    // healthShare,
-    // healthUpdate,
-    // healthClinicalRecords,
-    // faceId,
-    // homeKit,
-    // nfcReader,
-    // localNetwork,
-    // nearbyInteraction,
-    // focusStatus,
   };
 }

@@ -89,19 +89,19 @@ class Permission {
 
 /// Defines the different states a permission can be in.
 enum PermissionStatus {
-  // Permission is denied or has not been requested yet.
+  /// Permission is denied or has not been requested yet.
   denied(0),
-  // Permission is granted.
+  /// Permission is granted.
   granted(1),
-  // User is not allowed to use the requested feature.  *Only supported on iOS.*
+  /// User is not allowed to use the requested feature.  *Only supported on iOS.*
   restricted(2),
-  // User has authorized this application for limited access.  *Only supported on iOS (iOS14+).*
+  /// User has authorized this application for limited access.  *Only supported on iOS (iOS14+).*
   limited(3),
-  // Permission is permanently denied, the permission dialog will not be shown when requesting this permission.
+  /// Permission is permanently denied, the permission dialog will not be shown when requesting this permission.
   permanentlyDenied(4),
-  // Permission is provisionally granted.   *Only supported on iOS.*
+  /// Permission is provisionally granted.   *Only supported on iOS.*
   provisional(5),
-  // Platform does not support this permission.
+  /// Platform does not support this permission.
   notApplicable(6);
 
   final int value;
@@ -150,11 +150,11 @@ class PermissionWithService extends Permission {
 
 /// Defines the different states a service can be in.
 enum ServiceStatus {
-  // The service for the permission is disabled.
+  /// The service for the permission is disabled.
   disabled(0),
-  // The service for the permission is enabled.
+  /// The service for the permission is enabled.
   enabled(1),
-  // Platform does not have an associated service or the service is not applicable.
+  /// Platform does not have an associated service or the service is not applicable.
   notApplicable(2);
 
   final int value;
@@ -179,31 +179,42 @@ class PermissionGetterSnippet {
 
   String generate() {
     final docs = <String>[];
-    docs.add('Permission to access $name.');
+    final nameParts = name.split('_');
+    docs.add(
+      "Permission to access the device's ${nameParts.firstOrNull}${nameParts.length > 1 ? ' (${nameParts.skip(1).join(' ')})' : ''}.",
+    );
 
     if (entries.hasIos) {
       docs.add('');
-      docs.add('**iOS:**');
+      docs.add('iOS:');
     }
     for (final entry in entries.ios) {
-      docs.add('- Info.plist key: ${entry.key} ${entry.promptNote ?? ''}');
+      docs.add('- Info.plist key: ${entry.key}');
       if (entry.docNotes != null) {
         for (final note in entry.docNotes!) {
-          docs.add('- Note: $note');
+          docs.add('- $note');
         }
       }
     }
     if (entries.hasAndroid) {
       docs.add('');
-      docs.add('**Android:**');
+      docs.add('Android:');
     }
-    for (final entry in entries.android) {
-      docs.add('- Manifest permission: ${entry.key} ${entry.promptNote ?? ''}');
+    for (var i = 0; i < entries.android.length; i++) {
+      final entry = entries.android.elementAt(i);
+      if (i != 0) {
+        docs.add('');
+      }
+      docs.add('- Manifest permission: ${entry.key}');
       if (entry.docNotes != null) {
         for (final note in entry.docNotes!) {
-          docs.add('- Note: $note');
+          docs.add('- $note');
         }
       }
+    }
+    if (platforms.length == 1) {
+      docs.add('');
+      docs.add('Returns [PermissionStatus.notApplicable] for platforms other than (${platforms.join(', ')})');
     }
 
     final plat = platforms.isNotEmpty ? ", platforms: {${platforms.map((e) => "'$e'").join(', ')}}" : '';

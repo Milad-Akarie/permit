@@ -11,10 +11,6 @@ class PluginManifestTemp extends Template {
 
   @override
   String generate() {
-    return '''
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="$packageName">
-</manifest>
-''';
+    return '<manifest package="$packageName" />';
   }
 }

@@ -3,8 +3,14 @@ import 'package:permit/generate/templates/template.dart';
 
 class PluginGradleTemp extends Template {
   final String androidPackageName;
+  final int compileSdk;
+  final int minSdk;
 
-  PluginGradleTemp({this.androidPackageName = kAndroidPackageName});
+  PluginGradleTemp({
+    this.androidPackageName = kAndroidPackageName,
+    this.compileSdk = 35,
+    this.minSdk = 16,
+  });
 
   @override
   String get path => 'android/build.gradle.kts';
@@ -20,12 +26,16 @@ plugins {
 
 android {
     namespace = "$androidPackageName"
-    compileSdk = 34
-     
-      compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+    compileSdk = $compileSdk
+      
+    defaultConfig {
+      minSdk $minSdk 
     }
+     
+    compileOptions {
+      sourceCompatibility = JavaVersion.VERSION_17
+      targetCompatibility = JavaVersion.VERSION_17
+   }
 }
 ''';
   }

@@ -6,7 +6,7 @@ import 'package:permit/generate/templates/ios/plugin_swift_class_temp.dart';
 void main() {
   group('iOS templates generate', () {
     test('PluginPodTemp generates podspec with plugin name and min sdk', () {
-      final pod = PluginPodTemp(pluginName: 'myplugin', minSdkVersion: '14.0');
+      final pod = PluginPodTemp(pluginName: 'myplugin', minIosVersion: '14.0');
       final out = pod.generate();
       expect(out, contains('s.name             = \'myplugin\''));
       expect(out, contains("s.platform = :ios, '14.0'"));
