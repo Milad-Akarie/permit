@@ -5,17 +5,14 @@ import 'kotlin_handler_snippet.dart';
 class RequestInstallPackagesHandler extends KotlinHandlerSnippet {
   RequestInstallPackagesHandler()
     : super(
-        key: 'request_install_packages',
+        key: AndroidPermissions.requestInstallPackages.group,
         permissions: [AndroidPermissions.requestInstallPackages],
+        imports: {'androidx.core.net.toUri'},
       );
 
   @override
   String generate(int requestCode) {
-    return '''@SuppressLint("InlinedApi")
-class $className : PermissionHandler(
-    $requestCode,
-    arrayOf(${permissionsArray.join(',\n$indent$indent')})
-) {
+    return '''class $className : PermissionHandler($requestCode, arrayOf()) {
     override fun getStatus(activity: Activity): Int {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             return if (activity.packageManager.canRequestPackageInstalls()) 1 else 0
@@ -35,7 +32,7 @@ class $className : PermissionHandler(
         }
 
         val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
-            data = Uri.parse("package:\${activity.packageName}")
+            data = "package:\${activity.packageName}".toUri()
         }
         activity.startActivityForResult(intent, requestCode)
         pendingResult = result

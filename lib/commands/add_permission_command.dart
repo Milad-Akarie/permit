@@ -60,7 +60,7 @@ class AddPermissionCommand extends PermitCommand {
     final entries = lookup.find(key);
 
     if (entries.isNotEmpty) {
-      final resolved = _resolveEntries(List.of(entries));
+      final resolved = _resolveEntries(List.of(entries), key);
       onAddEntries(resolved, lookup);
     } else {
       Logger.info('No permission entries found for key: $key');
@@ -137,7 +137,7 @@ class AddPermissionCommand extends PermitCommand {
     }
   }
 
-  List<XmlEntry> _resolveEntries(List<PermissionDef> entries) {
+  List<XmlEntry> _resolveEntries(List<PermissionDef> entries, String searchKey) {
     final generateCode = argResults?['code'] == true;
     final desc = argResults?['desc'] as String?;
     var selectedEntries = entries;
@@ -149,7 +149,8 @@ class AddPermissionCommand extends PermitCommand {
     final canUpdateInfoPlist = entries.whereType<IosPermissionDef>().any(
       (e) => existingUsageDescriptions.containsKey(e.key),
     );
-    if (entries.length > 1) {
+    // Prompt user to select permissions if multiple found or if the found entry does not exactly match the search key
+    if (entries.length > 1 || !entries.first.matches(searchKey)) {
       final maxLineLength = entries.map((e) => e.name.length).reduce((a, b) => a > b ? a : b);
 
       selectedEntries = multiSelect(

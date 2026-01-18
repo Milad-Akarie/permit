@@ -32,7 +32,7 @@ void main() {
         expect(code, contains('Settings.canDrawOverlays(activity)'));
         expect(code, contains('override fun handleRequest(activity: Activity, result: MethodChannel.Result)'));
         expect(code, contains('Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)'));
-        expect(code, contains('Uri.parse("package:\${activity.packageName}")'));
+        expect(code, contains('"package:\${activity.packageName}".toUri()'));
         expect(code, contains('activity.startActivityForResult(intent, requestCode)'));
         expect(code, contains('pendingResult = result'));
       });
@@ -53,13 +53,6 @@ void main() {
         final code = handler.generate(1001);
 
         expect(code, contains('1001,'));
-      });
-
-      test('should include correct permission', () {
-        final handler = SystemAlertWindowHandler();
-        final code = handler.generate(2001);
-
-        expect(code, contains('Permission(android.Manifest.permission.SYSTEM_ALERT_WINDOW, sinceSDK = 23)'));
       });
 
       test('should have valid Kotlin syntax structure', () {
@@ -375,13 +368,6 @@ void main() {
             reason: '${handler.className} missing handleRequest method',
           );
 
-          // Verify permission is present
-          expect(
-            code,
-            contains('Permission(android.Manifest.permission.'),
-            reason: '${handler.className} missing permission declaration',
-          );
-
           // Verify syntax
           final openBraces = '{'.allMatches(code).length;
           final closeBraces = '}'.allMatches(code).length;
@@ -408,7 +394,7 @@ void main() {
           expect(code, contains('Intent('), reason: '${handler.className} missing Intent instantiation');
           expect(
             code,
-            contains('Uri.parse("package:\${activity.packageName}")'),
+            contains('"package:\${activity.packageName}".toUri()'),
             reason: '${handler.className} missing Uri parsing',
           );
           expect(

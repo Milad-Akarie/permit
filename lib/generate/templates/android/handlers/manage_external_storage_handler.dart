@@ -5,13 +5,18 @@ import 'kotlin_handler_snippet.dart';
 class ManageExternalStorageHandler extends KotlinHandlerSnippet {
   ManageExternalStorageHandler()
     : super(
-        key: 'manage_external_storage',
+        key: AndroidPermissions.manageExternalStorage.group,
         permissions: [AndroidPermissions.manageExternalStorage],
-        imports: {'android.os.Environment'},
+        imports: {'android.os.Environment', 'androidx.core.net.toUri'},
       );
 
   @override
+  Iterable<String> get permissionsArray => {};
+
+  @override
   String generate(int requestCode) {
+    // this permission requires special handling, it's not requested like normal permissions
+    permissions.removeWhere((e) => e.key == AndroidPermissions.manageExternalStorage.key);
     return '''@SuppressLint("InlinedApi")
 class $className : PermissionHandler(
     $requestCode,
@@ -21,12 +26,12 @@ class $className : PermissionHandler(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             return if (Environment.isExternalStorageManager()) 1 else 0
         }
-        return 2 // RESTRICTED
+        return super.getStatus(activity)
     }
 
     override fun handleRequest(activity: Activity, result: MethodChannel.Result) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            result.success(2) // RESTRICTED
+            super.handleRequest(activity, result)
             return
         }
 
@@ -36,7 +41,7 @@ class $className : PermissionHandler(
         }
 
         val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
-            data = Uri.parse("package:\${activity.packageName}")
+            data = "package:\${activity.packageName}".toUri()
         }
         activity.startActivityForResult(intent, requestCode)
         pendingResult = result

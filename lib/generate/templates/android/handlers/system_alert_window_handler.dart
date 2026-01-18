@@ -5,17 +5,14 @@ import 'kotlin_handler_snippet.dart';
 class SystemAlertWindowHandler extends KotlinHandlerSnippet {
   SystemAlertWindowHandler()
     : super(
-        key: 'system_alert_window',
+        key: AndroidPermissions.systemAlertWindow.group,
         permissions: [AndroidPermissions.systemAlertWindow],
+        imports: {'androidx.core.net.toUri'},
       );
 
   @override
   String generate(int requestCode) {
-    return '''@SuppressLint("InlinedApi")
-class $className : PermissionHandler(
-    $requestCode,
-    arrayOf(${permissionsArray.join(',\n$indent$indent')})
-) {
+    return '''class $className : PermissionHandler($requestCode, arrayOf()) {
     override fun getStatus(activity: Activity): Int {
         return if (Settings.canDrawOverlays(activity)) 1 else 0
     }
@@ -27,7 +24,7 @@ class $className : PermissionHandler(
         }
 
         val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
-            data = Uri.parse("package:\${activity.packageName}")
+            data = "package:\${activity.packageName}".toUri()
         }
         activity.startActivityForResult(intent, requestCode)
         pendingResult = result

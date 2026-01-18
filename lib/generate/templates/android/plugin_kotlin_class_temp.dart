@@ -9,9 +9,9 @@ final _serviceImports = <AssociatedService, Set<String>>{
   AssociatedService.bluetooth: {
     'android.bluetooth.BluetoothAdapter',
     'android.bluetooth.BluetoothManager',
+    'android.content.Context.BLUETOOTH_SERVICE',
   },
   AssociatedService.phone: {
-    'android.content.Context.BLUETOOTH_SERVICE',
     'android.telephony.TelephonyManager',
   },
 };
@@ -40,6 +40,8 @@ class PluginKotlinClassTemp extends Template {
 
     return '''
 // ---- GENERATED CODE - DO NOT MODIFY BY HAND ----
+@file:SuppressLint("InlinedApi")
+
 package $packageName
 
 import android.annotation.SuppressLint
@@ -277,7 +279,7 @@ ${_generateServiceSnippet()}
     if (services.isEmpty) return '';
     final buffer = StringBuffer();
     final w = buffer.writeln;
-    w('@Suppress("deprecation")');
+    w('@Suppress("deprecation", "ObsoleteSdkInt")');
     w('object ServiceChecker {');
     for (final service in services) {
       final functionName = 'check${service}Status';

@@ -27,7 +27,7 @@ void main() {
         expect(code, contains('Settings.canDrawOverlays(activity)'));
         expect(code, contains('override fun handleRequest(activity: Activity, result: MethodChannel.Result)'));
         expect(code, contains('Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)'));
-        expect(code, contains(r'Uri.parse("package:${activity.packageName}")'));
+        expect(code, contains('"package:\${activity.packageName}".toUri()'));
         expect(code, contains('activity.startActivityForResult(intent, requestCode)'));
         expect(code, contains('pendingResult = result'));
       });
@@ -48,13 +48,6 @@ void main() {
         final code = handler.generate(1001);
 
         expect(code, contains('1001,'));
-      });
-
-      test('should include correct permission', () {
-        final handler = SystemAlertWindowHandler();
-        final code = handler.generate(2001);
-
-        expect(code, contains('Permission(android.Manifest.permission.SYSTEM_ALERT_WINDOW, sinceSDK = 23)'));
       });
 
       test('should have valid Kotlin syntax structure', () {

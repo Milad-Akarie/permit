@@ -103,7 +103,7 @@ void main() {
     test('userTracking permission has minimumIosVersion', () {
       final p = IosPermissions.userTracking;
       expect(p.key, 'NSUserTrackingUsageDescription');
-      expect(p.group, 'tracking');
+      expect(p.group, 'user_tracking');
       expect(p.scope, AccessScope.standardOrFull);
     });
 

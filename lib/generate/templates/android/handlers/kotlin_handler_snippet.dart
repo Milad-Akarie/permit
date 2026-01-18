@@ -45,7 +45,6 @@ class KotlinHandlerSnippet {
 
   String generate(int requestCode) {
     final buffer = StringBuffer();
-    buffer.writeln('@SuppressLint("InlinedApi")');
     buffer.writeln('class $className : PermissionHandler(');
     buffer.writeln('$indent$requestCode, arrayOf(');
 

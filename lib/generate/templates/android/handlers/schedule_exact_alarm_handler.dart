@@ -5,18 +5,14 @@ import 'kotlin_handler_snippet.dart';
 class ScheduleExactAlarmHandler extends KotlinHandlerSnippet {
   ScheduleExactAlarmHandler()
     : super(
-        key: 'schedule_exact_alarm',
+        key: AndroidPermissions.scheduleExactAlarm.group,
         permissions: [AndroidPermissions.scheduleExactAlarm],
-        imports: {'android.app.AlarmManager'},
+        imports: {'android.app.AlarmManager', 'androidx.core.net.toUri'},
       );
 
   @override
   String generate(int requestCode) {
-    return '''@SuppressLint("InlinedApi")
-class $className : PermissionHandler(
-    $requestCode,
-    arrayOf(${permissionsArray.join(',\n$indent$indent')})
-) {
+    return '''class $className : PermissionHandler($requestCode, arrayOf()) {
     override fun getStatus(activity: Activity): Int {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarmManager = activity.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -38,7 +34,7 @@ class $className : PermissionHandler(
         }
 
         val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-            data = Uri.parse("package:\${activity.packageName}")
+            data = "package:\${activity.packageName}".toUri()
         }
         activity.startActivityForResult(intent, requestCode)
         pendingResult = result

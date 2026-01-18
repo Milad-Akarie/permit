@@ -29,7 +29,7 @@ android {
     compileSdk = $compileSdk
       
     defaultConfig {
-      minSdk $minSdk 
+      minSdk = $minSdk 
     }
      
     compileOptions {

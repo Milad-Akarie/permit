@@ -5,18 +5,16 @@ import 'kotlin_handler_snippet.dart';
 class IgnoreBatteryOptimizationsHandler extends KotlinHandlerSnippet {
   IgnoreBatteryOptimizationsHandler()
     : super(
-        key: 'ignore_battery_optimizations',
+        key: AndroidPermissions.ignoreBatteryOptimizations.group,
         permissions: [AndroidPermissions.ignoreBatteryOptimizations],
-        imports: {'android.os.PowerManager'},
+        imports: {'android.os.PowerManager', 'androidx.core.net.toUri'},
       );
 
   @override
   String generate(int requestCode) {
-    return '''@SuppressLint("InlinedApi")
-class $className : PermissionHandler(
-    $requestCode,
-    arrayOf(${permissionsArray.join(',\n$indent$indent')})
-) {
+    return '''@SuppressLint("ObsoleteSdkInt","BatteryLife")
+class $className : PermissionHandler($requestCode, arrayOf()) {
+
     override fun getStatus(activity: Activity): Int {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val pm = activity.getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -38,7 +36,7 @@ class $className : PermissionHandler(
         }
 
         val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-            data = Uri.parse("package:\${activity.packageName}")
+            data = "package:\${activity.packageName}".toUri()
         }
         activity.startActivityForResult(intent, requestCode)
         pendingResult = result

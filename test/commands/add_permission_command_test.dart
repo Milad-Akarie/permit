@@ -59,7 +59,7 @@ void main() {
       );
 
       await runZoned(() async {
-        await runner.run(['add', '--android', 'microphone']);
+        await runner.run(['add', '--android', 'android.permission.RECORD_AUDIO']);
       }, zoneSpecification: spec);
 
       expect(output.toString(), contains('Added Android permission'));
@@ -79,7 +79,7 @@ void main() {
       final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
 
       await runZoned(() async {
-        await runner.run(['add', '--ios', '--desc', 'Microphone access for recording', 'microphone']);
+        await runner.run(['add', '--ios', '--desc', 'Microphone access for recording', 'NSMicrophoneUsageDescription']);
       }, zoneSpecification: spec);
 
       expect(output.toString(), contains('Added iOS usage description'));
@@ -100,7 +100,7 @@ void main() {
       final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
 
       await runZoned(() async {
-        await runner.run(['add', '--android', '--code', 'microphone']);
+        await runner.run(['add', '--android', '--code', 'android.permission.RECORD_AUDIO']);
       }, zoneSpecification: spec);
 
       expect(output.toString(), contains('Added Android permission'));
@@ -122,7 +122,7 @@ void main() {
       final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
 
       await runZoned(() async {
-        await runner.run(['add', '--android', 'microphone']);
+        await runner.run(['add', '--android', 'android.permission.RECORD_AUDIO']);
       }, zoneSpecification: spec);
 
       expect(output.toString(), contains('Could not locate AndroidManifest.xml'));
@@ -138,7 +138,7 @@ void main() {
       final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
 
       await runZoned(() async {
-        await runner.run(['add', '--ios', '--desc', 'test', 'microphone']);
+        await runner.run(['add', '--ios', '--desc', 'test', 'NSMicrophoneUsageDescription']);
       }, zoneSpecification: spec);
 
       expect(output.toString(), contains('Could not locate Info.plist'));

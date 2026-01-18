@@ -175,7 +175,7 @@ void main() {
         expect(groups.contains('speech'), isTrue);
         expect(groups.contains('assistant'), isTrue);
         expect(groups.contains('nfc'), isTrue);
-        expect(groups.contains('tracking'), isTrue);
+        expect(groups.contains('user_tracking'), isTrue);
       });
 
       test('returns no duplicate groups', () {

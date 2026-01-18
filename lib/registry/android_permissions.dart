@@ -256,7 +256,7 @@ abstract class AndroidPermissions {
     runtime: true,
     sinceSDK: 30,
     group: 'manage_external_storage',
-    keywords: {'files', 'manage', 'access'},
+    keywords: {'files', 'manage', 'access', 'storage'},
     legacyKeys: {
       'android.permission.READ_EXTERNAL_STORAGE': 29,
       'android.permission.WRITE_EXTERNAL_STORAGE': 29,
@@ -271,6 +271,7 @@ abstract class AndroidPermissions {
   static const ignoreBatteryOptimizations = AndroidPermissionDef(
     'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
     sinceSDK: 23,
+    runtime: true,
     group: 'ignore_battery_optimizations',
     keywords: {'battery', 'opt_out', 'power'},
     docNotes: {
@@ -409,22 +410,26 @@ abstract class AndroidPermissions {
   static const scheduleExactAlarm = AndroidPermissionDef(
     'android.permission.SCHEDULE_EXACT_ALARM',
     sinceSDK: 31,
+    runtime: true,
     group: 'schedule_exact_alarm',
     keywords: {'alarm', 'timer', 'exact'},
+    docNotes: {'Required to schedule exact alarms using AlarmManager on Android 12 and above'},
   );
   static const postNotifications = AndroidPermissionDef(
     'android.permission.POST_NOTIFICATIONS',
     sinceSDK: 33,
     runtime: true,
     group: 'notifications',
-    keywords: {'push', 'alerts'},
+    keywords: {'push', 'post'},
     docNotes: {'Required to post notifications to the user on Android 13 and above'},
   );
   static const requestInstallPackages = AndroidPermissionDef(
     'android.permission.REQUEST_INSTALL_PACKAGES',
     sinceSDK: 26,
+    runtime: true,
     group: 'request_install_packages',
-    keywords: {'installer', 'apk', 'sideload'},
+    keywords: {'install', 'apk', 'sideload', 'packages'},
+    docNotes: {'Required to install APK packages from sources other than the Play Store'},
   );
   static const nfc = AndroidPermissionDef(
     'android.permission.NFC',

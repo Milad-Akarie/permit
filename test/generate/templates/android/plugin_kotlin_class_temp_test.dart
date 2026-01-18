@@ -32,7 +32,6 @@ void main() {
 
       // Handler class generated
       expect(output, contains('class LocationHandler'));
-      expect(output, contains('@SuppressLint("InlinedApi")'));
 
       // Service import included
       expect(output, contains('import android.location.LocationManager'));

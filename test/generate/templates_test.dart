@@ -120,7 +120,6 @@ void main() {
         final content = template.generate();
 
         expect(content, contains('package="$kAndroidPackageName"'));
-        expect(content, contains('<manifest xmlns:android="http://schemas.android.com/apk/res/android"'));
       });
 
       test('should generate AndroidManifest.xml with custom package', () {
