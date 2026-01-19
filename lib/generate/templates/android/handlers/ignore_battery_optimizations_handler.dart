@@ -2,7 +2,9 @@ import 'package:permit/registry/android_permissions.dart';
 
 import 'kotlin_handler_snippet.dart';
 
+/// Handler for ignoring battery optimizations permission.
 class IgnoreBatteryOptimizationsHandler extends KotlinHandlerSnippet {
+  /// Constructor for [IgnoreBatteryOptimizationsHandler].
   IgnoreBatteryOptimizationsHandler()
     : super(
         key: AndroidPermissions.ignoreBatteryOptimizations.group,

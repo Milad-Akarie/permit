@@ -2,7 +2,9 @@ import 'package:permit/registry/android_permissions.dart';
 
 import 'kotlin_handler_snippet.dart';
 
+/// Handler for request install packages permission.
 class RequestInstallPackagesHandler extends KotlinHandlerSnippet {
+  /// Constructor for [RequestInstallPackagesHandler].
   RequestInstallPackagesHandler()
     : super(
         key: AndroidPermissions.requestInstallPackages.group,

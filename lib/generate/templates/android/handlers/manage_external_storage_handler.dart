@@ -2,7 +2,9 @@ import 'package:permit/registry/android_permissions.dart';
 
 import 'kotlin_handler_snippet.dart';
 
+/// Handler for manage external storage permission.
 class ManageExternalStorageHandler extends KotlinHandlerSnippet {
+  /// Constructor for [ManageExternalStorageHandler].
   ManageExternalStorageHandler()
     : super(
         key: AndroidPermissions.manageExternalStorage.group,

@@ -8,23 +8,34 @@ import 'package:permit/registry/models.dart';
 import 'ignore_battery_optimizations_handler.dart';
 import 'manage_external_storage_handler.dart';
 
+/// Represents a Kotlin permission handler snippet.
 const indent = '    ';
 
+/// Represents a Kotlin permission handler snippet.
 class KotlinHandlerSnippet {
+  /// Constructor for [KotlinHandlerSnippet].
   final String key;
+
+  /// The permissions associated with this handler.
   final List<AndroidPermissionDef> permissions;
+
+  /// The imports required for this handler.
   final Set<String>? imports;
 
+  /// Constructor for [KotlinHandlerSnippet].
   KotlinHandlerSnippet({
     required this.key,
     required this.permissions,
     this.imports,
   });
 
+  /// The associated service, if any.
   late final AssociatedService? service = permissions.firstOrNull?.service;
 
+  /// The class name for this handler.
   String get className => '${key.toPascalCase()}Handler';
 
+  /// The array of permissions for this handler.
   late final permissionsArray = permissions
       .map<List<String>>((perm) {
         final sinceSDKParam = perm.sinceSDK != null ? ', sinceSDK = ${perm.sinceSDK}' : '';
@@ -43,6 +54,7 @@ class KotlinHandlerSnippet {
       })
       .expand((e) => e);
 
+  /// Generates the Kotlin code for this handler.
   String generate(int requestCode) {
     final buffer = StringBuffer();
     buffer.writeln('class $className : PermissionHandler(');
@@ -64,6 +76,7 @@ class KotlinHandlerSnippet {
   }
 }
 
+/// Custom Kotlin handlers for specific permissions.
 final customKotlinHandlers = <String, KotlinHandlerSnippet Function()>{
   AndroidPermissions.systemAlertWindow.group: () => SystemAlertWindowHandler(),
   AndroidPermissions.ignoreBatteryOptimizations.group: () => IgnoreBatteryOptimizationsHandler(),

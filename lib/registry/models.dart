@@ -44,6 +44,9 @@ abstract class PermissionDef {
 /// Definition for an Android permission.
 class AndroidPermissionDef extends PermissionDef {
   /// Whether this permission requires runtime requests (dangerous permissions).
+  ///
+  /// **NOTE:** it's also used for some special permissions that need to be enabled manually
+  /// in the system settings, even though they are not classified as dangerous.
   final bool runtime;
 
   /// The SDK version since which this permission is available.

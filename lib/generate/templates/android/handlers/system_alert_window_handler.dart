@@ -2,7 +2,9 @@ import 'package:permit/registry/android_permissions.dart';
 
 import 'kotlin_handler_snippet.dart';
 
+/// Handler for system alert window permission.
 class SystemAlertWindowHandler extends KotlinHandlerSnippet {
+  /// Constructor for [SystemAlertWindowHandler].
   SystemAlertWindowHandler()
     : super(
         key: AndroidPermissions.systemAlertWindow.group,
