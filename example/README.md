@@ -1,8 +1,3 @@
-# Permit CLI — Examples
-
-This file shows a few practical examples for using the `permit` command-line tool from this repository.
-
-## Common command examples
 
 - List permissions (show Android only):
 

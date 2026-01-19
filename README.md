@@ -1,6 +1,6 @@
 <br/>
-<p align="center">                    
-<img  src="https://raw.githubusercontent.com/Milad-Akarie/permit/main/art/permit_logo.svg" height="130" alt="Permit logo">                    
+<p align="center" style="padding-bottom: 12px">                    
+<img  src="https://raw.githubusercontent.com/Milad-Akarie/permit/main/art/permit_logo.svg" height="100" alt="Permit logo">                    
 </p>                    
 
 <p align="center">                    
