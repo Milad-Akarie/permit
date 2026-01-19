@@ -2,12 +2,22 @@ import 'android_permissions.dart';
 import 'ios_permissions.dart';
 import 'models.dart';
 
+/// A utility class for creating and looking up permission definitions.
 class EntriesLookup {
+  /// The set of available permission definitions.
   final Set<PermissionDef> entries;
 
+  /// Default constructor.
   const EntriesLookup(this.entries);
 
-  factory EntriesLookup.forDefaults({bool androidOnly = false, bool iosOnly = false}) {
+  /// Creates a lookup instance initialized with default permissions.
+  ///
+  /// [androidOnly] If true, only Android permissions are included.
+  /// [iosOnly] If true, only iOS permissions are included.
+  factory EntriesLookup.forDefaults({
+    bool androidOnly = false,
+    bool iosOnly = false,
+  }) {
     final allEntries = switch ((androidOnly, iosOnly)) {
       (true, false) => AndroidPermissions.all,
       (false, true) => IosPermissions.all,
@@ -16,12 +26,18 @@ class EntriesLookup {
     return EntriesLookup(allEntries);
   }
 
+  /// Finds permissions matching the given [input] string.
+  ///
+  /// Matches can be by key, group, or keywords.
   Set<PermissionDef> find(String input) {
     final matches = <PermissionDef>{};
     for (var entry in entries) {
       if (entry.matches(input)) {
         matches.add(entry);
-      } else if ({entry.group, ...entry.keywords}.any((e) => e.startsWith(input))) {
+      } else if ({
+        entry.group,
+        ...entry.keywords,
+      }.any((e) => e.startsWith(input))) {
         matches.add(entry);
       }
     }
@@ -29,6 +45,7 @@ class EntriesLookup {
     return matches;
   }
 
+  /// Finds a specific permission definition by its [key].
   PermissionDef? findByKey(String key) {
     for (var entry in entries) {
       if (entry.key == key) {
@@ -38,6 +55,7 @@ class EntriesLookup {
     return null;
   }
 
+  /// Returns all unique permission groups.
   Set<String> get groups {
     final groups = <String>{};
     for (var entry in entries) {
@@ -47,16 +65,23 @@ class EntriesLookup {
   }
 }
 
+/// Extension methods for sets of [PermissionDef].
 extension PermissionEntrySet on Iterable<PermissionDef> {
+  /// Checks if the set contains a permission with the given [key].
   bool containsKey(String key) {
     return any((entry) => entry.key == key);
   }
 
+  /// Checks if the set contains any Android permissions.
   bool get hasAndroid => any((entry) => entry is AndroidPermissionDef);
 
+  /// Checks if the set contains any iOS permissions.
   bool get hasIos => any((entry) => entry is IosPermissionDef);
 
+  /// Returns a set of all iOS permission definitions in this collection.
   Set<IosPermissionDef> get ios => whereType<IosPermissionDef>().toSet();
 
-  Set<AndroidPermissionDef> get android => whereType<AndroidPermissionDef>().toSet();
+  /// Returns a set of all Android permission definitions in this collection.
+  Set<AndroidPermissionDef> get android =>
+      whereType<AndroidPermissionDef>().toSet();
 }

@@ -1,7 +1,9 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Camera permission on iOS.
 class CameraPermissionHandler extends SwiftHandlerSnippet {
+  /// Constructor for [CameraPermissionHandler].
   CameraPermissionHandler()
     : super(
         entry: IosPermissions.camera,

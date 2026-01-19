@@ -1,7 +1,9 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for User Tracking permission on iOS.
 class UserTrackingPermissionHandler extends SwiftHandlerSnippet {
+  /// Constructor for [UserTrackingPermissionHandler].
   UserTrackingPermissionHandler()
     : super(
         entry: IosPermissions.userTracking,

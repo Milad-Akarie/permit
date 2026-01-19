@@ -1,8 +1,16 @@
 import 'package:permit/commands/permit_runner.dart';
-import 'package:permit/utils/logger.dart';
 import 'package:permit/editor/models.dart';
 import 'package:permit/editor/xml_editor.dart';
+import 'package:permit/utils/logger.dart';
 
+/// Command to list all permissions currently used in the project.
+///
+/// Usage: `permit list [options]`
+///
+/// Options:
+///   -a, --android    Show only Android permissions
+///   -i, --ios        Show only iOS permissions
+///   -c, --code       Show only permissions that generate code
 class ListPermissionsCommand extends PermitCommand {
   @override
   String get name => 'list';
@@ -10,10 +18,26 @@ class ListPermissionsCommand extends PermitCommand {
   @override
   String get description => 'List all existing permissions';
 
+  /// Default constructor.
   ListPermissionsCommand() {
-    argParser.addFlag('android', abbr: 'a', help: 'Show only Android permissions', defaultsTo: false);
-    argParser.addFlag('ios', abbr: 'i', help: 'Show only iOS permissions', defaultsTo: false);
-    argParser.addFlag('code', abbr: 'c', help: 'Show only permissions that generate code', defaultsTo: false);
+    argParser.addFlag(
+      'android',
+      abbr: 'a',
+      help: 'Show only Android permissions',
+      defaultsTo: false,
+    );
+    argParser.addFlag(
+      'ios',
+      abbr: 'i',
+      help: 'Show only iOS permissions',
+      defaultsTo: false,
+    );
+    argParser.addFlag(
+      'code',
+      abbr: 'c',
+      help: 'Show only permissions that generate code',
+      defaultsTo: false,
+    );
   }
 
   @override
@@ -27,7 +51,9 @@ class ListPermissionsCommand extends PermitCommand {
     final plistFile = (!androidOnly) ? pathFinder.getInfoPlist() : null;
 
     if (manifestFile == null && plistFile == null) {
-      Logger.error('Could not locate AndroidManifest.xml or Info.plist in the current directory.');
+      Logger.error(
+        'Could not locate AndroidManifest.xml or Info.plist in the current directory.',
+      );
       return;
     }
 
@@ -72,7 +98,9 @@ class ListPermissionsCommand extends PermitCommand {
         final codeIndicator = entry.generatesCode ? ' [CODE]' : '';
         final legacyIndicator = entry.isLegacy ? ' [LEGACY]' : '';
 
-        Logger.listed('${Logger.mutedPen.write(entry.key)}$codeIndicator$legacyIndicator');
+        Logger.listed(
+          '${Logger.mutedPen.write(entry.key)}$codeIndicator$legacyIndicator',
+        );
       }
       if (iosEntries.isNotEmpty) print('');
     }
@@ -82,7 +110,9 @@ class ListPermissionsCommand extends PermitCommand {
       for (final entry in iosEntries) {
         final codeIndicator = entry.generatesCode ? ' [CODE]' : '';
 
-        Logger.listed('${Logger.mutedPen.write(entry.key)}: ${entry.description}$codeIndicator');
+        Logger.listed(
+          '${Logger.mutedPen.write(entry.key)}: ${entry.description}$codeIndicator',
+        );
       }
     }
   }

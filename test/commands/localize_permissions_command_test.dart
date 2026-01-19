@@ -51,8 +51,7 @@ void main() {
         infoPlist.deleteSync();
       }
 
-      final runner = PermitRunner(pathFinder)
-        ..addCommand(LocalizePermissionsCommand());
+      final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(
@@ -82,8 +81,7 @@ void main() {
 </dict>
 </plist>''');
 
-      final runner = PermitRunner(pathFinder)
-        ..addCommand(LocalizePermissionsCommand());
+      final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(
@@ -123,8 +121,7 @@ void main() {
         xcodeProjDir.deleteSync(recursive: true);
       }
 
-      final runner = PermitRunner(pathFinder)
-        ..addCommand(LocalizePermissionsCommand());
+      final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(
@@ -195,10 +192,8 @@ void main() {
 
       final strings = xcstringsJson['strings'] as Map<String, dynamic>;
       expect(strings.containsKey('NSCameraUsageDescription'), isTrue);
-      final cameraEntry =
-          strings['NSCameraUsageDescription'] as Map<String, dynamic>;
-      final localizations =
-          cameraEntry['localizations'] as Map<String, dynamic>;
+      final cameraEntry = strings['NSCameraUsageDescription'] as Map<String, dynamic>;
+      final localizations = cameraEntry['localizations'] as Map<String, dynamic>;
       expect(localizations.containsKey('en'), isTrue);
       expect(localizations.containsKey('fr'), isTrue);
       expect(localizations.containsKey('de'), isTrue);
@@ -258,9 +253,7 @@ void main() {
       }
 
       // Verify existing entries are preserved and new one is added
-      final finalLocalizations =
-          strings['NSCameraUsageDescription']?['localizations']
-              as Map<String, dynamic>;
+      final finalLocalizations = strings['NSCameraUsageDescription']?['localizations'] as Map<String, dynamic>;
       expect(
         finalLocalizations['en']['stringUnit']['value'],
         equals('Camera access for photos'),
@@ -490,8 +483,7 @@ void main() {
           ).writeAsStringSync('// Empty pbxproj for testing');
         }
 
-        final runner = PermitRunner(pathFinder)
-          ..addCommand(LocalizePermissionsCommand());
+        final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
 
         final output = StringBuffer();
         final spec = ZoneSpecification(
@@ -537,8 +529,7 @@ void main() {
         ).writeAsStringSync('// Empty pbxproj for testing');
       }
 
-      final runner = PermitRunner(pathFinder)
-        ..addCommand(LocalizePermissionsCommand());
+      final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(
@@ -579,8 +570,7 @@ void main() {
         ).writeAsStringSync('// Empty pbxproj for testing');
       }
 
-      final runner = PermitRunner(pathFinder)
-        ..addCommand(LocalizePermissionsCommand());
+      final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(
@@ -629,8 +619,7 @@ void main() {
           ).writeAsStringSync('// Empty pbxproj for testing');
         }
 
-        final runner = PermitRunner(pathFinder)
-          ..addCommand(LocalizePermissionsCommand());
+        final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
 
         final output = StringBuffer();
         final spec = ZoneSpecification(
@@ -873,9 +862,7 @@ void main() {
         final strings = xcstringsJson['strings'] as Map<String, dynamic>;
 
         // Check camera entry (had existing translations)
-        final cameraLocalizations =
-            strings['NSCameraUsageDescription']?['localizations']
-                as Map<String, dynamic>;
+        final cameraLocalizations = strings['NSCameraUsageDescription']?['localizations'] as Map<String, dynamic>;
         expect(
           cameraLocalizations['en']['stringUnit']['value'],
           equals('Camera access for photos'),
@@ -888,15 +875,11 @@ void main() {
         expect(cameraLocalizations['es']['stringUnit']['state'], equals('new'));
 
         // Check microphone entry (had empty localizations)
-        final micLocalizations =
-            strings['NSMicrophoneUsageDescription']?['localizations']
-                as Map<String, dynamic>;
+        final micLocalizations = strings['NSMicrophoneUsageDescription']?['localizations'] as Map<String, dynamic>;
         expect(micLocalizations.length, equals(4)); // All languages added
 
         // Check photo library entry (was completely new)
-        final photoLocalizations =
-            strings['NSPhotoLibraryUsageDescription']?['localizations']
-                as Map<String, dynamic>;
+        final photoLocalizations = strings['NSPhotoLibraryUsageDescription']?['localizations'] as Map<String, dynamic>;
         expect(photoLocalizations.length, equals(4)); // All languages added
       },
     );
@@ -988,6 +971,7 @@ void main() {
               'en': {
                 'stringUnit': {'state': 'translated', 'value': 'Camera'},
               },
+              // ignore: equal_keys_in_map
               'en': {
                 'stringUnit': {
                   'state': 'translated',
@@ -1163,7 +1147,7 @@ void main() {
 
     test('should handle xcstrings path constant', () {
       expect(
-        LocalizePermissionsCommand.xcstringsPath,
+        LocalizePermissionsCommand.xcstringsFileName,
         equals('InfoPlist.xcstrings'),
       );
     });
@@ -1193,8 +1177,7 @@ void main() {
           ).writeAsStringSync('// Empty pbxproj for testing');
         }
 
-        final runner = PermitRunner(pathFinder)
-          ..addCommand(LocalizePermissionsCommand());
+        final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
 
         final output = StringBuffer();
         final spec = ZoneSpecification(
@@ -1244,8 +1227,7 @@ void main() {
           ).writeAsStringSync('// Empty pbxproj for testing');
         }
 
-        final runner = PermitRunner(pathFinder)
-          ..addCommand(LocalizePermissionsCommand());
+        final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
 
         final output = StringBuffer();
         final spec = ZoneSpecification(
@@ -1255,8 +1237,7 @@ void main() {
         );
 
         await runZoned(
-          () async =>
-              runner.run(['localize', 'en', 'invalid', 'fr', 'also-invalid']),
+          () async => runner.run(['localize', 'en', 'invalid', 'fr', 'also-invalid']),
           zoneSpecification: spec,
         );
 

@@ -1,5 +1,6 @@
 import 'package:interact/interact.dart';
 
+/// Theme for radio buttons.
 final radioTheme = Theme.colorfulTheme.copyWith(
   activeItemPrefix: '❯ ◉', // Filled radio
   inactiveItemPrefix: '  ○', // Empty radio
@@ -7,7 +8,7 @@ final radioTheme = Theme.colorfulTheme.copyWith(
   successPrefix: '',
 );
 
-// Checkbox style for multi-select
+/// Theme for checkboxes.
 final checkboxTheme = Theme.colorfulTheme.copyWith(
   checkedItemPrefix: '[✓]',
   uncheckedItemPrefix: '[ ]',
@@ -15,13 +16,18 @@ final checkboxTheme = Theme.colorfulTheme.copyWith(
   successPrefix: '',
 );
 
-// input theme
+/// Theme for text inputs.
 final inputTheme = Theme.colorfulTheme.copyWith(
   inputPrefix: '',
   successPrefix: '',
 );
 
-List<T> multiSelect<T>(String message, {required List<T> options, required String Function(T) display}) {
+/// Prompts the user to select multiple options from a list.
+List<T> multiSelect<T>(
+  String message, {
+  required List<T> options,
+  required String Function(T) display,
+}) {
   final selection = MultiSelect.withTheme(
     prompt: message,
     options: List.of(options.map(display)),
@@ -30,7 +36,12 @@ List<T> multiSelect<T>(String message, {required List<T> options, required Strin
   return List.of(selection.map((index) => options[index]));
 }
 
-T singleSelect<T>(String message, {required List<T> options, required String Function(T) display}) {
+/// Prompts the user to select a single option from a list.
+T singleSelect<T>(
+  String message, {
+  required List<T> options,
+  required String Function(T) display,
+}) {
   final index = Select.withTheme(
     prompt: message,
     options: List.of(options.map(display)),
@@ -39,7 +50,12 @@ T singleSelect<T>(String message, {required List<T> options, required String Fun
   return options[index];
 }
 
-String prompt(String message, {String? defaultValue, String? validatorErrorMessage}) {
+/// Prompts the user for text input.
+String prompt(
+  String message, {
+  String? defaultValue,
+  String? validatorErrorMessage,
+}) {
   return Input.withTheme(
     theme: inputTheme,
     prompt: message,

@@ -1,12 +1,20 @@
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/template.dart';
 
+/// Template for generating the iOS podspec file for a plugin package.
+///
+/// This file is used by CocoaPods to manage the iOS dependencies of the plugin.
 class PluginPodTemp extends Template {
+  /// Constructor for [PluginPodTemp].
   PluginPodTemp({
     this.pluginName = kDartPackageName,
     this.minIosVersion = '12.0',
   });
+
+  /// The name of the plugin.
   final String pluginName;
+
+  /// The minimum iOS version supported by the plugin.
   final String minIosVersion;
 
   @override

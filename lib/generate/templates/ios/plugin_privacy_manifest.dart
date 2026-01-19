@@ -1,6 +1,10 @@
 import 'package:permit/generate/templates/template.dart';
 
+/// Template for generating the iOS PrivacyInfo.xcprivacy file for a plugin package.
+///
+/// This file is required to comply with Apple's privacy requirements.
 class PluginPrivacyManifestTemp extends Template {
+  /// Constructor for [PluginPrivacyManifestTemp].
   const PluginPrivacyManifestTemp();
 
   @override

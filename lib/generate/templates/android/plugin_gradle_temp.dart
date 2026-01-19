@@ -1,11 +1,20 @@
 import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/template.dart';
 
+/// Template for generating the build.gradle.kts for a plugin package.
+///
+/// Includes configuration for Android SDK versions and Java compatibility.
 class PluginGradleTemp extends Template {
+  /// The Android package name for the plugin.
   final String androidPackageName;
+
+  /// The compile SDK version.
   final int compileSdk;
+
+  /// The minimum SDK version.
   final int minSdk;
 
+  /// Constructor for [PluginGradleTemp].
   PluginGradleTemp({
     this.androidPackageName = kAndroidPackageName,
     this.compileSdk = 35,

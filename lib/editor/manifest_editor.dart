@@ -1,10 +1,16 @@
 part of 'xml_editor.dart';
 
-/// Android Manifest-specific editor
+/// Android Manifest-specific editor.
 class ManifestEditor extends XmlEditor {
+  /// Default constructor.
   ManifestEditor(super.source);
 
-  /// Add a permission to the manifest
+  /// Adds a permission to the manifest.
+  ///
+  /// [name] The permission name (e.g., 'android.permission.CAMERA').
+  /// [comments] Optional comments to add above the permission.
+  /// [removeCommentsOnUpdate] Predicate to determine which existing comments to remove.
+  /// [maxSdkVersion] Optional max SDK version for the permission.
   void addPermission({
     required String name,
     List<String>? comments,
@@ -25,7 +31,11 @@ class ManifestEditor extends XmlEditor {
           XmlElementInfo(
             name: 'uses-permission',
             comments: comments,
-            attributes: {'android:name': name, if (maxSdkVersion != null) 'android:maxSdkVersion': '$maxSdkVersion'},
+            attributes: {
+              'android:name': name,
+              if (maxSdkVersion != null)
+                'android:maxSdkVersion': '$maxSdkVersion',
+            },
             isSelfClosing: true,
           ),
         ],
@@ -34,15 +44,9 @@ class ManifestEditor extends XmlEditor {
     );
   }
 
-  /// Remove a permission from the manifest by name
+  /// Removes a permission from the manifest by [name].
   ///
-  /// Example:
-  /// ```dart
-  /// editor.removePermission(
-  ///   name: 'android.permission.CAMERA',
-  ///   removeComments: (comment) => comment.contains('@marker'),
-  /// );
-  /// ```
+  /// [removeComments] Optional predicate to remove associated comments.
   void removePermission({
     required String name,
     RemoveComment? removeComments,
@@ -57,6 +61,7 @@ class ManifestEditor extends XmlEditor {
     );
   }
 
+  /// Parses and returns a list of all permissions currently in the manifest.
   List<ManifestPermissionEntry> getPermissions() {
     final permissions = <ManifestPermissionEntry>[];
     final range = _getElementScope('manifest');

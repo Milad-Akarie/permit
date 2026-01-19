@@ -1,5 +1,5 @@
-// This only validates basic language code formats.
-// it does not check against a full list of valid codes.
+/// This only validates basic language code formats.
+/// it does not check against a full list of valid codes.
 bool isValidLanguageCode(String code) {
   // Matches:
   // - en, ar, fr (2-letter)

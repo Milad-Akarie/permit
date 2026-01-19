@@ -1,7 +1,9 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Microphone permission on iOS.
 class MicrophonePermissionHandler extends SwiftHandlerSnippet {
+  /// Constructor for [MicrophonePermissionHandler].
   MicrophonePermissionHandler()
     : super(
         entry: IosPermissions.microphone,

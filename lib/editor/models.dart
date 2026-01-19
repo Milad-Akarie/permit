@@ -1,22 +1,35 @@
 import 'package:collection/collection.dart';
 
+/// Base class for XML entries (permissions or usage descriptions).
 abstract class XmlEntry {
+  /// The key/name of the entry.
   final String key;
+
+  /// Comments associated with the entry.
   final List<String> comments;
 
+  /// Default constructor.
   XmlEntry({required this.key, required this.comments});
 
-  bool get generatesCode => comments.any((comment) => comment.contains('@permit:code'));
-  bool get isLegacy => comments.any((comment) => comment.contains('@permit:legacy'));
+  /// Whether this entry is associated with generated code.
+  bool get generatesCode =>
+      comments.any((comment) => comment.contains('@permit:code'));
+
+  /// Whether this entry is marked as legacy.
+  bool get isLegacy =>
+      comments.any((comment) => comment.contains('@permit:legacy'));
 }
 
+/// Represents a usage description in Info.plist.
 class PListUsageDescription extends XmlEntry {
+  /// Default constructor.
   PListUsageDescription({
     required super.key,
     required this.description,
     required super.comments,
   });
 
+  /// The usage description text.
   final String description;
 
   // equality check
@@ -30,7 +43,8 @@ class PListUsageDescription extends XmlEntry {
   }
 
   @override
-  int get hashCode => Object.hash(key, description, const ListEquality().hash(comments));
+  int get hashCode =>
+      Object.hash(key, description, const ListEquality().hash(comments));
 
   @override
   String toString() {
@@ -38,7 +52,9 @@ class PListUsageDescription extends XmlEntry {
   }
 }
 
+/// Represents a permission entry in AndroidManifest.xml.
 class ManifestPermissionEntry extends XmlEntry {
+  /// Default constructor.
   ManifestPermissionEntry({
     required super.key,
     required super.comments,

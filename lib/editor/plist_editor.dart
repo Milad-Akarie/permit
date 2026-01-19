@@ -1,9 +1,11 @@
 part of 'xml_editor.dart';
 
-/// Plist-specific editor
+/// Plist-specific editor.
 class PListEditor extends XmlEditor {
+  /// Default constructor.
   PListEditor(super.source);
 
+  /// Checks if [name] is a valid NS*UsageDescription key.
   bool isNSUsageDesc(String? name) {
     if (name == null) return false;
     final trimmed = name.trim();
@@ -12,7 +14,10 @@ class PListEditor extends XmlEditor {
 
   static const _mainDict = 'plist.dict';
 
-  /// Add a plist usage description
+  /// Adds a usage description to the Info.plist.
+  ///
+  /// [key] The usage description key (e.g., 'NSCameraUsageDescription').
+  /// [description] The reason string explaining why the permission is needed.
   void addUsageDescription({
     required String key,
     required String description,
@@ -31,7 +36,11 @@ class PListEditor extends XmlEditor {
         path: _mainDict,
         tags: [
           XmlElementInfo(name: 'key', content: key, comments: keyComments),
-          XmlElementInfo(name: 'string', content: description, comments: valueComments),
+          XmlElementInfo(
+            name: 'string',
+            content: description,
+            comments: valueComments,
+          ),
         ],
         insertAfter: (key, content) => key == 'key' && isNSUsageDesc(content),
       ),
@@ -98,15 +107,9 @@ class PListEditor extends XmlEditor {
     return (range.start, _getNextElementIndent(range.start));
   }
 
-  /// Remove a plist usage description by key with its associated comments
+  /// Removes a usage description by [name] (key).
   ///
-  /// Example:
-  /// ```dart
-  /// editor.removeUsageDescription(
-  ///   key: 'NSCameraUsageDescription',
-  ///   removeComments: (comment) => comment.contains('@marker'),
-  ///   );
-  /// ```
+  /// [removeComments] Optional predicate to remove associated comments.
   void removeUsageDescription({
     required String name,
     RemoveComment? removeComments,
@@ -122,6 +125,7 @@ class PListEditor extends XmlEditor {
     );
   }
 
+  /// Parses and returns a list of all usage descriptions currently in the plist.
   List<PListUsageDescription> getUsageDescriptions() {
     final descriptions = <PListUsageDescription>[];
     final range = _getElementScope(_mainDict);
@@ -170,19 +174,4 @@ class PListEditor extends XmlEditor {
 
     return descriptions;
   }
-
-  /// Add an entry to an array at a specific path
-  void addArrayEntry({
-    required String path,
-    required String key,
-    required String entry,
-    String? keyComment,
-  }) {}
-
-  /// Remove an entry from an array at a specific path
-  void removeArrayEntry({
-    required String path,
-    required String key,
-    required String entry,
-  }) {}
 }

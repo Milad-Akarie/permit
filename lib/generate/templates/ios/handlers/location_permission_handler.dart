@@ -1,8 +1,12 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Location permission on iOS.
 class LocationPermissionHandler extends SwiftHandlerSnippet {
+  /// Whether to request 'Always' permission.
   final bool forAlways;
+
+  /// Constructor for [LocationPermissionHandler].
   LocationPermissionHandler({this.forAlways = false})
     : super(
         entry: forAlways ? IosPermissions.locationAlways : IosPermissions.locationWhenInUse,

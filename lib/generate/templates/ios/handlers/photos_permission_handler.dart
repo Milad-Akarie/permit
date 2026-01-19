@@ -1,9 +1,12 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Photos permission on iOS.
 class PhotosPermissionHandler extends SwiftHandlerSnippet {
+  /// Whether the permission is for adding only.
   final bool addOnly;
 
+  /// Constructor for [PhotosPermissionHandler].
   PhotosPermissionHandler({this.addOnly = false})
     : super(
         entry: addOnly ? IosPermissions.photoLibraryAdd : IosPermissions.photoLibrary,

@@ -2,13 +2,23 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:permit/commands/permit_runner.dart';
+import 'package:permit/editor/models.dart';
+import 'package:permit/editor/xml_editor.dart';
 import 'package:permit/generate/plugin_generator.dart';
 import 'package:permit/registry/permit_registry.dart';
 import 'package:permit/utils/logger.dart';
 import 'package:permit/utils/utils.dart';
-import 'package:permit/editor/models.dart';
-import 'package:permit/editor/xml_editor.dart';
 
+/// Command to remove an existing permission from the project.
+///
+/// Usage: `permit remove &lt;permission_name&gt; [options]`
+///
+/// Options:
+///  -a, --android    Remove permission from Android platform only
+///  -i, --ios        Remove permission from iOS platform only
+///
+/// If no &lt;permission_name&gt; is provided, a multi-select prompt will be shown
+/// to choose from all existing permissions in the project.
 class RemovePermissionCommand extends PermitCommand {
   @override
   String get name => 'remove';
@@ -16,9 +26,20 @@ class RemovePermissionCommand extends PermitCommand {
   @override
   String get description => 'Remove an existing permission';
 
+  /// Default constructor.
   RemovePermissionCommand() {
-    argParser.addFlag('android', abbr: 'a', help: 'Remove permission from Android platform only', defaultsTo: false);
-    argParser.addFlag('ios', abbr: 'i', help: 'Remove permission from iOS platform only', defaultsTo: false);
+    argParser.addFlag(
+      'android',
+      abbr: 'a',
+      help: 'Remove permission from Android platform only',
+      defaultsTo: false,
+    );
+    argParser.addFlag(
+      'ios',
+      abbr: 'i',
+      help: 'Remove permission from iOS platform only',
+      defaultsTo: false,
+    );
   }
 
   @override
@@ -29,7 +50,9 @@ class RemovePermissionCommand extends PermitCommand {
     final manifestFile = pathFinder.getManifest();
     final plistFile = pathFinder.getInfoPlist();
     if (manifestFile == null && plistFile == null) {
-      Logger.error('Could not locate AndroidManifest.xml or Info.plist in the current directory.');
+      Logger.error(
+        'Could not locate AndroidManifest.xml or Info.plist in the current directory.',
+      );
       return;
     }
 
@@ -51,10 +74,14 @@ class RemovePermissionCommand extends PermitCommand {
       final iosEntries = entries.whereType<PListUsageDescription>();
 
       if (androidEntries.isNotEmpty) {
-        removeAndroidPermissions(androidEntries.toList(), manifestEditor!, manifestFile!);
+        _removeAndroidPermissions(
+          androidEntries.toList(),
+          manifestEditor!,
+          manifestFile!,
+        );
       }
       if (iosEntries.isNotEmpty) {
-        removeIosPermissions(iosEntries.toList(), plistEditor!, plistFile!);
+        _removeIosPermissions(iosEntries.toList(), plistEditor!, plistFile!);
       }
       PluginGenerator(pathFinder: pathFinder).generate();
     }
@@ -124,7 +151,11 @@ class RemovePermissionCommand extends PermitCommand {
     onRemoveEntries(selected);
   }
 
-  void removeAndroidPermissions(List<ManifestPermissionEntry> entries, ManifestEditor manifestEditor, File file) {
+  void _removeAndroidPermissions(
+    List<ManifestPermissionEntry> entries,
+    ManifestEditor manifestEditor,
+    File file,
+  ) {
     for (var entry in entries) {
       try {
         manifestEditor.removePermission(
@@ -138,12 +169,18 @@ class RemovePermissionCommand extends PermitCommand {
 
     if (manifestEditor.save(file)) {
       for (final entry in entries) {
-        Logger.android('Removed permissions successfully: ${Logger.mutedPen.write(entry.key)}');
+        Logger.android(
+          'Removed permissions successfully: ${Logger.mutedPen.write(entry.key)}',
+        );
       }
     }
   }
 
-  void removeIosPermissions(List<PListUsageDescription> entries, PListEditor plistEditor, File file) {
+  void _removeIosPermissions(
+    List<PListUsageDescription> entries,
+    PListEditor plistEditor,
+    File file,
+  ) {
     for (var entry in entries) {
       try {
         plistEditor.removeUsageDescription(
@@ -157,7 +194,9 @@ class RemovePermissionCommand extends PermitCommand {
 
     if (plistEditor.save(file)) {
       for (final entry in entries) {
-        Logger.ios('Removed iOS permissions successfully: ${Logger.mutedPen.write(entry.key)}');
+        Logger.ios(
+          'Removed iOS permissions successfully: ${Logger.mutedPen.write(entry.key)}',
+        );
       }
     }
   }

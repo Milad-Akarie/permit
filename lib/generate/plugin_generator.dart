@@ -1,16 +1,17 @@
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:path/path.dart' as p;
 import 'package:permit/editor/pubspec_editor.dart';
 import 'package:permit/editor/xml_editor.dart';
 import 'package:permit/generate/templates/android/handlers/kotlin_handler_snippet.dart';
 import 'package:permit/generate/templates/android/plugin_gradle_temp.dart';
 import 'package:permit/generate/templates/android/plugin_kotlin_class_temp.dart';
 import 'package:permit/generate/templates/android/plugin_manifest_temp.dart';
+import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/generate/templates/ios/plugin_pod_temp.dart';
 import 'package:permit/generate/templates/ios/plugin_privacy_manifest.dart';
 import 'package:permit/generate/templates/ios/plugin_swift_class_temp.dart';
-import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/generate/templates/plugin_dart_temp.dart';
 import 'package:permit/generate/templates/plugin_pubspec_temp.dart';
 import 'package:permit/generate/templates/template.dart';
@@ -20,15 +21,17 @@ import 'package:permit/registry/ios_permissions.dart';
 import 'package:permit/registry/models.dart';
 import 'package:permit/registry/permit_registry.dart';
 import 'package:permit/utils/logger.dart';
-import 'package:path/path.dart' as p;
 
 const String _toolRoot = 'tools/permit_plugin';
 const String _androidDir = '$_toolRoot/android/';
 const String _iosDir = '$_toolRoot/ios/';
 
+/// Generates platform-specific code (Kotlin/Swift/Dart) to handle permissions.
 class PluginGenerator {
+  /// Path finder to locate project files.
   final PathFinder pathFinder;
 
+  /// Default constructor.
   PluginGenerator({required this.pathFinder});
 
   List<KotlinHandlerSnippet> _getKotlinHandlers() {
@@ -36,7 +39,9 @@ class PluginGenerator {
     final handlers = <KotlinHandlerSnippet>[];
     if (manifest == null) return handlers;
     final editor = ManifestEditor(manifest.readAsStringSync());
-    final permissionsInManifest = editor.getPermissions().where((e) => e.generatesCode);
+    final permissionsInManifest = editor.getPermissions().where(
+      (e) => e.generatesCode,
+    );
     if (permissionsInManifest.isEmpty) return handlers;
 
     final entryLookUp = EntriesLookup.forDefaults(androidOnly: true);
@@ -93,13 +98,22 @@ class PluginGenerator {
       if (handler != null) {
         handlers.add(handler);
       } else {
-        throw Exception('No Swift handler found for iOS permission group: $group');
+        throw Exception(
+          'No Swift handler found for iOS permission group: $group',
+        );
       }
     }
 
     return handlers;
   }
 
+  /// Generates the plugin code based on the current permissions in manifest and plist.
+  ///
+  /// This method:
+  /// 1. Scans manifest/plist for permissions that require code generation.
+  /// 2. Creates necessary Android/iOS platform code (Kotlin/Swift).
+  /// 3. Updates the `tools/permit_plugin` directory.
+  /// 4. Updates `pubspec.yaml` to include the generated local plugin.
   void generate() {
     final templates = <Template>[];
     final swiftHandlers = _getSwiftHandlers();
@@ -120,10 +134,14 @@ class PluginGenerator {
     if (swiftHandlers.any((e) => e.key == IosPermissions.bluetooth.group)) {
       final androidPermissionKeys = kotlinHandlers.expand((handler) => handler.permissions.map((e) => e.key)).toSet();
       final androidBluetoothPermissions = <AndroidPermissionDef>{};
-      if (androidPermissionKeys.contains(AndroidPermissions.bluetoothScan.key)) {
+      if (androidPermissionKeys.contains(
+        AndroidPermissions.bluetoothScan.key,
+      )) {
         androidBluetoothPermissions.add(AndroidPermissions.bluetoothScan);
       }
-      if (androidPermissionKeys.contains(AndroidPermissions.bluetoothConnect.key)) {
+      if (androidPermissionKeys.contains(
+        AndroidPermissions.bluetoothConnect.key,
+      )) {
         androidBluetoothPermissions.add(AndroidPermissions.bluetoothConnect);
       }
       if (androidBluetoothPermissions.isNotEmpty) {
@@ -148,7 +166,10 @@ class PluginGenerator {
 
     final rootPath = pathFinder.root.path;
     if (templates.isEmpty) {
-      _deleteDir(_toolRoot, message: 'Deleted existing plugin generation directory.');
+      _deleteDir(
+        _toolRoot,
+        message: 'Deleted existing plugin generation directory.',
+      );
       final toolDir = Directory(p.join(rootPath, 'tools'));
       if (toolDir.existsSync() && toolDir.listSync().isEmpty) {
         toolDir.deleteSync();
@@ -173,10 +194,15 @@ class PluginGenerator {
       ),
     );
 
-    final allKeys = {...kotlinHandlers.map((e) => e.key), ...swiftHandlers.map((e) => e.key)};
+    final allKeys = {
+      ...kotlinHandlers.map((e) => e.key),
+      ...swiftHandlers.map((e) => e.key),
+    };
 
     final snippets = allKeys.map((key) {
-      final kotlinHandler = kotlinHandlers.firstWhereOrNull((h) => h.key == key);
+      final kotlinHandler = kotlinHandlers.firstWhereOrNull(
+        (h) => h.key == key,
+      );
       final swiftHandler = swiftHandlers.firstWhereOrNull((h) => h.key == key);
       return PermissionGetterSnippet(
         key,
@@ -212,7 +238,9 @@ class PluginGenerator {
           'pubspec.yaml updated, run ${Logger.mutedPen("flutter pub get")} then hard-reload App.',
         );
       } else {
-        Logger.error('Failed to update pubspec.yaml with permit_plugin dependency.');
+        Logger.error(
+          'Failed to update pubspec.yaml with permit_plugin dependency.',
+        );
       }
     } else {
       Logger.info('Plugin code updated, hard-reload is required.');

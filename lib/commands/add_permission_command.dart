@@ -1,14 +1,26 @@
 import 'dart:io';
 
 import 'package:permit/commands/permit_runner.dart';
+import 'package:permit/editor/models.dart';
+import 'package:permit/editor/xml_editor.dart';
 import 'package:permit/generate/plugin_generator.dart';
 import 'package:permit/registry/models.dart';
 import 'package:permit/registry/permit_registry.dart';
 import 'package:permit/utils/logger.dart';
 import 'package:permit/utils/utils.dart';
-import 'package:permit/editor/models.dart';
-import 'package:permit/editor/xml_editor.dart';
 
+/// Command to add a new permission to the project.
+///
+/// Usage: `permit add &lt;permission_name&gt; [options]`
+/// Args:
+///  &lt;permission_name&gt : The key or keyword of the permission to add.
+///  if specific key is provided, it will be added directly.
+///  if a keyword is provided, user will be prompted to select from matching permissions.
+///  Options:
+///   -d, --desc &lt;description&gt : Usage description for iOS permissions. (default is null).
+///   -c, --code : Generate code for permission handling. (default is false).
+///   -a, --android : Add permission for Android platform only. (default is false).
+///   -i, --ios : Add permission for iOS platform only. (default is false).
 class AddPermissionCommand extends PermitCommand {
   @override
   String get name => 'add';
@@ -16,6 +28,8 @@ class AddPermissionCommand extends PermitCommand {
   @override
   String get description => 'Add a new permission';
 
+  /// Creates an instance of [AddPermissionCommand].
+  /// Default constructor.
   AddPermissionCommand() {
     argParser.addOption(
       'desc',
@@ -23,12 +37,27 @@ class AddPermissionCommand extends PermitCommand {
       help: 'Usage description',
       defaultsTo: '',
     );
-    argParser.addFlag('code', abbr: 'c', help: 'Generate code for permission handling', defaultsTo: false);
-    argParser.addFlag('android', abbr: 'a', help: 'Add permission for Android platform', defaultsTo: false);
-    argParser.addFlag('ios', abbr: 'i', help: 'Add permission for iOS platform', defaultsTo: false);
+    argParser.addFlag(
+      'code',
+      abbr: 'c',
+      help: 'Generate code for permission handling',
+      defaultsTo: false,
+    );
+    argParser.addFlag(
+      'android',
+      abbr: 'a',
+      help: 'Add permission for Android platform',
+      defaultsTo: false,
+    );
+    argParser.addFlag(
+      'ios',
+      abbr: 'i',
+      help: 'Add permission for iOS platform',
+      defaultsTo: false,
+    );
   }
 
-  late final (PListEditor editor, File file)? infoPlist = () {
+  late final (PListEditor editor, File file)? _infoPlist = () {
     final file = pathFinder.getInfoPlist();
     if (file == null) {
       return null;
@@ -36,7 +65,7 @@ class AddPermissionCommand extends PermitCommand {
     return (PListEditor(file.readAsStringSync()), file);
   }();
 
-  late final (ManifestEditor editor, File file)? manifest = () {
+  late final (ManifestEditor editor, File file)? _manifest = () {
     final file = pathFinder.getManifest();
     if (file == null) {
       return null;
@@ -53,7 +82,9 @@ class AddPermissionCommand extends PermitCommand {
     );
 
     if (key.isEmpty) {
-      Logger.info('No permission key or a search keyword provide. try permit add <permission_key|keyword>');
+      Logger.info(
+        'No permission key or a search keyword provide. try permit add <permission_key|keyword>',
+      );
       return;
     }
 
@@ -61,34 +92,38 @@ class AddPermissionCommand extends PermitCommand {
 
     if (entries.isNotEmpty) {
       final resolved = _resolveEntries(List.of(entries), key);
-      onAddEntries(resolved, lookup);
+      _onAddEntries(resolved, lookup);
     } else {
       Logger.info('No permission entries found for key: $key');
       return;
     }
   }
 
-  void onAddEntries(List<XmlEntry> entries, EntriesLookup lookup) {
+  /// Handles the addition of resolved entries to the project files.
+  void _onAddEntries(List<XmlEntry> entries, EntriesLookup lookup) {
     final androidEntries = entries.whereType<ManifestPermissionEntry>();
     final iosEntries = entries.whereType<PListUsageDescription>();
     if (androidEntries.isNotEmpty) {
-      addAndroidPermissions(androidEntries.toList(), lookup);
+      _addAndroidPermissions(androidEntries.toList(), lookup);
     }
     if (iosEntries.isNotEmpty) {
-      addIosPermissions(iosEntries.toList());
+      _addIosPermissions(iosEntries.toList());
     }
 
     /// Generate plugin code
     PluginGenerator(pathFinder: pathFinder).generate();
   }
 
-  void addAndroidPermissions(List<ManifestPermissionEntry> entries, EntriesLookup lookup) {
-    if (manifest == null) {
+  void _addAndroidPermissions(
+    List<ManifestPermissionEntry> entries,
+    EntriesLookup lookup,
+  ) {
+    if (_manifest == null) {
       Logger.error('Could not locate AndroidManifest.xml');
       return;
     }
 
-    final (editor, file) = manifest!;
+    final (editor, file) = _manifest;
 
     for (var entry in entries) {
       editor.addPermission(
@@ -111,17 +146,19 @@ class AddPermissionCommand extends PermitCommand {
 
     if (editor.save(file)) {
       for (var entry in entries) {
-        Logger.android('Added Android permission: ${Logger.mutedPen.write(entry.key)}');
+        Logger.android(
+          'Added Android permission: ${Logger.mutedPen.write(entry.key)}',
+        );
       }
     }
   }
 
-  void addIosPermissions(List<PListUsageDescription> entries) {
-    if (infoPlist == null) {
+  void _addIosPermissions(List<PListUsageDescription> entries) {
+    if (_infoPlist == null) {
       Logger.error('Could not locate Info.plist');
       return;
     }
-    final (editor, file) = infoPlist!;
+    final (editor, file) = _infoPlist;
     for (var entry in entries) {
       editor.addUsageDescription(
         key: entry.key,
@@ -132,18 +169,26 @@ class AddPermissionCommand extends PermitCommand {
     }
     if (editor.save(file)) {
       for (var entry in entries) {
-        Logger.ios('Added iOS usage description: ${Logger.mutedPen.write(entry.key)}');
+        Logger.ios(
+          'Added iOS usage description: ${Logger.mutedPen.write(entry.key)}',
+        );
       }
     }
   }
 
-  List<XmlEntry> _resolveEntries(List<PermissionDef> entries, String searchKey) {
+  List<XmlEntry> _resolveEntries(
+    List<PermissionDef> entries,
+    String searchKey,
+  ) {
     final generateCode = argResults?['code'] == true;
     final desc = argResults?['desc'] as String?;
     var selectedEntries = entries;
 
     final existingUsageDescriptions = Map<String, PListUsageDescription>.fromEntries(
-      infoPlist?.$1.getUsageDescriptions().map((e) => MapEntry(e.key, e)) ?? [],
+      _infoPlist?.$1.getUsageDescriptions().map(
+            (e) => MapEntry(e.key, e),
+          ) ??
+          [],
     );
 
     final canUpdateInfoPlist = entries.whereType<IosPermissionDef>().any(
@@ -177,7 +222,9 @@ class AddPermissionCommand extends PermitCommand {
       resolvedEntries.add(
         ManifestPermissionEntry(
           key: androidEntry.key,
-          comments: [generateCode && androidEntry.runtime ? '@permit:code DO-NOT-REMOVE' : '@permit'],
+          comments: [
+            generateCode && androidEntry.runtime ? '@permit:code DO-NOT-REMOVE' : '@permit',
+          ],
         ),
       );
     }

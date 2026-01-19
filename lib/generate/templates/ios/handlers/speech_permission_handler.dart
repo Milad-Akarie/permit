@@ -1,7 +1,9 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Speech permission on iOS.
 class SpeechPermissionHandler extends SwiftHandlerSnippet {
+  /// Constructor for [SpeechPermissionHandler].
   SpeechPermissionHandler()
     : super(
         entry: IosPermissions.speech,

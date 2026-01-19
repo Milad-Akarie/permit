@@ -1,7 +1,9 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Reminders permission on iOS.
 class RemindersPermissionHandler extends SwiftHandlerSnippet {
+  /// Constructor for [RemindersPermissionHandler].
   RemindersPermissionHandler()
     : super(
         entry: IosPermissions.reminders,

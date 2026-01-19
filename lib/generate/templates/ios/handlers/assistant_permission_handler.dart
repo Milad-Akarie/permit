@@ -1,7 +1,9 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Assistant (Siri) permission on iOS.
 class AssistantPermissionHandler extends SwiftHandlerSnippet {
+  /// Constructor for [AssistantPermissionHandler].
   AssistantPermissionHandler()
     : super(
         entry: IosPermissions.assistant,

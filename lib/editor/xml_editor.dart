@@ -5,16 +5,20 @@ import 'package:collection/collection.dart';
 import 'package:xml/xml_events.dart';
 
 import 'models.dart';
-part 'plist_editor.dart';
-part 'manifest_editor.dart';
 
+part 'manifest_editor.dart';
+part 'plist_editor.dart';
+
+/// A function type for determining whether to remove a comment.
 typedef RemoveComment = bool Function(String comment);
 const _defaultIndent = '  ';
 
+/// A utility class for editing XML-like content (XML or Plist) while preserving formatting and comments.
 class XmlEditor {
   final String _source;
   final List<XmlEvent> _events;
 
+  /// Default constructor.
   XmlEditor(this._source) : _events = _parseIntoEvents(_source);
 
   static List<XmlEvent> _parseIntoEvents(String source) {
@@ -55,6 +59,7 @@ class XmlEditor {
     return eventList;
   }
 
+  /// Inserts a new element based on the provided [insert] definition.
   void insert(XmlInsertElementEdit insert) {
     final (anchor, indent) = getInsertionAnchor(insert);
     if (anchor == -1) {
@@ -64,6 +69,9 @@ class XmlEditor {
     _events.insertAll(anchor, insert.buildEvents(indent));
   }
 
+  /// Removes an element based on the provided [remove] definition.
+  ///
+  /// Returns `true` if any elements were removed.
   bool remove(XmlRemoveElementEdit remove) {
     final indices = _getRemovableIndices(remove);
     if (indices.isEmpty) {
@@ -154,7 +162,11 @@ class XmlEditor {
     return sorted;
   }
 
-  List<int> _removeElement(Range range, XmlRemoveElementEdit remove, {bool checkOnlyNext = false}) {
+  List<int> _removeElement(
+    Range range,
+    XmlRemoveElementEdit remove, {
+    bool checkOnlyNext = false,
+  }) {
     final removedIndices = <int>[];
     for (var i = range.start; i <= range.end; i++) {
       final event = _events[i];
@@ -202,6 +214,8 @@ class XmlEditor {
     return removedIndices;
   }
 
+  /// Determines the insertion anchor point for the given [insert] operation.
+  /// Returns a tuple of (anchor index, indent string).
   (int, String) getInsertionAnchor(XmlInsertElementEdit insert) {
     final range = _getElementScope(insert.path);
     if (range == null) {
@@ -254,6 +268,8 @@ class XmlEditor {
     return _defaultIndent;
   }
 
+  /// Saves the current XML content to the specified [file].
+  /// Returns `true` if successful, `false` otherwise.
   bool save(File file) {
     try {
       file.writeAsStringSync(toString());
@@ -264,21 +280,36 @@ class XmlEditor {
   }
 }
 
+/// A function type for determining the anchor point for element insertion.
 typedef ElementAnchorPredicate = bool Function(String key, String? content);
 
+/// An abstract class representing an XML edit operation.
 abstract class XmlEdit {
+  /// The XML path where the edit should be applied.
   final String path;
 
+  /// Default constructor.
   XmlEdit({required this.path});
 }
 
+/// A class representing information about an XML element to be inserted.
 class XmlElementInfo {
+  /// The name of the XML element.
   final String name;
+
+  /// The content of the XML element (if any).
   final String? content;
+
+  /// Comments associated with the XML element (if any).
   final List<String>? comments;
+
+  /// Whether the element is self-closing.
   final bool isSelfClosing;
+
+  /// Attributes of the XML element.
   final Map<String, String> attributes;
 
+  /// Default constructor.
   XmlElementInfo({
     required this.name,
     this.attributes = const {},
@@ -287,9 +318,12 @@ class XmlElementInfo {
     this.isSelfClosing = false,
   });
 
+  /// Checks if the given event matches this element info.
   bool matches(XmlStartElementEvent event) {
     if (event.name.trim() != name) return false;
-    final eventAttrs = Map.fromEntries(event.attributes.map((e) => MapEntry(e.name, e.value)));
+    final eventAttrs = Map.fromEntries(
+      event.attributes.map((e) => MapEntry(e.name, e.value)),
+    );
     for (final entry in attributes.entries) {
       if (eventAttrs[entry.key] != entry.value) {
         return false;
@@ -298,6 +332,7 @@ class XmlElementInfo {
     return true;
   }
 
+  /// Builds the XML events for this element.
   List<XmlEvent> buildEvents(String indent) {
     return [
       for (final comment in [...?comments]) ...[
@@ -323,28 +358,45 @@ class XmlElementInfo {
   }
 }
 
+/// An edit operation to insert new XML elements.
 class XmlInsertElementEdit extends XmlEdit {
+  /// The list of elements to insert.
   final List<XmlElementInfo> tags;
+
+  /// An optional predicate to determine the anchor point for insertion.
   final ElementAnchorPredicate? insertAfter;
 
+  /// Default constructor.
   XmlInsertElementEdit({
     required super.path,
     required this.tags,
     this.insertAfter,
   });
 
+  /// Builds the XML events for the elements to insert.
   List<XmlEvent> buildEvents(String indent) {
     return [for (final tag in tags) ...tag.buildEvents(indent)];
   }
 }
 
+/// An edit operation to remove XML elements.
 class XmlRemoveElementEdit extends XmlEdit {
+  /// The tag name of the element to remove.
   final String tag;
+
+  /// Optional content to match for removal.
   final String? content;
+
+  /// Optional attributes to match for removal.
   final Map<String, String>? attributes;
+
+  /// An optional function to determine whether to remove associated comments.
   final RemoveComment? commentRemover;
+
+  /// An optional tag name of the next element to remove after the main one.
   final String? removeNextTag;
 
+  /// Default constructor.
   XmlRemoveElementEdit({
     required super.path,
     required this.tag,
@@ -354,13 +406,16 @@ class XmlRemoveElementEdit extends XmlEdit {
     this.commentRemover,
   });
 
+  /// Checks if the given event matches the removal criteria.
   bool matches(XmlStartElementEvent event, XmlTextEvent? contentEvent) {
     if (event.name != tag) return false;
     if (content != null && (contentEvent == null || contentEvent.value.trim() != content)) {
       return false;
     }
     if (attributes != null) {
-      final eventAttrs = Map.fromEntries(event.attributes.map((e) => MapEntry(e.name, e.value)));
+      final eventAttrs = Map.fromEntries(
+        event.attributes.map((e) => MapEntry(e.name, e.value)),
+      );
       for (final entry in attributes!.entries) {
         if (eventAttrs[entry.key] != entry.value) {
           return false;
@@ -371,10 +426,15 @@ class XmlRemoveElementEdit extends XmlEdit {
   }
 }
 
+/// A simple range class representing a start and end index.
 class Range {
+  /// The start index (inclusive).
   final int start;
+
+  /// The end index (inclusive).
   final int end;
 
+  /// Default constructor.
   Range(this.start, this.end);
 
   @override

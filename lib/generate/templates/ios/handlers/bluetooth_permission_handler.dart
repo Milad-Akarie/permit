@@ -1,7 +1,9 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Bluetooth permission on iOS.
 class BluetoothPermissionHandler extends SwiftHandlerSnippet {
+  /// Constructor for [BluetoothPermissionHandler].
   BluetoothPermissionHandler()
     : super(
         entry: IosPermissions.bluetooth,

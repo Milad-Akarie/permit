@@ -33,14 +33,20 @@ class Logger {
     }
   }
 
+  /// Logs an iOS-specific message.
+  /// Use for messages related to iOS platform operations.
   static void ios(String message) {
     print('${iosPen('iOS:')} $message');
   }
 
+  /// Logs an Android-specific message.
+  /// Use for messages related to Android platform operations.
   static void android(String message) {
     print('${androidPen('Android:')} $message');
   }
 
+  /// Logs a muted/gray message.
+  /// Use for less important information.
   static void listed(String message) {
     print('  - $message');
   }
@@ -91,8 +97,13 @@ class Logger {
     _instance.log(LogLevel.success, message);
   }
 
+  /// Pen for Android-specific logs.
   static AnsiPen androidPen = AnsiPen()..rgb(r: 0.255, g: 0.612, b: 0.067);
+
+  /// Pen for iOS-specific logs.
   static AnsiPen iosPen = AnsiPen()..rgb(r: 0.067, g: 0.439, b: 0.678);
+
+  /// Pen for muted/gray logs.
   static AnsiPen mutedPen = AnsiPen()..rgb(r: 0.5, g: 0.5, b: 0.5);
 
   /// Returns the appropriate color pen for the given log level.

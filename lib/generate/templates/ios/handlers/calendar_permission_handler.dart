@@ -1,9 +1,12 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Calendar permission on iOS.
 class CalendarPermissionHandler extends SwiftHandlerSnippet {
+  /// Whether to request write-only access.
   final bool writeOnly;
 
+  /// Constructor for [CalendarPermissionHandler].
   CalendarPermissionHandler({this.writeOnly = false})
     : super(
         entry: writeOnly ? IosPermissions.calendarsWriteOnly : IosPermissions.calendars,

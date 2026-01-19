@@ -4,13 +4,21 @@ import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/generate/templates/template.dart';
 
+/// Template for generating the Swift class for the iOS plugin.
+///
+/// it implements the FlutterPlugin protocol and handles method calls.
+/// Uses the provided [handlers] to generate the necessary code for each permission handler.
 class PluginSwiftClassTemp extends Template {
   @override
   String get path => 'ios/Classes/PermitPlugin.swift';
 
+  /// The list of permission handler snippets to include.
   final List<SwiftHandlerSnippet> handlers;
+
+  /// The method channel name to use.
   final String channelName;
 
+  /// Default constructor for [PluginSwiftClassTemp].
   PluginSwiftClassTemp(this.handlers, {this.channelName = kDefaultChannelName});
 
   @override

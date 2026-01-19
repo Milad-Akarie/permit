@@ -1,7 +1,9 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Media Library permission on iOS.
 class MediaLibraryPermissionHandler extends SwiftHandlerSnippet {
+  /// Constructor for [MediaLibraryPermissionHandler].
   MediaLibraryPermissionHandler()
     : super(
         entry: IosPermissions.mediaLibrary,

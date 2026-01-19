@@ -18,3 +18,76 @@
 
 
 ---
+
+A command-line tool to manage permissions in Flutter projects.
+It simplifies the process of adding, removing, and managing permissions in `AndroidManifest.xml` and `Info.plist`.
+
+## Installation
+
+```bash
+dart pub global activate permit
+```
+
+or add it as a dev dependency:
+
+```bash
+dart pub add --dev permit
+```
+
+## Commands
+
+### `add`
+Adds a permission to your project. It automatically updates `AndroidManifest.xml` and `Info.plist`.
+
+```bash
+permit add <permission_name> [options]
+```
+**Options:**
+- `-d`, `--desc`: Usage description for iOS `Info.plist`.
+- `-c`, `--code`: Generate Dart code helper for checking/requesting permission.
+- `-a`, `--android`: Add permission only for Android.
+- `-i`, `--ios`: Add permission only for iOS.
+
+**Example:**
+```bash
+permit add camera -d "We need camera access to scan QR codes" --code
+```
+
+### `remove`
+Removes a permission from your project.
+
+```bash
+permit remove <permission_name> [options]
+```
+**Options:**
+- `-a`, `--android`: Remove only from Android.
+- `-i`, `--ios`: Remove only from iOS.
+
+### `list`
+Lists all permissions currently used in the project.
+
+```bash
+permit list [options]
+```
+**Options:**
+- `-c`, `--code`: List only permissions that generate code.
+
+### `localize` (iOS)
+Generates `InfoPlist.xcstrings` for localizing iOS permission usage descriptions.
+
+```bash
+permit localize [language_codes...]
+```
+If no language codes are provided, it updates existing localizations.
+
+**Example:**
+```bash
+permit localize en es fr
+```
+
+### `build`
+Synchronizes permissions and regenerates any missing helper code.
+
+```bash
+permit build
+```

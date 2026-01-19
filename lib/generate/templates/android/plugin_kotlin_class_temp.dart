@@ -16,11 +16,20 @@ final _serviceImports = <AssociatedService, Set<String>>{
   },
 };
 
+/// Template for generating the Kotlin class for the Android plugin.
+///
+/// Includes the main plugin class and the permission handlers.
 class PluginKotlinClassTemp extends Template {
+  /// The package name for the plugin.
   final String packageName;
+
+  /// The method channel name for the plugin.
   final String channelName;
+
+  /// The list of permission handlers to include in the plugin.
   final List<KotlinHandlerSnippet> handlers;
 
+  /// Constructor for [PluginKotlinClassTemp].
   PluginKotlinClassTemp({
     this.packageName = kAndroidPackageName,
     this.channelName = kDefaultChannelName,
@@ -30,11 +39,11 @@ class PluginKotlinClassTemp extends Template {
   @override
   String get path => 'android/src/main/kotlin/${packageName.replaceAll('.', '/')}/PermitPlugin.kt';
 
-  late final services = handlers.map((e) => e.service).nonNulls.where((e) => e.isAndroidSupported).toSet();
+  late final _services = handlers.map((e) => e.service).nonNulls.where((e) => e.isAndroidSupported).toSet();
 
   @override
   String generate() {
-    final serviceImports = services.expand((e) => _serviceImports[e] ?? []);
+    final serviceImports = _services.expand((e) => _serviceImports[e] ?? []);
     final handlersImports = handlers.expand((e) => e.imports ?? {}).where((e) => e.isNotEmpty);
     final allImports = {...serviceImports, ...handlersImports};
 
@@ -276,12 +285,12 @@ ${_generateServiceSnippet()}
   }
 
   String _generateServiceSnippet() {
-    if (services.isEmpty) return '';
+    if (_services.isEmpty) return '';
     final buffer = StringBuffer();
     final w = buffer.writeln;
     w('@Suppress("deprecation", "ObsoleteSdkInt")');
     w('object ServiceChecker {');
-    for (final service in services) {
+    for (final service in _services) {
       final functionName = 'check${service}Status';
       if (service == AssociatedService.location) {
         w('''

@@ -1,7 +1,9 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Sensors permission on iOS.
 class SensorsPermissionHandler extends SwiftHandlerSnippet {
+  /// Constructor for [SensorsPermissionHandler].
   SensorsPermissionHandler()
     : super(
         entry: IosPermissions.sensors,

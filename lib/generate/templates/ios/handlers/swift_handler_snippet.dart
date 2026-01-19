@@ -16,24 +16,34 @@ import 'speech_permission_handler.dart';
 import 'user_tracking_permission_handler.dart';
 import 'assistant_permission_handler.dart';
 
+/// Abstract base class for Swift permission handler snippets.
 abstract class SwiftHandlerSnippet {
+  /// The iOS permission definition entry.
   final IosPermissionDef entry;
+
+  /// Imports required for the handler.
   final Set<String> imports;
 
+  /// Constructor for [SwiftHandlerSnippet].
   SwiftHandlerSnippet({
     required this.entry,
     this.imports = const {},
   });
 
+  /// The key of the permission entry.
   String get key => entry.group;
 
+  /// Builds the default class name for the handler.
   String get className => '${key.toPascalCase()}Handler';
 
+  /// Builds the default constructor for the handler.
   String get constructor => '$className()';
 
+  /// Generates the Swift code for the permission handler.
   String generate();
 }
 
+/// Mapping of iOS permission keys to their corresponding Swift handler snippets.
 final swiftPermissionHandlers = <String, SwiftHandlerSnippet Function()>{
   IosPermissions.camera.group: () => CameraPermissionHandler(),
   IosPermissions.microphone.group: () => MicrophonePermissionHandler(),

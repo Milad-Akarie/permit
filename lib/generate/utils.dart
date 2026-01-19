@@ -1,3 +1,4 @@
+/// Utility extensions for String and double types.
 extension StringExtensions on String {
   /// Capitalizes the first letter of the string.
   String capitalize() {
@@ -22,7 +23,9 @@ extension StringExtensions on String {
   }
 }
 
+/// Utility extension for double type.
 extension DoubleExt on double {
+  /// Converts the double to a string, omitting decimal places if it's an integer.
   String toShortString() {
     if (this % 1 == 0) {
       return toInt().toString();

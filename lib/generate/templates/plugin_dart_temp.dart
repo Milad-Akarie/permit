@@ -4,13 +4,18 @@ import 'package:permit/generate/utils.dart';
 import 'package:permit/registry/models.dart';
 import 'package:permit/registry/permit_registry.dart';
 
+/// Template for generating the main plugin Dart file.
 class PluginDartTemp extends Template {
   @override
   String get path => 'lib/permit.dart';
 
+  /// List of permission getter snippets to include.
   final List<PermissionGetterSnippet> getterSnippets;
+
+  /// The method channel name to use.
   final String channelName;
 
+  /// Constructor for [PluginDartTemp].
   PluginDartTemp(this.getterSnippets, {this.channelName = kDefaultChannelName});
 
   @override
@@ -169,14 +174,24 @@ enum ServiceStatus {
 }
 ''';
 
+/// Snippet for generating a permission getter.
 class PermissionGetterSnippet {
+  /// The name of the permission.
   final String name;
+
+  /// The list of permission definitions for this permission.
   final List<PermissionDef> entries;
 
+  /// Constructor for [PermissionGetterSnippet].
   PermissionGetterSnippet(this.name, {required this.entries});
+
+  /// Indicates if any entry has an associated service.
   bool get hasService => entries.any((e) => e.service != null);
+
+  /// The set of platforms this permission applies to.
   late final Set<String> platforms = entries.map((e) => e.platform).toSet();
 
+  /// Generates the Dart code snippet for this permission getter.
   String generate() {
     final docs = <String>[];
     final nameParts = name.split('_');

@@ -1,7 +1,9 @@
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
 import 'package:permit/registry/ios_permissions.dart';
 
+/// Handler for Contacts permission on iOS.
 class ContactsPermissionHandler extends SwiftHandlerSnippet {
+  /// Constructor for [ContactsPermissionHandler].
   ContactsPermissionHandler()
     : super(
         entry: IosPermissions.contacts,

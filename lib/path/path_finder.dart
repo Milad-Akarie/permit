@@ -1,5 +1,6 @@
 import 'dart:io';
 
+/// Abstract base class for locating project files.
 abstract class PathFinder {
   Directory get root;
 
@@ -11,8 +12,10 @@ abstract class PathFinder {
   /// Returns null if it cannot be determined reliably.
   File? getInfoPlist();
 
+  /// Returns the pubspec.yaml file if it exists.
   File? getPubspec();
 
+  /// Recursively searches up from [start] directory to find the project root (containing pubspec.yaml).
   static Directory? findRootDirectory(Directory start) {
     var current = start;
     while (true) {
@@ -29,10 +32,12 @@ abstract class PathFinder {
   }
 }
 
+/// Implementation of [PathFinder] that uses standard Flutter project structure and file search.
 class PathFinderImpl extends PathFinder {
   @override
   final Directory root;
 
+  /// Default constructor.
   PathFinderImpl(this.root);
 
   /// Attempts to locate the AndroidManifest.xml actually used by the app.
@@ -43,7 +48,9 @@ class PathFinderImpl extends PathFinder {
     if (!androidDir.existsSync()) return null;
 
     // 1. Check conventional location first (most common case)
-    final conventional = File('${androidDir.path}/src/main/AndroidManifest.xml');
+    final conventional = File(
+      '${androidDir.path}/src/main/AndroidManifest.xml',
+    );
     if (conventional.existsSync() && _isMainManifest(conventional)) {
       return conventional;
     }
@@ -139,7 +146,9 @@ class PathFinderImpl extends PathFinder {
     try {
       final content = plist.readAsStringSync();
       // Valid plist must have proper XML structure and CFBundleIdentifier
-      return content.contains('<?xml') && content.contains('<plist') && content.contains('CFBundle');
+      return content.contains('<?xml') &&
+          content.contains('<plist') &&
+          content.contains('CFBundle');
     } catch (_) {
       return false;
     }

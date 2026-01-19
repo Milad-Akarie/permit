@@ -3,6 +3,7 @@ import 'package:path/path.dart' as p;
 
 import 'package:permit/utils/logger.dart';
 
+/// Checks if the xcodeproj gem is installed.
 Future<bool> isXcodeprojInstalled() async {
   try {
     final result = await Process.run('gem', ['list', '-i', 'xcodeproj']);
@@ -12,6 +13,7 @@ Future<bool> isXcodeprojInstalled() async {
   }
 }
 
+/// Tries to install the xcodeproj gem.
 Future<void> installXcodeproj() async {
   Logger.info('Trying to install xcodeproj gem...');
 
@@ -26,6 +28,7 @@ Future<void> installXcodeproj() async {
   Logger.success('xcodeproj installed');
 }
 
+/// Gets the known regions and source language from the Xcode project.
 Future<(String source, Set<String> regions)> getKnownRegions(String projectPath) async {
   final rubyScript =
       '''
@@ -80,6 +83,7 @@ end
   return (source, regions);
 }
 
+/// Adds a reference to the xcstrings file in the Xcode project.
 Future<void> addXcodeReference({
   required String projectPath,
   required String xcstringsPath,
