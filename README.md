@@ -18,8 +18,6 @@
 </p> 
 
 
-Below is a refined version of your documentation. Typos are fixed, structure is tightened, and clarity is improved—without changing the core concepts or behavior.
-
 ---
 
 # Permit
