@@ -23,7 +23,8 @@
 # Permit
 
 A command-line tool for managing permissions in Flutter projects.
-`permit` simplifies adding, removing, listing, and localizing permissions in `AndroidManifest.xml` and `Info.plist`.
+`permit` simplifies adding, removing, and listing permissions in `AndroidManifest.xml` and
+`Info.plist`.
 
 ---
 
@@ -38,14 +39,18 @@ dart pub global activate permit
 ## Motivation & Features
 
 * **CLI-first**: no Xcode or Android Studio opening, no manual file editing.
-* **Reduces the risk of store rejections** by generating native permission code only for APIs your app actually uses.
+* **Reduces the risk of store rejections** by generating native permission code only for APIs your
+  app actually uses.
 * **No key memorization**: use keywords instead of platform-specific permission names.
 * **Usage descriptions on the fly**: add iOS descriptions inline, or by follow-up prompts.
-* **Zero missing config**: if runtime code exists, metadata exists in at least one platform config file.
+* **Zero missing config**: if runtime code exists, metadata exists in at least one platform config
+  file.
 * **Simple localization**: one command to generate and keep iOS permission strings in sync.
-* **Platform-scoped permissions**: generate permissions and runtime code for Android or iOS independently.
+* **Platform-scoped permissions**: generate permissions and runtime code for Android or iOS
+  independently.
 * **Instant auditing**: list all added permissions and their runtime code status.
-* **Zero external dependencies**: generates a local plugin you own and control—no third-party versioning issues.
+* **Zero external dependencies**: generates a local plugin you own and control—no third-party
+  versioning issues.
 
 ---
 
@@ -63,7 +68,10 @@ permit <command> [options]
 permit add <permission>
 ```
 
-Adds permission metadata to the relevant platform files. Optionally, it can also generate runtime permission request code.
+Adds permission metadata to the relevant platform files. Optionally, it can also generate runtime
+permission request code.
+
+
 
 ### Supported Inputs
 
@@ -145,6 +153,7 @@ This will:
 
 * Run `flutter pub get` after the plugin is added
 * Hot-restart or rebuild after plugin updates
+* Add command updates existing keys, you can use it to update usage descriptions as well
 
 ---
 
@@ -319,42 +328,45 @@ Rebuilds runtime permission code based on the current platform permission metada
 
 ```xml
 <!--@permit:code-->
-<uses-permission android:name="android.permission.CAMERA"/>
+<uses-permission android:name="android.permission.CAMERA" />
 ```
 
 **Info.plist**
 
 ```xml
 <!--@permit:code-->
-<key>NSCameraUsageDescription</key>
-<string>This app requires camera access to take photos.</string>
+<key>NSCameraUsageDescription</key><string>This app requires camera access to take photos.</string>
 ```
 
 ### Generated Code
+
 The generated code is placed in `tools/permit_plugin/lib/permit.dart`.
 E.g after adding camera permission with code generation:
 
 ```dart
-import 'package:permit_plugin/permit.dart';    
+import 'package:permit_plugin/permit.dart';
 
 // check permission status
-final status = await Permit.camera.status;
+final status = await
+Permit.camera.status;
 
-switch(status){
-    case PermissionStatus.denied:
-    // Permission was denied or not yet requested.
-    case PermissionStatus.granted:
-    //  Permission was granted.
-    case PermissionStatus.restricted:
-    //  Permission is restricted (iOS only).
-    case PermissionStatus.limited:
-    //  Permission is limited (iOS only).
-    case PermissionStatus.permanentlyDenied:
-    //  Permission is permanently denied, user must enable it from settings.
-    case PermissionStatus.provisional:
-    // Permission is provisional (iOS only).
-    case PermissionStatus.notApplicable:
-    // Permission is not applicable for this platform, either not supported or not added in config files.
+switch
+(
+status){
+case PermissionStatus.denied:
+// Permission was denied or not yet requested.
+case PermissionStatus.granted:
+//  Permission was granted.
+case PermissionStatus.restricted:
+//  Permission is restricted (iOS only).
+case PermissionStatus.limited:
+//  Permission is limited (iOS only).
+case PermissionStatus.permanentlyDenied:
+//  Permission is permanently denied, user must enable it from settings.
+case PermissionStatus.provisional:
+// Permission is provisional (iOS only).
+case PermissionStatus.notApplicable:
+// Permission is not applicable for this platform, either not supported or not added in config files.
 }
 
 // request permission
@@ -374,6 +386,6 @@ final wasOpened = await Permit.openSettings();
 
 ## Support Permit
 
-If you find `permit` useful, consider supporting the project.
-More details coming soon.
+If you find `permit` useful, consider supporting the project by liking it, sharing it, or buying a coffee!
+
 

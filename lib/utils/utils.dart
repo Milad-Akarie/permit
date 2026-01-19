@@ -1,4 +1,5 @@
 import 'package:interact/interact.dart';
+import 'package:permit/utils/logger.dart';
 
 /// Theme for radio buttons.
 final radioTheme = Theme.colorfulTheme.copyWith(
@@ -29,7 +30,7 @@ List<T> multiSelect<T>(
   required String Function(T) display,
 }) {
   final selection = MultiSelect.withTheme(
-    prompt: message,
+    prompt: '$message ${Logger.mutedPen.write('(↑↓ navigate, space to select)')}',
     options: List.of(options.map(display)),
     theme: checkboxTheme,
   ).interact();
