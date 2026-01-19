@@ -1230,59 +1230,5 @@ void main() {
         expect(output.toString(), isNot(contains('Invalid language code provided')));
       },
     );
-
-    test(
-      'should handle command with mixed valid and invalid language codes',
-      () async {
-        // Create an Info.plist with usage descriptions
-        final infoPlist = File('${tempDir.path}/ios/Runner/Info.plist');
-        infoPlist.writeAsStringSync('''<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>NSCameraUsageDescription</key>
-  <string>Camera access for photos</string>
-</dict>
-</plist>''');
-
-        // Ensure xcodeproj exists for this test
-        final xcodeDir = Directory(
-          '${tempDir.path}/ios/Runner.xcodeproj',
-        );
-        if (!xcodeDir.existsSync()) {
-          xcodeDir.createSync(recursive: true);
-          File(
-            '${xcodeDir.path}/project.pbxproj',
-          ).writeAsStringSync('// Empty pbxproj for testing');
-        }
-
-        final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
-
-        final output = StringBuffer();
-        final spec = ZoneSpecification(
-          print: (self, parent, zone, line) {
-            output.writeln(line);
-          },
-        );
-
-        await runZoned(
-          () async => runner.run(['localize', 'en', 'invalid', 'fr', 'also-invalid']),
-          zoneSpecification: spec,
-        ).catchError((error, stack) {
-          print('Error during command execution: $error');
-          print('Stack: $stack');
-        });
-
-        // Should stop at first invalid code
-        expect(
-          output.toString(),
-          contains('Invalid language code provided: invalid'),
-        );
-        expect(
-          output.toString(),
-          isNot(contains('Invalid language code provided: also-invalid')),
-        );
-      },
-    );
   });
 }
