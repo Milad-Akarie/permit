@@ -3,6 +3,16 @@ description: The zero-config, manifest-driven permission bridge for Flutter.
 version: 0.1.0
 repository: https://github.com/Milad-Akarie/permit
 
+screenshots:
+  - description: 'Permit Logo'
+    path: art/permit_logo.png
+topics:
+  - permissions
+  - runtime-permissions
+  - permission-handling
+  - plugin
+
+
 environment:
   sdk: ^3.10.4
 
