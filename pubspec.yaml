@@ -1,5 +1,5 @@
 name: permit
-description: A command-line tool to manage and generate permission files for mobile applications.
+description: The zero-config, manifest-driven permission bridge for Flutter.
 version: 0.1.0
 repository: https://github.com/Milad-Akarie/permit
 
