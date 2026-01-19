@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:permit/commands/list_permissions_command.dart';
 import 'package:permit/commands/permit_runner.dart';
 import 'package:test/test.dart';
@@ -45,34 +46,45 @@ void main() {
       expect(command.argParser.options['code']?.defaultsTo, isFalse);
     });
 
-    test('should list Android permissions when manifest has permissions', () async {
-      pathFinder.createMockManifest(
-        content: '''
+    test(
+      'should list Android permissions when manifest has permissions',
+      () async {
+        pathFinder.createMockManifest(
+          content: '''
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <uses-permission android:name="android.permission.CAMERA" />
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 </manifest>
 ''',
-      );
+        );
 
-      final runner = PermitRunner(pathFinder)..addCommand(ListPermissionsCommand());
+        final runner = PermitRunner(pathFinder)
+          ..addCommand(ListPermissionsCommand());
 
-      final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+        final output = StringBuffer();
+        final spec = ZoneSpecification(
+          print: (self, parent, zone, line) => output.writeln(line),
+        );
 
-      await runZoned(() async {
-        await runner.run(['list']);
-      }, zoneSpecification: spec);
+        await runZoned(() async {
+          await runner.run(['list']);
+        }, zoneSpecification: spec);
 
-      expect(output.toString(), contains('Uses Permissions (2):'));
-      expect(output.toString(), contains('android.permission.CAMERA'));
-      expect(output.toString(), contains('android.permission.ACCESS_FINE_LOCATION'));
-      expect(output.toString(), isNot(contains('Usage Descriptions')));
-    });
+        expect(output.toString(), contains('Uses Permissions (2):'));
+        expect(output.toString(), contains('android.permission.CAMERA'));
+        expect(
+          output.toString(),
+          contains('android.permission.ACCESS_FINE_LOCATION'),
+        );
+        expect(output.toString(), isNot(contains('Usage Descriptions')));
+      },
+    );
 
-    test('should list iOS usage descriptions when plist has descriptions', () async {
-      pathFinder.createMockInfoPlist(
-        content: '''
+    test(
+      'should list iOS usage descriptions when plist has descriptions',
+      () async {
+        pathFinder.createMockInfoPlist(
+          content: '''
 <?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
@@ -83,24 +95,31 @@ void main() {
 </dict>
 </plist>
 ''',
-      );
+        );
 
-      final runner = PermitRunner(pathFinder)..addCommand(ListPermissionsCommand());
+        final runner = PermitRunner(pathFinder)
+          ..addCommand(ListPermissionsCommand());
 
-      final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+        final output = StringBuffer();
+        final spec = ZoneSpecification(
+          print: (self, parent, zone, line) => output.writeln(line),
+        );
 
-      await runZoned(() async {
-        await runner.run(['list']);
-      }, zoneSpecification: spec);
+        await runZoned(() async {
+          await runner.run(['list']);
+        }, zoneSpecification: spec);
 
-      expect(output.toString(), contains('Usage Descriptions (2):'));
-      expect(output.toString(), contains('NSCameraUsageDescription'));
-      expect(output.toString(), contains('Camera access'));
-      expect(output.toString(), contains('NSLocationWhenInUseUsageDescription'));
-      expect(output.toString(), contains('Location access'));
-      expect(output.toString(), isNot(contains('Uses Permissions')));
-    });
+        expect(output.toString(), contains('Usage Descriptions (2):'));
+        expect(output.toString(), contains('NSCameraUsageDescription'));
+        expect(output.toString(), contains('Camera access'));
+        expect(
+          output.toString(),
+          contains('NSLocationWhenInUseUsageDescription'),
+        );
+        expect(output.toString(), contains('Location access'));
+        expect(output.toString(), isNot(contains('Uses Permissions')));
+      },
+    );
 
     test('should filter to Android only when --android flag is used', () async {
       pathFinder.createMockManifest(
@@ -122,10 +141,13 @@ void main() {
 ''',
       );
 
-      final runner = PermitRunner(pathFinder)..addCommand(ListPermissionsCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(ListPermissionsCommand());
 
       final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+      final spec = ZoneSpecification(
+        print: (self, parent, zone, line) => output.writeln(line),
+      );
 
       await runZoned(() async {
         await runner.run(['list', '--android']);
@@ -156,10 +178,13 @@ void main() {
 ''',
       );
 
-      final runner = PermitRunner(pathFinder)..addCommand(ListPermissionsCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(ListPermissionsCommand());
 
       final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+      final spec = ZoneSpecification(
+        print: (self, parent, zone, line) => output.writeln(line),
+      );
 
       await runZoned(() async {
         await runner.run(['list', '--ios']);
@@ -170,18 +195,20 @@ void main() {
       expect(output.toString(), isNot(contains('Uses Permissions')));
     });
 
-    test('should show only permissions that generate code when --code flag is used', () async {
-      pathFinder.createMockManifest(
-        content: '''
+    test(
+      'should show only permissions that generate code when --code flag is used',
+      () async {
+        pathFinder.createMockManifest(
+          content: '''
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <!-- @permit:code -->
   <uses-permission android:name="android.permission.CAMERA" />
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 </manifest>
 ''',
-      );
-      pathFinder.createMockInfoPlist(
-        content: '''
+        );
+        pathFinder.createMockInfoPlist(
+          content: '''
 <?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
@@ -193,43 +220,59 @@ void main() {
 </dict>
 </plist>
 ''',
-      );
+        );
 
-      final runner = PermitRunner(pathFinder)..addCommand(ListPermissionsCommand());
+        final runner = PermitRunner(pathFinder)
+          ..addCommand(ListPermissionsCommand());
 
-      final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+        final output = StringBuffer();
+        final spec = ZoneSpecification(
+          print: (self, parent, zone, line) => output.writeln(line),
+        );
 
-      await runZoned(() async {
-        await runner.run(['list', '--code']);
-      }, zoneSpecification: spec);
+        await runZoned(() async {
+          await runner.run(['list', '--code']);
+        }, zoneSpecification: spec);
 
-      expect(output.toString(), contains('Uses Permissions (1):'));
-      expect(output.toString(), contains('android.permission.CAMERA'));
-      expect(output.toString(), contains('[CODE]'));
-      expect(output.toString(), isNot(contains('android.permission.ACCESS_FINE_LOCATION')));
-      expect(output.toString(), contains('Usage Descriptions (1):'));
-      expect(output.toString(), contains('NSCameraUsageDescription'));
-      expect(output.toString(), contains('Camera access'));
-      expect(output.toString(), contains('[CODE]'));
-      expect(output.toString(), isNot(contains('NSLocationWhenInUseUsageDescription')));
-    });
+        expect(output.toString(), contains('Uses Permissions (1):'));
+        expect(output.toString(), contains('android.permission.CAMERA'));
+        expect(output.toString(), contains('[CODE]'));
+        expect(
+          output.toString(),
+          isNot(contains('android.permission.ACCESS_FINE_LOCATION')),
+        );
+        expect(output.toString(), contains('Usage Descriptions (1):'));
+        expect(output.toString(), contains('NSCameraUsageDescription'));
+        expect(output.toString(), contains('Camera access'));
+        expect(output.toString(), contains('[CODE]'));
+        expect(
+          output.toString(),
+          isNot(contains('NSLocationWhenInUseUsageDescription')),
+        );
+      },
+    );
 
     test('should print error when no files are found', () async {
       // Delete the created files to simulate no files
       File('${pathFinder.root.path}/AndroidManifest.xml').deleteSync();
-      File('${pathFinder.root.path}/Info.plist').deleteSync();
+      File('${pathFinder.root.path}/ios/Runner/Info.plist').deleteSync();
 
-      final runner = PermitRunner(pathFinder)..addCommand(ListPermissionsCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(ListPermissionsCommand());
 
       final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+      final spec = ZoneSpecification(
+        print: (self, parent, zone, line) => output.writeln(line),
+      );
 
       await runZoned(() async {
         await runner.run(['list']);
       }, zoneSpecification: spec);
 
-      expect(output.toString(), contains('Could not locate AndroidManifest.xml or Info.plist'));
+      expect(
+        output.toString(),
+        contains('Could not locate AndroidManifest.xml or Info.plist'),
+      );
     });
   });
 }

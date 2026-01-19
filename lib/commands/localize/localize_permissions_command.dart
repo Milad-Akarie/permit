@@ -57,11 +57,11 @@ class LocalizePermissionsCommand extends PermitCommand {
       }
     }
 
-    final xcStringsJson = _loadXcStringsFile(xcstringsFile, source);
+    final xcStringsJson = loadXcStringsFile(xcstringsFile, source);
 
     if (langCodesToUse.isEmpty) {
       langCodesToUse.addAll(knownRegions);
-      langCodesToUse.addAll(_getExistingLangCodes(xcStringsJson));
+      langCodesToUse.addAll(getExistingLangCodes(xcStringsJson));
     }
 
     // always ensure source language is included
@@ -115,7 +115,7 @@ class LocalizePermissionsCommand extends PermitCommand {
     }
   }
 
-  Map<String, dynamic> _loadXcStringsFile(File xcstringsFile, String source) {
+  Map<String, dynamic> loadXcStringsFile(File xcstringsFile, String source) {
     return xcstringsFile.existsSync()
         ? jsonDecode(xcstringsFile.readAsStringSync())
         : {
@@ -125,7 +125,7 @@ class LocalizePermissionsCommand extends PermitCommand {
           };
   }
 
-  Set<String> _getExistingLangCodes(Map<String, dynamic> json) {
+  Set<String> getExistingLangCodes(Map<String, dynamic> json) {
     final existingLangCodes = <String>{};
     final strings = json['strings'];
     if (strings is Map<String, dynamic>) {

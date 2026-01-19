@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:permit/commands/remove_permission_command.dart';
+
 import 'package:permit/commands/permit_runner.dart';
+import 'package:permit/commands/remove_permission_command.dart';
 import 'package:test/test.dart';
 
 import 'helpers.dart';
@@ -42,41 +43,52 @@ void main() {
       expect(command.argParser.options['ios']?.defaultsTo, isFalse);
     });
 
-    test('should remove Android permission when --android flag is used', () async {
-      // Add permission first
-      pathFinder.createMockManifest(
-        content: '''
+    test(
+      'should remove Android permission when --android flag is used',
+      () async {
+        // Add permission first
+        pathFinder.createMockManifest(
+          content: '''
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <uses-permission android:name="android.permission.CAMERA" />
   <!-- @permit -->
   <uses-permission android:name="android.permission.RECORD_AUDIO" />
 </manifest>
 ''',
-      );
+        );
 
-      final runner = PermitRunner(pathFinder)..addCommand(RemovePermissionCommand());
+        final runner = PermitRunner(pathFinder)
+          ..addCommand(RemovePermissionCommand());
 
-      final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+        final output = StringBuffer();
+        final spec = ZoneSpecification(
+          print: (self, parent, zone, line) => output.writeln(line),
+        );
 
-      await runZoned(() async {
-        await runner.run(['remove', '--android', 'microphone']);
-      }, zoneSpecification: spec);
+        await runZoned(() async {
+          await runner.run(['remove', '--android', 'microphone']);
+        }, zoneSpecification: spec);
 
-      expect(output.toString(), contains('Removed permissions successfully'));
-      expect(output.toString(), contains('android.permission.RECORD_AUDIO'));
+        expect(output.toString(), contains('Removed permissions successfully'));
+        expect(output.toString(), contains('android.permission.RECORD_AUDIO'));
 
-      // Check the manifest file was updated
-      final manifestFile = pathFinder.getManifest()!;
-      final content = manifestFile.readAsStringSync();
-      expect(content, isNot(contains('android.permission.RECORD_AUDIO')));
-      expect(content, contains('android.permission.CAMERA')); // Other permission remains
-    });
+        // Check the manifest file was updated
+        final manifestFile = pathFinder.getManifest()!;
+        final content = manifestFile.readAsStringSync();
+        expect(content, isNot(contains('android.permission.RECORD_AUDIO')));
+        expect(
+          content,
+          contains('android.permission.CAMERA'),
+        ); // Other permission remains
+      },
+    );
 
-    test('should remove iOS usage description when --ios flag is used', () async {
-      // Add permission first
-      pathFinder.createMockInfoPlist(
-        content: '''
+    test(
+      'should remove iOS usage description when --ios flag is used',
+      () async {
+        // Add permission first
+        pathFinder.createMockInfoPlist(
+          content: '''
 <?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
@@ -88,42 +100,55 @@ void main() {
 </dict>
 </plist>
 ''',
-      );
+        );
 
-      final runner = PermitRunner(pathFinder)..addCommand(RemovePermissionCommand());
+        final runner = PermitRunner(pathFinder)
+          ..addCommand(RemovePermissionCommand());
 
-      final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+        final output = StringBuffer();
+        final spec = ZoneSpecification(
+          print: (self, parent, zone, line) => output.writeln(line),
+        );
 
-      await runZoned(() async {
-        await runner.run(['remove', '--ios', 'media']);
-      }, zoneSpecification: spec);
+        await runZoned(() async {
+          await runner.run(['remove', '--ios', 'media']);
+        }, zoneSpecification: spec);
 
-      expect(output.toString(), contains('Removed iOS permissions successfully'));
-      expect(output.toString(), contains('NSAppleMusicUsageDescription'));
+        expect(
+          output.toString(),
+          contains('Removed iOS permissions successfully'),
+        );
+        expect(output.toString(), contains('NSAppleMusicUsageDescription'));
 
-      // Check the plist file was updated
-      final plistFile = pathFinder.getInfoPlist()!;
-      final content = plistFile.readAsStringSync();
-      expect(content, isNot(contains('NSAppleMusicUsageDescription')));
-      expect(content, contains('NSCameraUsageDescription')); // Other remains
-    });
+        // Check the plist file was updated
+        final plistFile = pathFinder.getInfoPlist()!;
+        final content = plistFile.readAsStringSync();
+        expect(content, isNot(contains('NSAppleMusicUsageDescription')));
+        expect(content, contains('NSCameraUsageDescription')); // Other remains
+      },
+    );
 
     test('should print error when no files found', () async {
       // Delete files
       File('${pathFinder.root.path}/AndroidManifest.xml').deleteSync();
-      File('${pathFinder.root.path}/Info.plist').deleteSync();
+      File('${pathFinder.root.path}/ios/Runner/Info.plist').deleteSync();
 
-      final runner = PermitRunner(pathFinder)..addCommand(RemovePermissionCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(RemovePermissionCommand());
 
       final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+      final spec = ZoneSpecification(
+        print: (self, parent, zone, line) => output.writeln(line),
+      );
 
       await runZoned(() async {
         await runner.run(['remove', 'microphone']);
       }, zoneSpecification: spec);
 
-      expect(output.toString(), contains('Could not locate AndroidManifest.xml or Info.plist'));
+      expect(
+        output.toString(),
+        contains('Could not locate AndroidManifest.xml or Info.plist'),
+      );
     });
   });
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:permit/commands/add_permission_command.dart';
 import 'package:permit/commands/permit_runner.dart';
 import 'package:test/test.dart';
@@ -49,7 +50,8 @@ void main() {
     });
 
     test('should add Android permission when --android flag is used', () async {
-      final runner = PermitRunner(pathFinder)..addCommand(AddPermissionCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(AddPermissionCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(
@@ -59,7 +61,11 @@ void main() {
       );
 
       await runZoned(() async {
-        await runner.run(['add', '--android', 'android.permission.RECORD_AUDIO']);
+        await runner.run([
+          'add',
+          '--android',
+          'android.permission.RECORD_AUDIO',
+        ]);
       }, zoneSpecification: spec);
 
       expect(output.toString(), contains('Added Android permission'));
@@ -72,73 +78,115 @@ void main() {
       expect(content, contains('@permit'));
     });
 
-    test('should add iOS usage description when --ios flag is used with desc', () async {
-      final runner = PermitRunner(pathFinder)..addCommand(AddPermissionCommand());
+    test(
+      'should add iOS usage description when --ios flag is used with desc',
+      () async {
+        final runner = PermitRunner(pathFinder)
+          ..addCommand(AddPermissionCommand());
 
-      final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+        final output = StringBuffer();
+        final spec = ZoneSpecification(
+          print: (self, parent, zone, line) => output.writeln(line),
+        );
 
-      await runZoned(() async {
-        await runner.run(['add', '--ios', '--desc', 'Microphone access for recording', 'NSMicrophoneUsageDescription']);
-      }, zoneSpecification: spec);
+        await runZoned(() async {
+          await runner.run([
+            'add',
+            '--ios',
+            '--desc',
+            'Microphone access for recording',
+            'NSMicrophoneUsageDescription',
+          ]);
+        }, zoneSpecification: spec);
 
-      expect(output.toString(), contains('Added iOS usage description'));
-      expect(output.toString(), contains('NSMicrophoneUsageDescription'));
+        expect(output.toString(), contains('Added iOS usage description'));
+        expect(output.toString(), contains('NSMicrophoneUsageDescription'));
 
-      // Check the plist file was updated
-      final plistFile = pathFinder.getInfoPlist()!;
-      final content = plistFile.readAsStringSync();
-      expect(content, contains('NSMicrophoneUsageDescription'));
-      expect(content, contains('Microphone access for recording'));
-      expect(content, contains('@permit'));
-    });
+        // Check the plist file was updated
+        final plistFile = pathFinder.getInfoPlist()!;
+        final content = plistFile.readAsStringSync();
+        expect(content, contains('NSMicrophoneUsageDescription'));
+        expect(content, contains('Microphone access for recording'));
+        expect(content, contains('@permit'));
+      },
+    );
 
-    test('should add permission with code generation when --code flag is used', () async {
-      final runner = PermitRunner(pathFinder)..addCommand(AddPermissionCommand());
+    test(
+      'should add permission with code generation when --code flag is used',
+      () async {
+        final runner = PermitRunner(pathFinder)
+          ..addCommand(AddPermissionCommand());
 
-      final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+        final output = StringBuffer();
+        final spec = ZoneSpecification(
+          print: (self, parent, zone, line) => output.writeln(line),
+        );
 
-      await runZoned(() async {
-        await runner.run(['add', '--android', '--code', 'android.permission.RECORD_AUDIO']);
-      }, zoneSpecification: spec);
+        await runZoned(() async {
+          await runner.run([
+            'add',
+            '--android',
+            '--code',
+            'android.permission.RECORD_AUDIO',
+          ]);
+        }, zoneSpecification: spec);
 
-      expect(output.toString(), contains('Added Android permission'));
-      expect(output.toString(), contains('android.permission.RECORD_AUDIO'));
+        expect(output.toString(), contains('Added Android permission'));
+        expect(output.toString(), contains('android.permission.RECORD_AUDIO'));
 
-      // Check the manifest file has @permit:code
-      final manifestFile = pathFinder.getManifest()!;
-      final content = manifestFile.readAsStringSync();
-      expect(content, contains('@permit:code'));
-    });
+        // Check the manifest file has @permit:code
+        final manifestFile = pathFinder.getManifest()!;
+        final content = manifestFile.readAsStringSync();
+        expect(content, contains('@permit:code'));
+      },
+    );
 
     test('should print error when no manifest found for Android', () async {
       // Delete manifest
       File('${pathFinder.root.path}/AndroidManifest.xml').deleteSync();
 
-      final runner = PermitRunner(pathFinder)..addCommand(AddPermissionCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(AddPermissionCommand());
 
       final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+      final spec = ZoneSpecification(
+        print: (self, parent, zone, line) => output.writeln(line),
+      );
 
       await runZoned(() async {
-        await runner.run(['add', '--android', 'android.permission.RECORD_AUDIO']);
+        await runner.run([
+          'add',
+          '--android',
+          'android.permission.RECORD_AUDIO',
+        ]);
       }, zoneSpecification: spec);
 
-      expect(output.toString(), contains('Could not locate AndroidManifest.xml'));
+      expect(
+        output.toString(),
+        contains('Could not locate AndroidManifest.xml'),
+      );
     });
 
     test('should print error when no plist found for iOS', () async {
       // Delete plist
-      File('${pathFinder.root.path}/Info.plist').deleteSync();
+      File('${pathFinder.root.path}/ios/Runner/Info.plist').deleteSync();
 
-      final runner = PermitRunner(pathFinder)..addCommand(AddPermissionCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(AddPermissionCommand());
 
       final output = StringBuffer();
-      final spec = ZoneSpecification(print: (self, parent, zone, line) => output.writeln(line));
+      final spec = ZoneSpecification(
+        print: (self, parent, zone, line) => output.writeln(line),
+      );
 
       await runZoned(() async {
-        await runner.run(['add', '--ios', '--desc', 'test', 'NSMicrophoneUsageDescription']);
+        await runner.run([
+          'add',
+          '--ios',
+          '--desc',
+          'test',
+          'NSMicrophoneUsageDescription',
+        ]);
       }, zoneSpecification: spec);
 
       expect(output.toString(), contains('Could not locate Info.plist'));
