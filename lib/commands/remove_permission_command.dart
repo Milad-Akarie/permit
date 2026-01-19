@@ -56,8 +56,12 @@ class RemovePermissionCommand extends PermitCommand {
       return;
     }
 
-    final manifestEditor = manifestFile == null ? null : ManifestEditor(manifestFile.readAsStringSync());
-    final plistEditor = plistFile == null ? null : PListEditor(plistFile.readAsStringSync());
+    final manifestEditor = manifestFile == null
+        ? null
+        : ManifestEditor(manifestFile.readAsStringSync());
+    final plistEditor = plistFile == null
+        ? null
+        : PListEditor(plistFile.readAsStringSync());
 
     final existingEntries = [
       ...?manifestEditor?.getPermissions(),
@@ -88,7 +92,9 @@ class RemovePermissionCommand extends PermitCommand {
 
     // If no key provided, show multi-select of all existing permissions
     if (key.isEmpty) {
-      final maxLineLength = existingEntries.map((e) => e.key.length).reduce(max);
+      final maxLineLength = existingEntries
+          .map((e) => e.key.length)
+          .reduce(max);
 
       final selectedEntries = multiSelect(
         'Select permissions to remove',
@@ -97,7 +103,8 @@ class RemovePermissionCommand extends PermitCommand {
           final platform = entry is ManifestPermissionEntry ? 'Android' : 'iOS';
           final option = '$platform: ${entry.key}';
           if (entry.isLegacy) {
-            return option.padRight(maxLineLength + 12) + Logger.mutedPen.write('(legacy)');
+            return option.padRight(maxLineLength + 12) +
+                Logger.mutedPen.write('(legacy)');
           } else {
             return option;
           }

@@ -29,7 +29,9 @@ Future<void> installXcodeproj() async {
 }
 
 /// Gets the known regions and source language from the Xcode project.
-Future<(String source, Set<String> regions)> getKnownRegions(String projectPath) async {
+Future<(String source, Set<String> regions)> getKnownRegions(
+  String projectPath,
+) async {
   final rubyScript =
       '''
 require "xcodeproj"
@@ -77,7 +79,9 @@ end
   final source = lines.first;
   final regions = lines
       .skip(1) // Skip the first line (source language)
-      .where((region) => region != 'Base') // Filter out "Base" - not a real language
+      .where(
+        (region) => region != 'Base',
+      ) // Filter out "Base" - not a real language
       .toSet();
 
   return (source, regions);

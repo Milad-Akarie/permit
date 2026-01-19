@@ -3,18 +3,21 @@ import 'package:permit/registry/models.dart';
 
 void main() {
   group('PermissionDef models', () {
-    test('AndroidPermissionDef.matches handles full and short keys (case-insensitive)', () {
-      const def = AndroidPermissionDef(
-        'android.permission.CAMERA',
-        runtime: true,
-        group: 'camera',
-      );
-      expect(def.matches('android.permission.CAMERA'), isTrue);
-      expect(def.matches('ANDROID.PERMISSION.CAMERA'), isTrue);
-      expect(def.matches('CAMERA'), isTrue);
-      expect(def.matches('camera'), isTrue);
-      expect(def.matches('android.permission.SOMETHING_ELSE'), isFalse);
-    });
+    test(
+      'AndroidPermissionDef.matches handles full and short keys (case-insensitive)',
+      () {
+        const def = AndroidPermissionDef(
+          'android.permission.CAMERA',
+          runtime: true,
+          group: 'camera',
+        );
+        expect(def.matches('android.permission.CAMERA'), isTrue);
+        expect(def.matches('ANDROID.PERMISSION.CAMERA'), isTrue);
+        expect(def.matches('CAMERA'), isTrue);
+        expect(def.matches('camera'), isTrue);
+        expect(def.matches('android.permission.SOMETHING_ELSE'), isFalse);
+      },
+    );
 
     test('AndroidPermissionDef equality and hashCode', () {
       const a = AndroidPermissionDef(
@@ -60,7 +63,10 @@ void main() {
   });
   group('AndroidPermissionDef', () {
     test('matches full key and short key case-insensitive', () {
-      final def = AndroidPermissionDef('android.permission.CAMERA', group: 'camera');
+      final def = AndroidPermissionDef(
+        'android.permission.CAMERA',
+        group: 'camera',
+      );
       expect(def.matches('android.permission.CAMERA'), isTrue);
       expect(def.matches('camera'), isTrue);
       expect(def.matches('Camera'), isTrue);
@@ -69,10 +75,17 @@ void main() {
     });
 
     test('promptNote returns API sinceSDK when set', () {
-      final def = AndroidPermissionDef('android.permission.SOMETHING', group: 'misc', sinceSDK: 21);
+      final def = AndroidPermissionDef(
+        'android.permission.SOMETHING',
+        group: 'misc',
+        sinceSDK: 21,
+      );
       expect(def.promptNote, equals('SDK 21+'));
 
-      final def2 = AndroidPermissionDef('android.permission.SOMETHING', group: 'misc');
+      final def2 = AndroidPermissionDef(
+        'android.permission.SOMETHING',
+        group: 'misc',
+      );
       expect(def2.promptNote, isNull);
     });
   });
@@ -102,8 +115,18 @@ void main() {
     });
 
     test('equality and hashCode', () {
-      final a = IosPermissionDef('NSX', group: 'g', scope: AccessScope.writeOnly, sinceApi: 11.0);
-      final b = IosPermissionDef('NSX', group: 'g', scope: AccessScope.writeOnly, sinceApi: 11.0);
+      final a = IosPermissionDef(
+        'NSX',
+        group: 'g',
+        scope: AccessScope.writeOnly,
+        sinceApi: 11.0,
+      );
+      final b = IosPermissionDef(
+        'NSX',
+        group: 'g',
+        scope: AccessScope.writeOnly,
+        sinceApi: 11.0,
+      );
       expect(a, equals(b));
       expect(a.hashCode, equals(b.hashCode));
     });

@@ -20,12 +20,20 @@ void main() {
       expect(privacy.path, contains('PrivacyInfo'));
     });
 
-    test('PluginSwiftClassTemp generates base plugin class even with no handlers', () {
-      final swift = PluginSwiftClassTemp([]);
-      final out = swift.generate();
-      expect(out, contains('public class PermitPlugin'));
-      expect(out, contains('func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult)'));
-      expect(swift.path, contains('PermitPlugin.swift'));
-    });
+    test(
+      'PluginSwiftClassTemp generates base plugin class even with no handlers',
+      () {
+        final swift = PluginSwiftClassTemp([]);
+        final out = swift.generate();
+        expect(out, contains('public class PermitPlugin'));
+        expect(
+          out,
+          contains(
+            'func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult)',
+          ),
+        );
+        expect(swift.path, contains('PermitPlugin.swift'));
+      },
+    );
   });
 }

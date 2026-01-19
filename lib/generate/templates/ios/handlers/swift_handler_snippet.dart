@@ -50,12 +50,15 @@ final swiftPermissionHandlers = <String, SwiftHandlerSnippet Function()>{
   IosPermissions.contacts.group: () => ContactsPermissionHandler(),
   IosPermissions.mediaLibrary.group: () => MediaLibraryPermissionHandler(),
   IosPermissions.photoLibrary.group: () => PhotosPermissionHandler(),
-  IosPermissions.photoLibraryAdd.group: () => PhotosPermissionHandler(addOnly: true),
+  IosPermissions.photoLibraryAdd.group: () =>
+      PhotosPermissionHandler(addOnly: true),
   IosPermissions.bluetooth.group: () => BluetoothPermissionHandler(),
   IosPermissions.locationWhenInUse.group: () => LocationPermissionHandler(),
-  IosPermissions.locationAlways.group: () => LocationPermissionHandler(forAlways: true),
+  IosPermissions.locationAlways.group: () =>
+      LocationPermissionHandler(forAlways: true),
   IosPermissions.calendars.group: () => CalendarPermissionHandler(),
-  IosPermissions.calendarsWriteOnly.group: () => CalendarPermissionHandler(writeOnly: true),
+  IosPermissions.calendarsWriteOnly.group: () =>
+      CalendarPermissionHandler(writeOnly: true),
   IosPermissions.reminders.group: () => RemindersPermissionHandler(),
   IosPermissions.sensors.group: () => SensorsPermissionHandler(),
   IosPermissions.speech.group: () => SpeechPermissionHandler(),

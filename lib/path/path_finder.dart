@@ -147,7 +147,9 @@ class PathFinderImpl extends PathFinder {
     try {
       final content = plist.readAsStringSync();
       // Valid plist must have proper XML structure and CFBundleIdentifier
-      return content.contains('<?xml') && content.contains('<plist') && content.contains('CFBundle');
+      return content.contains('<?xml') &&
+          content.contains('<plist') &&
+          content.contains('CFBundle');
     } catch (_) {
       return false;
     }

@@ -7,7 +7,8 @@ class PermitRunner extends CommandRunner {
   final PathFinder pathFinder;
 
   /// Default constructor.
-  PermitRunner(this.pathFinder) : super('permit', 'A CLI tool to manage native app permissions');
+  PermitRunner(this.pathFinder)
+    : super('permit', 'A CLI tool to manage native app permissions');
 }
 
 /// Abstract base class for all Permit commands.

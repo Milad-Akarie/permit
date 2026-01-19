@@ -4,7 +4,6 @@ import 'kotlin_handler_snippet.dart';
 
 /// Handler for schedule exact alarm permission.
 class ScheduleExactAlarmHandler extends KotlinHandlerSnippet {
-
   /// Constructor for [ScheduleExactAlarmHandler].
   ScheduleExactAlarmHandler()
     : super(

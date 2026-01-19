@@ -47,8 +47,16 @@ void main() {
         Logger.listed('item');
       }, zoneSpecification: spec);
 
-      expect(printed.any((s) => s.contains('Android:') && s.contains('hello android')), isTrue);
-      expect(printed.any((s) => s.contains('iOS:') && s.contains('hello ios')), isTrue);
+      expect(
+        printed.any(
+          (s) => s.contains('Android:') && s.contains('hello android'),
+        ),
+        isTrue,
+      );
+      expect(
+        printed.any((s) => s.contains('iOS:') && s.contains('hello ios')),
+        isTrue,
+      );
       expect(printed.any((s) => s.contains('- item')), isTrue);
     });
   });

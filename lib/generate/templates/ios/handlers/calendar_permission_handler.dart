@@ -9,7 +9,9 @@ class CalendarPermissionHandler extends SwiftHandlerSnippet {
   /// Constructor for [CalendarPermissionHandler].
   CalendarPermissionHandler({this.writeOnly = false})
     : super(
-        entry: writeOnly ? IosPermissions.calendarsWriteOnly : IosPermissions.calendars,
+        entry: writeOnly
+            ? IosPermissions.calendarsWriteOnly
+            : IosPermissions.calendars,
         imports: {'EventKit'},
       );
 

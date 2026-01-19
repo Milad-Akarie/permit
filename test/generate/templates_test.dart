@@ -59,11 +59,23 @@ void main() {
       final handlers = [
         KotlinHandlerSnippet(
           key: 'camera',
-          permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
+          permissions: [
+            AndroidPermissionDef(
+              'android.permission.CAMERA',
+              group: 'camera',
+              runtime: true,
+            ),
+          ],
         ),
         KotlinHandlerSnippet(
           key: 'microphone',
-          permissions: [AndroidPermissionDef('android.permission.RECORD_AUDIO', group: 'microphone', runtime: true)],
+          permissions: [
+            AndroidPermissionDef(
+              'android.permission.RECORD_AUDIO',
+              group: 'microphone',
+              runtime: true,
+            ),
+          ],
         ),
       ];
 
@@ -73,12 +85,20 @@ void main() {
 
         expect(content, contains('package $kAndroidPackageName'));
         expect(content, contains('class PermitPlugin'));
-        expect(content, contains('MethodChannel(binding.binaryMessenger, "$kDefaultChannelName")'));
+        expect(
+          content,
+          contains(
+            'MethodChannel(binding.binaryMessenger, "$kDefaultChannelName")',
+          ),
+        );
         expect(content, contains('PermissionRegistry.getHandler(permission)'));
       });
 
       test('should generate Kotlin class with custom package', () {
-        final template = PluginKotlinClassTemp(packageName: 'com.example.custom', handlers: handlers);
+        final template = PluginKotlinClassTemp(
+          packageName: 'com.example.custom',
+          handlers: handlers,
+        );
         final content = template.generate();
 
         expect(content, contains('package com.example.custom'));
@@ -88,7 +108,9 @@ void main() {
         final template = PluginKotlinClassTemp(handlers: handlers);
         expect(
           template.path,
-          equals('android/src/main/kotlin/${kAndroidPackageName.replaceAll('.', '/')}/PermitPlugin.kt'),
+          equals(
+            'android/src/main/kotlin/${kAndroidPackageName.replaceAll('.', '/')}/PermitPlugin.kt',
+          ),
         );
       });
     });
@@ -102,7 +124,9 @@ void main() {
       });
 
       test('should generate build.gradle.kts with custom namespace', () {
-        final template = PluginGradleTemp(androidPackageName: 'com.custom.namespace');
+        final template = PluginGradleTemp(
+          androidPackageName: 'com.custom.namespace',
+        );
         final content = template.generate();
 
         expect(content, contains('namespace = "com.custom.namespace"'));
@@ -139,7 +163,13 @@ void main() {
       test('should have correct className', () {
         final handler = KotlinHandlerSnippet(
           key: 'camera',
-          permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
+          permissions: [
+            AndroidPermissionDef(
+              'android.permission.CAMERA',
+              group: 'camera',
+              runtime: true,
+            ),
+          ],
         );
         expect(handler.className, equals('CameraHandler'));
       });
@@ -147,28 +177,55 @@ void main() {
       test('should generate Kotlin handler class', () {
         final handler = KotlinHandlerSnippet(
           key: 'camera',
-          permissions: [AndroidPermissionDef('android.permission.CAMERA', group: 'camera', runtime: true)],
+          permissions: [
+            AndroidPermissionDef(
+              'android.permission.CAMERA',
+              group: 'camera',
+              runtime: true,
+            ),
+          ],
         );
         final content = handler.generate(1001);
 
         expect(content, contains('class CameraHandler : PermissionHandler('));
         expect(content, contains('1001, arrayOf('));
-        expect(content, contains('Permission(android.Manifest.permission.CAMERA)'));
+        expect(
+          content,
+          contains('Permission(android.Manifest.permission.CAMERA)'),
+        );
       });
 
       test('should generate handler with multiple permissions', () {
         final handler = KotlinHandlerSnippet(
           key: 'location',
           permissions: [
-            AndroidPermissionDef('android.permission.ACCESS_FINE_LOCATION', group: 'location', runtime: true),
-            AndroidPermissionDef('android.permission.ACCESS_COARSE_LOCATION', group: 'location', runtime: true),
+            AndroidPermissionDef(
+              'android.permission.ACCESS_FINE_LOCATION',
+              group: 'location',
+              runtime: true,
+            ),
+            AndroidPermissionDef(
+              'android.permission.ACCESS_COARSE_LOCATION',
+              group: 'location',
+              runtime: true,
+            ),
           ],
         );
         final content = handler.generate(1002);
 
         expect(content, contains('class LocationHandler : PermissionHandler('));
-        expect(content, contains('Permission(android.Manifest.permission.ACCESS_FINE_LOCATION),'));
-        expect(content, contains('Permission(android.Manifest.permission.ACCESS_COARSE_LOCATION),'));
+        expect(
+          content,
+          contains(
+            'Permission(android.Manifest.permission.ACCESS_FINE_LOCATION),',
+          ),
+        );
+        expect(
+          content,
+          contains(
+            'Permission(android.Manifest.permission.ACCESS_COARSE_LOCATION),',
+          ),
+        );
       });
 
       test('should generate handler with sinceApi', () {
@@ -178,7 +235,12 @@ void main() {
         );
         final content = handler.generate(1003);
 
-        expect(content, contains('Permission(android.Manifest.permission.BLUETOOTH_SCAN, sinceSDK = 31)'));
+        expect(
+          content,
+          contains(
+            'Permission(android.Manifest.permission.BLUETOOTH_SCAN, sinceSDK = 31)',
+          ),
+        );
       });
     });
   });

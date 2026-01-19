@@ -54,7 +54,8 @@ void main() {
         infoPlist.deleteSync();
       }
 
-      final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(LocalizePermissionsCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(
@@ -87,7 +88,8 @@ void main() {
 </dict>
 </plist>''');
 
-      final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(LocalizePermissionsCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(
@@ -130,7 +132,8 @@ void main() {
         xcodeProjDir.deleteSync(recursive: true);
       }
 
-      final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(LocalizePermissionsCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(
@@ -204,8 +207,10 @@ void main() {
 
       final strings = xcstringsJson['strings'] as Map<String, dynamic>;
       expect(strings.containsKey('NSCameraUsageDescription'), isTrue);
-      final cameraEntry = strings['NSCameraUsageDescription'] as Map<String, dynamic>;
-      final localizations = cameraEntry['localizations'] as Map<String, dynamic>;
+      final cameraEntry =
+          strings['NSCameraUsageDescription'] as Map<String, dynamic>;
+      final localizations =
+          cameraEntry['localizations'] as Map<String, dynamic>;
       expect(localizations.containsKey('en'), isTrue);
       expect(localizations.containsKey('fr'), isTrue);
       expect(localizations.containsKey('de'), isTrue);
@@ -265,7 +270,9 @@ void main() {
       }
 
       // Verify existing entries are preserved and new one is added
-      final finalLocalizations = strings['NSCameraUsageDescription']?['localizations'] as Map<String, dynamic>;
+      final finalLocalizations =
+          strings['NSCameraUsageDescription']?['localizations']
+              as Map<String, dynamic>;
       expect(
         finalLocalizations['en']['stringUnit']['value'],
         equals('Camera access for photos'),
@@ -470,63 +477,6 @@ void main() {
       expect(existingLangCodes, isEmpty);
     });
 
-    test(
-      'should handle command line arguments with specific languages',
-      () async {
-        // Create an Info.plist with usage descriptions
-        final infoPlist = File('${tempDir.path}/ios/Runner/Info.plist');
-        infoPlist.writeAsStringSync('''<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>NSCameraUsageDescription</key>
-  <string>Camera access for photos</string>
-</dict>
-</plist>''');
-
-        // Ensure xcodeproj exists for this test
-        final xcodeDir = Directory(
-          '${tempDir.path}/ios/Runner.xcodeproj',
-        );
-        if (!xcodeDir.existsSync()) {
-          xcodeDir.createSync(recursive: true);
-          File(
-            '${xcodeDir.path}/project.pbxproj',
-          ).writeAsStringSync('// Empty pbxproj for testing');
-        }
-
-        final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
-
-        final output = StringBuffer();
-        final spec = ZoneSpecification(
-          print: (self, parent, zone, line) {
-            output.writeln(line);
-          },
-        );
-
-        await runZoned(
-          () async => runner.run(['localize', 'fr', 'de']),
-          zoneSpecification: spec,
-        ).catchError((error, stack) {
-          print('Error during command execution: $error');
-          print('Stack: $stack');
-        });
-
-        // The command should at least parse the arguments without early exit errors
-        // It may fail later when trying to run Ruby scripts, which is acceptable in tests
-        final output_str = output.toString();
-        // Should not show early return messages about missing Info.plist or usage descriptions
-        expect(output_str, isNot(contains('Could not find Info.plist')));
-        expect(
-          output_str,
-          isNot(contains('No usage description keys found')),
-        );
-        // Should not fail before reaching the language argument processing
-        expect(output_str, isNot(contains('Invalid language code provided: fr')));
-        expect(output_str, isNot(contains('Invalid language code provided: de')));
-      },
-    );
-
     test('should handle invalid language code and return early', () async {
       // Create an Info.plist with usage descriptions
       final infoPlist = File('${tempDir.path}/ios/Runner/Info.plist');
@@ -548,7 +498,8 @@ void main() {
         ).writeAsStringSync('// Empty pbxproj for testing');
       }
 
-      final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(LocalizePermissionsCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(
@@ -592,7 +543,8 @@ void main() {
         ).writeAsStringSync('// Empty pbxproj for testing');
       }
 
-      final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
+      final runner = PermitRunner(pathFinder)
+        ..addCommand(LocalizePermissionsCommand());
 
       final output = StringBuffer();
       final spec = ZoneSpecification(
@@ -644,7 +596,8 @@ void main() {
           ).writeAsStringSync('// Empty pbxproj for testing');
         }
 
-        final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
+        final runner = PermitRunner(pathFinder)
+          ..addCommand(LocalizePermissionsCommand());
 
         final output = StringBuffer();
         final spec = ZoneSpecification(
@@ -653,7 +606,7 @@ void main() {
           },
         );
 
-        await runZoned(
+        runZoned(
           () async => runner.run(['localize']),
           zoneSpecification: spec,
         ).catchError((error, stack) {
@@ -663,14 +616,17 @@ void main() {
 
         // The command should parse arguments without early exit errors
         // It may fail later when trying to run Ruby scripts, which is acceptable in tests
-        final output_str = output.toString();
-        expect(output_str, isNot(contains('Could not find Info.plist')));
+        final outputStr = output.toString();
+        expect(outputStr, isNot(contains('Could not find Info.plist')));
         expect(
-          output_str,
+          outputStr,
           isNot(contains('No usage description keys found')),
         );
         // Should not show invalid language code errors for valid locales
-        expect(output_str, isNot(contains('Invalid language code provided: en')));
+        expect(
+          outputStr,
+          isNot(contains('Invalid language code provided: en')),
+        );
       },
     );
 
@@ -888,7 +844,9 @@ void main() {
         final strings = xcstringsJson['strings'] as Map<String, dynamic>;
 
         // Check camera entry (had existing translations)
-        final cameraLocalizations = strings['NSCameraUsageDescription']?['localizations'] as Map<String, dynamic>;
+        final cameraLocalizations =
+            strings['NSCameraUsageDescription']?['localizations']
+                as Map<String, dynamic>;
         expect(
           cameraLocalizations['en']['stringUnit']['value'],
           equals('Camera access for photos'),
@@ -901,11 +859,15 @@ void main() {
         expect(cameraLocalizations['es']['stringUnit']['state'], equals('new'));
 
         // Check microphone entry (had empty localizations)
-        final micLocalizations = strings['NSMicrophoneUsageDescription']?['localizations'] as Map<String, dynamic>;
+        final micLocalizations =
+            strings['NSMicrophoneUsageDescription']?['localizations']
+                as Map<String, dynamic>;
         expect(micLocalizations.length, equals(4)); // All languages added
 
         // Check photo library entry (was completely new)
-        final photoLocalizations = strings['NSPhotoLibraryUsageDescription']?['localizations'] as Map<String, dynamic>;
+        final photoLocalizations =
+            strings['NSPhotoLibraryUsageDescription']?['localizations']
+                as Map<String, dynamic>;
         expect(photoLocalizations.length, equals(4)); // All languages added
       },
     );
@@ -1203,7 +1165,8 @@ void main() {
           ).writeAsStringSync('// Empty pbxproj for testing');
         }
 
-        final runner = PermitRunner(pathFinder)..addCommand(LocalizePermissionsCommand());
+        final runner = PermitRunner(pathFinder)
+          ..addCommand(LocalizePermissionsCommand());
 
         final output = StringBuffer();
         final spec = ZoneSpecification(
@@ -1227,7 +1190,66 @@ void main() {
           isNot(contains('No usage description keys found')),
         );
         // Should not show invalid language errors when no args are provided
-        expect(output.toString(), isNot(contains('Invalid language code provided')));
+        expect(
+          output.toString(),
+          isNot(contains('Invalid language code provided')),
+        );
+      },
+    );
+
+    test(
+      'should handle command with mixed valid and invalid language codes',
+      () async {
+        // Create an Info.plist with usage descriptions
+        final infoPlist = File('${tempDir.path}/ios/Runner/Info.plist');
+        infoPlist.writeAsStringSync('''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>NSCameraUsageDescription</key>
+  <string>Camera access for photos</string>
+</dict>
+</plist>''');
+
+        // Ensure xcodeproj exists for this test
+        final xcodeDir = Directory(
+          '${tempDir.path}/ios/Runner.xcodeproj',
+        );
+        if (!xcodeDir.existsSync()) {
+          xcodeDir.createSync(recursive: true);
+          File(
+            '${xcodeDir.path}/project.pbxproj',
+          ).writeAsStringSync('// Empty pbxproj for testing');
+        }
+
+        final runner = PermitRunner(pathFinder)
+          ..addCommand(LocalizePermissionsCommand());
+
+        final output = StringBuffer();
+        final spec = ZoneSpecification(
+          print: (self, parent, zone, line) {
+            output.writeln(line);
+          },
+        );
+
+        await runZoned(
+          () async =>
+              runner.run(['localize', 'en', 'invalid', 'fr', 'also-invalid']),
+          zoneSpecification: spec,
+        ).catchError((error, stack) {
+          print('Error during command execution: $error');
+          print('Stack: $stack');
+        });
+
+        // Should stop at first invalid code
+        expect(
+          output.toString(),
+          contains('Invalid language code provided: invalid'),
+        );
+        expect(
+          output.toString(),
+          isNot(contains('Invalid language code provided: also-invalid')),
+        );
       },
     );
   });

@@ -4,12 +4,15 @@ import 'package:permit/registry/models.dart';
 
 void main() {
   group('IosPermissions defaults', () {
-    test('camera permission has default (null) minimumIosVersion and default scope', () {
-      final p = IosPermissions.camera;
-      expect(p.key, equals('NSCameraUsageDescription'));
-      expect(p.group, equals('camera'));
-      expect(p.scope, equals(AccessScope.standardOrFull));
-    });
+    test(
+      'camera permission has default (null) minimumIosVersion and default scope',
+      () {
+        final p = IosPermissions.camera;
+        expect(p.key, equals('NSCameraUsageDescription'));
+        expect(p.group, equals('camera'));
+        expect(p.scope, equals(AccessScope.standardOrFull));
+      },
+    );
 
     test('photoLibraryAdd has a minimumIosVersion set', () {
       final p = IosPermissions.photoLibraryAdd;
@@ -122,20 +125,23 @@ void main() {
       expect(p.isDeprecated, isTrue);
     });
 
-    test('calendarsDeprecated and remindersDeprecated are deprecated and present in all', () {
-      final calDeprecated = IosPermissions.calendarsDeprecated;
-      final remDeprecated = IosPermissions.remindersDeprecated;
+    test(
+      'calendarsDeprecated and remindersDeprecated are deprecated and present in all',
+      () {
+        final calDeprecated = IosPermissions.calendarsDeprecated;
+        final remDeprecated = IosPermissions.remindersDeprecated;
 
-      expect(calDeprecated.untilApi, equals(17.0));
-      expect(calDeprecated.isDeprecated, isTrue);
+        expect(calDeprecated.untilApi, equals(17.0));
+        expect(calDeprecated.isDeprecated, isTrue);
 
-      expect(remDeprecated.untilApi, equals(17.0));
-      expect(remDeprecated.isDeprecated, isTrue);
+        expect(remDeprecated.untilApi, equals(17.0));
+        expect(remDeprecated.isDeprecated, isTrue);
 
-      // Ensure they are included in the all set
-      expect(IosPermissions.all.contains(calDeprecated), isTrue);
-      expect(IosPermissions.all.contains(remDeprecated), isTrue);
-    });
+        // Ensure they are included in the all set
+        expect(IosPermissions.all.contains(calDeprecated), isTrue);
+        expect(IosPermissions.all.contains(remDeprecated), isTrue);
+      },
+    );
 
     test('sensors keywords are present', () {
       final p = IosPermissions.sensors;

@@ -64,7 +64,9 @@ void main() {
       // Verify order: permissions should be grouped
       final internetIdx = result.indexOf('android.permission.INTERNET');
       final cameraIdx = result.indexOf('android.permission.CAMERA');
-      final storageIdx = result.indexOf('android.permission.WRITE_EXTERNAL_STORAGE');
+      final storageIdx = result.indexOf(
+        'android.permission.WRITE_EXTERNAL_STORAGE',
+      );
       expect(internetIdx, lessThan(cameraIdx));
       expect(cameraIdx, lessThan(storageIdx));
     });
@@ -285,11 +287,16 @@ void main() {
 
       final editor = ManifestEditor(realManifest);
       editor.removePermission(name: 'android.permission.CAMERA');
-      editor.removePermission(name: 'android.permission.WRITE_EXTERNAL_STORAGE');
+      editor.removePermission(
+        name: 'android.permission.WRITE_EXTERNAL_STORAGE',
+      );
 
       final result = editor.toString();
       expect(result, isNot(contains('android.permission.CAMERA')));
-      expect(result, isNot(contains('android.permission.WRITE_EXTERNAL_STORAGE')));
+      expect(
+        result,
+        isNot(contains('android.permission.WRITE_EXTERNAL_STORAGE')),
+      );
       expect(result, contains('android.permission.INTERNET'));
     });
   });
@@ -314,7 +321,10 @@ void main() {
       expect(permissions, hasLength(3));
       expect(permissions[0].key, equals('android.permission.INTERNET'));
       expect(permissions[1].key, equals('android.permission.CAMERA'));
-      expect(permissions[2].key, equals('android.permission.WRITE_EXTERNAL_STORAGE'));
+      expect(
+        permissions[2].key,
+        equals('android.permission.WRITE_EXTERNAL_STORAGE'),
+      );
     });
 
     test('retrieves permissions with associated comments', () {
@@ -368,10 +378,16 @@ void main() {
       final editor = ManifestEditor(realManifest);
       final permissions = editor.getPermissions();
 
-      expect(permissions[0].key, equals('android.permission.WRITE_EXTERNAL_STORAGE'));
+      expect(
+        permissions[0].key,
+        equals('android.permission.WRITE_EXTERNAL_STORAGE'),
+      );
       expect(permissions[1].key, equals('android.permission.CAMERA'));
       expect(permissions[2].key, equals('android.permission.INTERNET'));
-      expect(permissions[3].key, equals('android.permission.ACCESS_FINE_LOCATION'));
+      expect(
+        permissions[3].key,
+        equals('android.permission.ACCESS_FINE_LOCATION'),
+      );
     });
 
     test('retrieves permissions with multiple preceding comments', () {
@@ -430,8 +446,14 @@ void main() {
       );
 
       final result = editor.toString();
-      expect(result, contains('xmlns:android="http://schemas.android.com/apk/res/android"'));
-      expect(result, contains('xmlns:tools="http://schemas.android.com/tools"'));
+      expect(
+        result,
+        contains('xmlns:android="http://schemas.android.com/apk/res/android"'),
+      );
+      expect(
+        result,
+        contains('xmlns:tools="http://schemas.android.com/tools"'),
+      );
       expect(result, contains('package="com.example.app"'));
     });
 
@@ -469,7 +491,12 @@ void main() {
       // Verify structure is intact
       final lines = result.split('\n');
       expect(lines[0], equals('<?xml version="1.0" encoding="utf-8"?>'));
-      expect(lines[1], equals('<manifest xmlns:android="http://schemas.android.com/apk/res/android">'));
+      expect(
+        lines[1],
+        equals(
+          '<manifest xmlns:android="http://schemas.android.com/apk/res/android">',
+        ),
+      );
       expect(lines[2], equals(''));
       expect(lines.contains('</manifest>'), isTrue);
     });
@@ -548,7 +575,9 @@ void main() {
       expect(permissions, hasLength(4)); // 1 existing + 3 added
 
       // Remove one
-      editor.removePermission(name: 'android.permission.WRITE_EXTERNAL_STORAGE');
+      editor.removePermission(
+        name: 'android.permission.WRITE_EXTERNAL_STORAGE',
+      );
 
       permissions = editor.getPermissions();
       expect(permissions, hasLength(3));
@@ -559,7 +588,10 @@ void main() {
       expect(result, contains('package="com.example.app"'));
       expect(result, contains('android.permission.CAMERA'));
       expect(result, contains('android.permission.ACCESS_FINE_LOCATION'));
-      expect(result, isNot(contains('android.permission.WRITE_EXTERNAL_STORAGE')));
+      expect(
+        result,
+        isNot(contains('android.permission.WRITE_EXTERNAL_STORAGE')),
+      );
     });
 
     test('handles commented permissions correctly', () {
@@ -603,7 +635,10 @@ void main() {
       );
 
       final result = editor.toString();
-      expect(result, contains('android.permission.BIND_NOTIFICATION_LISTENER_SERVICE'));
+      expect(
+        result,
+        contains('android.permission.BIND_NOTIFICATION_LISTENER_SERVICE'),
+      );
     });
 
     test('handles manifest with mixed content', () {

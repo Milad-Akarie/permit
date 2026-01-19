@@ -21,7 +21,8 @@ dependencies:
 ''');
 
       // Create AndroidManifest
-      final androidMain = Directory('${root.path}/android/app/src/main')..createSync(recursive: true);
+      final androidMain = Directory('${root.path}/android/app/src/main')
+        ..createSync(recursive: true);
       File('${androidMain.path}/AndroidManifest.xml').writeAsStringSync('''
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -32,7 +33,8 @@ dependencies:
 ''');
 
       // Create Info.plist
-      final iosRunner = Directory('${root.path}/ios/Runner')..createSync(recursive: true);
+      final iosRunner = Directory('${root.path}/ios/Runner')
+        ..createSync(recursive: true);
       File('${iosRunner.path}/Info.plist').writeAsStringSync('''
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -90,7 +92,9 @@ dependencies:
         isTrue,
       );
       // Kotlin class should exist (Camera handler code generated)
-      final kotlinFiles = androidDir.listSync(recursive: true).where((e) => e.path.endsWith('.kt'));
+      final kotlinFiles = androidDir
+          .listSync(recursive: true)
+          .where((e) => e.path.endsWith('.kt'));
       expect(kotlinFiles, isNotEmpty);
 
       // Check iOS generated code
@@ -98,7 +102,9 @@ dependencies:
       expect(iosDir.existsSync(), isTrue);
       expect(File('${iosDir.path}/permit_plugin.podspec').existsSync(), isTrue);
       // Swift class (Camera handler code generated)
-      final swiftFiles = iosDir.listSync(recursive: true).where((e) => e.path.endsWith('.swift'));
+      final swiftFiles = iosDir
+          .listSync(recursive: true)
+          .where((e) => e.path.endsWith('.swift'));
       expect(swiftFiles, isNotEmpty);
 
       // Check lib/permit_plugin.dart generated

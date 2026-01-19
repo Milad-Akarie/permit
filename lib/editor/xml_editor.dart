@@ -172,7 +172,10 @@ class XmlEditor {
       final event = _events[i];
       if (event is XmlStartElementEvent) {
         final nextEvent = _events.elementAtOrNull(i + 1);
-        final content = (nextEvent is XmlTextEvent && nextEvent.value.trim().isNotEmpty) ? nextEvent : null;
+        final content =
+            (nextEvent is XmlTextEvent && nextEvent.value.trim().isNotEmpty)
+            ? nextEvent
+            : null;
         if (remove.matches(event, content)) {
           removedIndices.add(i);
           if (content != null) {
@@ -183,11 +186,14 @@ class XmlEditor {
           for (var j = i - 1; j >= range.start; j--) {
             final prevEvent = _events[j];
             if (prevEvent is XmlCommentEvent) {
-              if (remove.commentRemover != null && remove.commentRemover!(prevEvent.value)) {
+              if (remove.commentRemover != null &&
+                  remove.commentRemover!(prevEvent.value)) {
                 removedIndices.add(j);
               }
             } else if (prevEvent is XmlTextEvent) {
-              final isBeforeRemoved = removedIndices.contains(j + 1) && _events.elementAtOrNull(j + 1) is! XmlTextEvent;
+              final isBeforeRemoved =
+                  removedIndices.contains(j + 1) &&
+                  _events.elementAtOrNull(j + 1) is! XmlTextEvent;
               if (isBeforeRemoved) {
                 removedIndices.add(j);
               }
@@ -199,7 +205,8 @@ class XmlEditor {
           if (!event.isSelfClosing) {
             for (var j = i + 1; j <= range.end; j++) {
               final nextEvent = _events[j];
-              if (nextEvent is XmlEndElementEvent && nextEvent.name == remove.tag) {
+              if (nextEvent is XmlEndElementEvent &&
+                  nextEvent.name == remove.tag) {
                 removedIndices.add(j);
                 break;
               }
@@ -409,7 +416,8 @@ class XmlRemoveElementEdit extends XmlEdit {
   /// Checks if the given event matches the removal criteria.
   bool matches(XmlStartElementEvent event, XmlTextEvent? contentEvent) {
     if (event.name != tag) return false;
-    if (content != null && (contentEvent == null || contentEvent.value.trim() != content)) {
+    if (content != null &&
+        (contentEvent == null || contentEvent.value.trim() != content)) {
       return false;
     }
     if (attributes != null) {

@@ -14,7 +14,8 @@ class BuildCodeCommand extends PermitCommand {
   BuildCodeCommand();
 
   @override
-  String get description => 'Synchronize permissions metadata and generated code';
+  String get description =>
+      'Synchronize permissions metadata and generated code';
 
   @override
   String get name => 'build';

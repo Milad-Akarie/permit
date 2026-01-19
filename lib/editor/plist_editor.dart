@@ -61,7 +61,9 @@ class PListEditor extends XmlEditor {
         final event = _events[i];
         if (event is! XmlStartElementEvent) continue;
 
-        final content = (i + 1 <= range.end && _events[i + 1] is XmlTextEvent) ? _events[i + 1] as XmlTextEvent : null;
+        final content = (i + 1 <= range.end && _events[i + 1] is XmlTextEvent)
+            ? _events[i + 1] as XmlTextEvent
+            : null;
 
         if (!insert.insertAfter!(event.name, content?.value)) continue;
 
@@ -138,18 +140,23 @@ class PListEditor extends XmlEditor {
         comments.add(event.value);
         continue;
       } else if (event is XmlStartElementEvent) {
-        final content = (i + 1 < range.end && _events[i + 1] is XmlTextEvent) ? _events[i + 1] as XmlTextEvent : null;
+        final content = (i + 1 < range.end && _events[i + 1] is XmlTextEvent)
+            ? _events[i + 1] as XmlTextEvent
+            : null;
         String? key;
         String? description;
 
-        if (content != null && event.name == 'key' && isNSUsageDesc(content.value)) {
+        if (content != null &&
+            event.name == 'key' &&
+            isNSUsageDesc(content.value)) {
           key = content.value;
           // find next XmlStartElementEvent for string
           for (var j = i + 2; j <= range.end; j++) {
             final nextEvent = _events[j];
 
             if (nextEvent is XmlStartElementEvent) {
-              final nextContent = (j + 1 < range.end && _events[j + 1] is XmlTextEvent)
+              final nextContent =
+                  (j + 1 < range.end && _events[j + 1] is XmlTextEvent)
                   ? _events[j + 1] as XmlTextEvent
                   : null;
               if (nextEvent.name == 'string' && nextContent != null) {

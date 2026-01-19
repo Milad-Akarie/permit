@@ -20,7 +20,9 @@ abstract class IosPermissions {
     group: 'camera',
     sinceApi: 7.0,
     keywords: {'capture', 'record'},
-    docNotes: {'Required to access the device camera for photo and video capture'},
+    docNotes: {
+      'Required to access the device camera for photo and video capture',
+    },
   );
 
   // MICROPHONE

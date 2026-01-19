@@ -37,14 +37,21 @@ class PluginKotlinClassTemp extends Template {
   });
 
   @override
-  String get path => 'android/src/main/kotlin/${packageName.replaceAll('.', '/')}/PermitPlugin.kt';
+  String get path =>
+      'android/src/main/kotlin/${packageName.replaceAll('.', '/')}/PermitPlugin.kt';
 
-  late final _services = handlers.map((e) => e.service).nonNulls.where((e) => e.isAndroidSupported).toSet();
+  late final _services = handlers
+      .map((e) => e.service)
+      .nonNulls
+      .where((e) => e.isAndroidSupported)
+      .toSet();
 
   @override
   String generate() {
     final serviceImports = _services.expand((e) => _serviceImports[e] ?? []);
-    final handlersImports = handlers.expand((e) => e.imports ?? {}).where((e) => e.isNotEmpty);
+    final handlersImports = handlers
+        .expand((e) => e.imports ?? {})
+        .where((e) => e.isNotEmpty);
     final allImports = {...serviceImports, ...handlersImports};
 
     return '''

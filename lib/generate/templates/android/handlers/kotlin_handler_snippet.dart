@@ -38,7 +38,9 @@ class KotlinHandlerSnippet {
   /// The array of permissions for this handler.
   late final permissionsArray = permissions
       .map<List<String>>((perm) {
-        final sinceSDKParam = perm.sinceSDK != null ? ', sinceSDK = ${perm.sinceSDK}' : '';
+        final sinceSDKParam = perm.sinceSDK != null
+            ? ', sinceSDK = ${perm.sinceSDK}'
+            : '';
         final array = [
           'Permission(${perm.key.replaceFirst('android.permission', 'android.Manifest.permission')}$sinceSDKParam)',
         ];
@@ -67,8 +69,12 @@ class KotlinHandlerSnippet {
     buffer.writeln(')');
     if (service != null) {
       buffer.writeln(' {');
-      buffer.writeln('$indent override fun handleServiceStatus(activity: Activity, result: MethodChannel.Result) {');
-      buffer.writeln('$indent$indent result.success(ServiceChecker.check${service}Status(activity))');
+      buffer.writeln(
+        '$indent override fun handleServiceStatus(activity: Activity, result: MethodChannel.Result) {',
+      );
+      buffer.writeln(
+        '$indent$indent result.success(ServiceChecker.check${service}Status(activity))',
+      );
       buffer.writeln('$indent }');
       buffer.writeln('}');
     }
@@ -79,8 +85,12 @@ class KotlinHandlerSnippet {
 /// Custom Kotlin handlers for specific permissions.
 final customKotlinHandlers = <String, KotlinHandlerSnippet Function()>{
   AndroidPermissions.systemAlertWindow.group: () => SystemAlertWindowHandler(),
-  AndroidPermissions.ignoreBatteryOptimizations.group: () => IgnoreBatteryOptimizationsHandler(),
-  AndroidPermissions.manageExternalStorage.group: () => ManageExternalStorageHandler(),
-  AndroidPermissions.requestInstallPackages.group: () => RequestInstallPackagesHandler(),
-  AndroidPermissions.scheduleExactAlarm.group: () => ScheduleExactAlarmHandler(),
+  AndroidPermissions.ignoreBatteryOptimizations.group: () =>
+      IgnoreBatteryOptimizationsHandler(),
+  AndroidPermissions.manageExternalStorage.group: () =>
+      ManageExternalStorageHandler(),
+  AndroidPermissions.requestInstallPackages.group: () =>
+      RequestInstallPackagesHandler(),
+  AndroidPermissions.scheduleExactAlarm.group: () =>
+      ScheduleExactAlarmHandler(),
 };

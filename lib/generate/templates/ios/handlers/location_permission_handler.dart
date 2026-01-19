@@ -9,7 +9,9 @@ class LocationPermissionHandler extends SwiftHandlerSnippet {
   /// Constructor for [LocationPermissionHandler].
   LocationPermissionHandler({this.forAlways = false})
     : super(
-        entry: forAlways ? IosPermissions.locationAlways : IosPermissions.locationWhenInUse,
+        entry: forAlways
+            ? IosPermissions.locationAlways
+            : IosPermissions.locationWhenInUse,
         imports: {'CoreLocation'},
       );
 
@@ -18,7 +20,9 @@ class LocationPermissionHandler extends SwiftHandlerSnippet {
 
   @override
   String get constructor {
-    final requestType = forAlways ? 'requestAlwaysAuthorization()' : 'requestWhenInUseAuthorization()';
+    final requestType = forAlways
+        ? 'requestAlwaysAuthorization()'
+        : 'requestWhenInUseAuthorization()';
     return '''LocationHandler(forAlways: $forAlways) { manager in
                     manager.$requestType
                 }''';

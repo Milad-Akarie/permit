@@ -12,7 +12,8 @@ void main() {
         final pubspec = File('${root.path}/pubspec.yaml')..createSync();
         pubspec.writeAsStringSync('name: test_project');
 
-        final nested = Directory('${root.path}/a/b/c')..createSync(recursive: true);
+        final nested = Directory('${root.path}/a/b/c')
+          ..createSync(recursive: true);
 
         final found = PathFinder.findRootDirectory(nested);
         expect(found, isNotNull);
@@ -27,7 +28,8 @@ void main() {
     test('returns null when no pubspec in ancestors', () {
       final root = Directory.systemTemp.createTempSync('no_pubspec_root_');
       try {
-        final nested = Directory('${root.path}/x/y')..createSync(recursive: true);
+        final nested = Directory('${root.path}/x/y')
+          ..createSync(recursive: true);
         final found = PathFinder.findRootDirectory(nested);
         expect(found, isNull);
       } finally {
@@ -57,7 +59,9 @@ void main() {
     });
 
     test('returns null when pubspec missing', () {
-      final root = Directory.systemTemp.createTempSync('permit_no_pubspec_root_');
+      final root = Directory.systemTemp.createTempSync(
+        'permit_no_pubspec_root_',
+      );
       try {
         final pf = PathFinderImpl(root);
         final result = pf.getPubspec();
@@ -71,12 +75,14 @@ void main() {
   });
 
   group('PluginGenerator.generate (no templates)', () {
-    test('deletes existing tools/permit_plugin and removes dependency from pubspec', () {
-      final root = Directory.systemTemp.createTempSync('permit_gen_root_');
-      try {
-        // create pubspec with permit_plugin dependency
-        final pubspec = File('${root.path}/pubspec.yaml')..createSync();
-        pubspec.writeAsStringSync('''
+    test(
+      'deletes existing tools/permit_plugin and removes dependency from pubspec',
+      () {
+        final root = Directory.systemTemp.createTempSync('permit_gen_root_');
+        try {
+          // create pubspec with permit_plugin dependency
+          final pubspec = File('${root.path}/pubspec.yaml')..createSync();
+          pubspec.writeAsStringSync('''
 name: test_proj
 
 dependencies:
@@ -86,29 +92,34 @@ dependencies:
     path: tools/permit_plugin
 ''');
 
-        // create tools/permit_plugin directory to be deleted
-        final toolDir = Directory('${root.path}/tools/permit_plugin')..createSync(recursive: true);
-        File('${toolDir.path}/dummy.txt')
-          ..createSync()
-          ..writeAsStringSync('hello');
+          // create tools/permit_plugin directory to be deleted
+          final toolDir = Directory('${root.path}/tools/permit_plugin')
+            ..createSync(recursive: true);
+          File('${toolDir.path}/dummy.txt')
+            ..createSync()
+            ..writeAsStringSync('hello');
 
-        final pf = PathFinderImpl(root);
-        final generator = PluginGenerator(pathFinder: pf);
+          final pf = PathFinderImpl(root);
+          final generator = PluginGenerator(pathFinder: pf);
 
-        // run generate - should detect no templates and delete the tool dir and remove dependency
-        generator.generate();
+          // run generate - should detect no templates and delete the tool dir and remove dependency
+          generator.generate();
 
-        // tools/permit_plugin should no longer exist
-        expect(Directory('${root.path}/tools/permit_plugin').existsSync(), isFalse);
+          // tools/permit_plugin should no longer exist
+          expect(
+            Directory('${root.path}/tools/permit_plugin').existsSync(),
+            isFalse,
+          );
 
-        // pubspec should have been updated to remove permit_plugin
-        final updated = File('${root.path}/pubspec.yaml').readAsStringSync();
-        expect(updated.contains('permit_plugin'), isFalse);
-      } finally {
-        try {
-          root.deleteSync(recursive: true);
-        } catch (_) {}
-      }
-    });
+          // pubspec should have been updated to remove permit_plugin
+          final updated = File('${root.path}/pubspec.yaml').readAsStringSync();
+          expect(updated.contains('permit_plugin'), isFalse);
+        } finally {
+          try {
+            root.deleteSync(recursive: true);
+          } catch (_) {}
+        }
+      },
+    );
   });
 }

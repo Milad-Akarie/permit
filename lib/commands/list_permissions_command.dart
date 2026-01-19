@@ -82,15 +82,21 @@ class ListPermissionsCommand extends PermitCommand {
     }
 
     // Filter by code generation if requested
-    final filteredEntries = codeOnly ? allEntries.where((entry) => entry.generatesCode).toList() : allEntries;
+    final filteredEntries = codeOnly
+        ? allEntries.where((entry) => entry.generatesCode).toList()
+        : allEntries;
 
     if (filteredEntries.isEmpty) {
       Logger.info('No permissions found.');
       return;
     }
 
-    final androidEntries = filteredEntries.whereType<ManifestPermissionEntry>().toList();
-    final iosEntries = filteredEntries.whereType<PListUsageDescription>().toList();
+    final androidEntries = filteredEntries
+        .whereType<ManifestPermissionEntry>()
+        .toList();
+    final iosEntries = filteredEntries
+        .whereType<PListUsageDescription>()
+        .toList();
     print('');
     if (androidEntries.isNotEmpty) {
       Logger.android('Uses Permissions (${androidEntries.length}):');

@@ -20,7 +20,8 @@ void main() {
         expect(
           code,
           contains('class ${handler.className}'),
-          reason: 'Handler $key did not include class declaration for ${handler.className}',
+          reason:
+              'Handler $key did not include class declaration for ${handler.className}',
         );
 
         // Should contain at least one Swift function keyword or brace from class
@@ -32,22 +33,25 @@ void main() {
       }
     });
 
-    test('location handlers have correct className and constructor forAlways flag', () {
-      // location (when in use)
-      final whenInUseFactory = swiftPermissionHandlers['location'];
-      final alwaysFactory = swiftPermissionHandlers['location_always'];
+    test(
+      'location handlers have correct className and constructor forAlways flag',
+      () {
+        // location (when in use)
+        final whenInUseFactory = swiftPermissionHandlers['location'];
+        final alwaysFactory = swiftPermissionHandlers['location_always'];
 
-      if (whenInUseFactory != null) {
-        final whenInUse = whenInUseFactory();
-        expect(whenInUse.className, equals('LocationHandler'));
-        expect(whenInUse.constructor, contains('forAlways: false'));
-      }
+        if (whenInUseFactory != null) {
+          final whenInUse = whenInUseFactory();
+          expect(whenInUse.className, equals('LocationHandler'));
+          expect(whenInUse.constructor, contains('forAlways: false'));
+        }
 
-      if (alwaysFactory != null) {
-        final always = alwaysFactory();
-        expect(always.className, equals('LocationHandler'));
-        expect(always.constructor, contains('forAlways: true'));
-      }
-    });
+        if (alwaysFactory != null) {
+          final always = alwaysFactory();
+          expect(always.className, equals('LocationHandler'));
+          expect(always.constructor, contains('forAlways: true'));
+        }
+      },
+    );
   });
 }

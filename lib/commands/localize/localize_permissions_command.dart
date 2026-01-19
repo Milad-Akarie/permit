@@ -33,7 +33,8 @@ class LocalizePermissionsCommand extends PermitCommand {
   String get name => 'localize';
 
   @override
-  String get description => 'Generate InfoPlist.xcstrings for permission localizations (iOS)';
+  String get description =>
+      'Generate InfoPlist.xcstrings for permission localizations (iOS)';
 
   /// Default file name for the xcstrings file.
   static const xcstringsFileName = 'InfoPlist.xcstrings';
@@ -103,7 +104,8 @@ class LocalizePermissionsCommand extends PermitCommand {
       xcStringsJson['strings'][entry.key] ??= {
         'localizations': <String, dynamic>{},
       };
-      final localizations = xcStringsJson['strings'][entry.key]?['localizations'];
+      final localizations =
+          xcStringsJson['strings'][entry.key]?['localizations'];
       if (localizations is Map<String, dynamic>) {
         for (final langCode in langCodesToUse) {
           localizations.putIfAbsent(langCode, () {

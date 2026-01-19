@@ -132,7 +132,9 @@ class PluginGenerator {
     // adds Bluetooth handler if iOS Bluetooth permission is requested
     // granular handlers will still be generated
     if (swiftHandlers.any((e) => e.key == IosPermissions.bluetooth.group)) {
-      final androidPermissionKeys = kotlinHandlers.expand((handler) => handler.permissions.map((e) => e.key)).toSet();
+      final androidPermissionKeys = kotlinHandlers
+          .expand((handler) => handler.permissions.map((e) => e.key))
+          .toSet();
       final androidBluetoothPermissions = <AndroidPermissionDef>{};
       if (androidPermissionKeys.contains(
         AndroidPermissions.bluetoothScan.key,

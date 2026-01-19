@@ -3,56 +3,62 @@ import 'package:test/test.dart';
 
 void main() {
   group('XmlEditor - Insertion without Comments', () {
-    test('inserts element without comment and preserves 2-space indentation', () {
-      const xml = '''<root>
+    test(
+      'inserts element without comment and preserves 2-space indentation',
+      () {
+        const xml = '''<root>
   <body>
     <existing>Value</existing>
   </body>
 </root>''';
 
-      final editor = XmlEditor(xml);
-      editor.insert(
-        XmlInsertElementEdit(
-          path: 'root.body',
-          tags: [
-            XmlElementInfo(
-              name: 'newTag',
-              content: 'NewValue',
-            ),
-          ],
-        ),
-      );
+        final editor = XmlEditor(xml);
+        editor.insert(
+          XmlInsertElementEdit(
+            path: 'root.body',
+            tags: [
+              XmlElementInfo(
+                name: 'newTag',
+                content: 'NewValue',
+              ),
+            ],
+          ),
+        );
 
-      final result = editor.toString();
-      expect(result, contains('<newTag>NewValue</newTag>'));
-      expect(result, contains('    <newTag>'));
-      expect(result, contains('<existing>Value</existing>'));
-    });
+        final result = editor.toString();
+        expect(result, contains('<newTag>NewValue</newTag>'));
+        expect(result, contains('    <newTag>'));
+        expect(result, contains('<existing>Value</existing>'));
+      },
+    );
 
-    test('inserts element without comment and preserves 2-space indentation', () {
-      const xml = '''<root>
+    test(
+      'inserts element without comment and preserves 2-space indentation',
+      () {
+        const xml = '''<root>
     <body>
         <existing>Value</existing>
     </body>
 </root>''';
 
-      final editor = XmlEditor(xml);
-      editor.insert(
-        XmlInsertElementEdit(
-          path: 'root.body',
-          tags: [
-            XmlElementInfo(
-              name: 'new',
-              content: 'Val',
-            ),
-          ],
-        ),
-      );
+        final editor = XmlEditor(xml);
+        editor.insert(
+          XmlInsertElementEdit(
+            path: 'root.body',
+            tags: [
+              XmlElementInfo(
+                name: 'new',
+                content: 'Val',
+              ),
+            ],
+          ),
+        );
 
-      final result = editor.toString();
-      expect(result, contains('  <new>'));
-      expect(result, contains('<existing>'));
-    });
+        final result = editor.toString();
+        expect(result, contains('  <new>'));
+        expect(result, contains('<existing>'));
+      },
+    );
 
     test('inserts multiple elements without comments in sequence', () {
       const xml = '''<root>
@@ -311,27 +317,30 @@ void main() {
       expect(result, isNot(contains('<permission>')));
     });
 
-    test('removes element but preserves preceding comment when predicate false', () {
-      const xml = '''<root>
+    test(
+      'removes element but preserves preceding comment when predicate false',
+      () {
+        const xml = '''<root>
   <body>
     <!-- Keep this comment -->
     <permission>CAMERA</permission>
   </body>
 </root>''';
 
-      final editor = XmlEditor(xml);
-      editor.remove(
-        XmlRemoveElementEdit(
-          path: 'root.body',
-          tag: 'permission',
-          commentRemover: (c) => c.contains('Delete'),
-        ),
-      );
+        final editor = XmlEditor(xml);
+        editor.remove(
+          XmlRemoveElementEdit(
+            path: 'root.body',
+            tag: 'permission',
+            commentRemover: (c) => c.contains('Delete'),
+          ),
+        );
 
-      final result = editor.toString();
-      expect(result, contains('Keep this comment'));
-      expect(result, isNot(contains('<permission>')));
-    });
+        final result = editor.toString();
+        expect(result, contains('Keep this comment'));
+        expect(result, isNot(contains('<permission>')));
+      },
+    );
 
     test('removes element and comment with proper indentation preserved', () {
       const xml = '''<root>

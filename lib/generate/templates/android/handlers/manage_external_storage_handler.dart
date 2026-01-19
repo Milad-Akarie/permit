@@ -18,7 +18,9 @@ class ManageExternalStorageHandler extends KotlinHandlerSnippet {
   @override
   String generate(int requestCode) {
     // this permission requires special handling, it's not requested like normal permissions
-    permissions.removeWhere((e) => e.key == AndroidPermissions.manageExternalStorage.key);
+    permissions.removeWhere(
+      (e) => e.key == AndroidPermissions.manageExternalStorage.key,
+    );
     return '''@SuppressLint("InlinedApi")
 class $className : PermissionHandler(
     $requestCode,

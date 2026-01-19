@@ -13,7 +13,9 @@ import 'package:permit/utils/logger.dart';
 Future<void> main(List<String> args) async {
   final projectDir = PathFinder.findRootDirectory(Directory.current);
   if (projectDir == null) {
-    Logger.error('Could not find project root. Please run this command from within a Flutter project.');
+    Logger.error(
+      'Could not find project root. Please run this command from within a Flutter project.',
+    );
     exit(1);
   }
   final runner = PermitRunner(PathFinderImpl(projectDir))

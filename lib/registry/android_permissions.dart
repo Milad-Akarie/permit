@@ -20,7 +20,9 @@ abstract class AndroidPermissions {
     runtime: true,
     group: 'camera',
     keywords: {'capture', 'record'},
-    docNotes: {'Required to access the device camera for photo and video capture'},
+    docNotes: {
+      'Required to access the device camera for photo and video capture',
+    },
   );
 
   // Microphone
@@ -65,7 +67,9 @@ abstract class AndroidPermissions {
     group: 'location',
     service: AssociatedService.location,
     keywords: {'gps', 'maps', 'geolocation'},
-    docNotes: {'Required for approximate location access using Wi-Fi and cellular networks'},
+    docNotes: {
+      'Required for approximate location access using Wi-Fi and cellular networks',
+    },
   );
 
   /// android.permission.ACCESS_BACKGROUND_LOCATION
@@ -127,7 +131,9 @@ abstract class AndroidPermissions {
     'android.permission.GET_ACCOUNTS',
     group: 'contacts',
     keywords: {'address', 'phone'},
-    docNotes: {'Required to access the list of accounts in the Accounts Service'},
+    docNotes: {
+      'Required to access the list of accounts in the Accounts Service',
+    },
   );
 
   // Calendar
@@ -171,7 +177,9 @@ abstract class AndroidPermissions {
     group: 'phone',
     service: AssociatedService.phone,
     keywords: {'state', 'identity', 'carrier'},
-    docNotes: {'Required to access phone state information such as network, SIM, and call status'},
+    docNotes: {
+      'Required to access phone state information such as network, SIM, and call status',
+    },
   );
 
   /// android.permission.READ_PHONE_NUMBERS
@@ -190,7 +198,9 @@ abstract class AndroidPermissions {
     service: AssociatedService.phone,
     keywords: {'state', 'identity', 'carrier'},
     legacyKeys: {'android.permission.READ_PHONE_STATE': 25},
-    docNotes: {'Required to access the phone numbers associated with the device'},
+    docNotes: {
+      'Required to access the phone numbers associated with the device',
+    },
   );
 
   /// android.permission.CALL_PHONE
@@ -616,7 +626,9 @@ abstract class AndroidPermissions {
     sinceSDK: 20,
     group: 'sensors',
     keywords: {'heart', 'bio', 'bpm'},
-    docNotes: {'Required to access data from body sensors such as heart rate monitors'},
+    docNotes: {
+      'Required to access data from body sensors such as heart rate monitors',
+    },
   );
 
   /// android.permission.BODY_SENSORS_BACKGROUND
@@ -701,7 +713,9 @@ abstract class AndroidPermissions {
     runtime: true,
     group: 'schedule_exact_alarm',
     keywords: {'alarm', 'timer', 'exact'},
-    docNotes: {'Required to schedule exact alarms using AlarmManager on Android 12 and above'},
+    docNotes: {
+      'Required to schedule exact alarms using AlarmManager on Android 12 and above',
+    },
   );
 
   /// android.permission.POST_NOTIFICATIONS
@@ -716,7 +730,9 @@ abstract class AndroidPermissions {
     runtime: true,
     group: 'notifications',
     keywords: {'push', 'post'},
-    docNotes: {'Required to post notifications to the user on Android 13 and above'},
+    docNotes: {
+      'Required to post notifications to the user on Android 13 and above',
+    },
   );
 
   /// android.permission.REQUEST_INSTALL_PACKAGES
@@ -731,7 +747,9 @@ abstract class AndroidPermissions {
     runtime: true,
     group: 'request_install_packages',
     keywords: {'install', 'apk', 'sideload', 'packages'},
-    docNotes: {'Required to install APK packages from sources other than the Play Store'},
+    docNotes: {
+      'Required to install APK packages from sources other than the Play Store',
+    },
   );
 
   /// android.permission.NFC
@@ -757,7 +775,9 @@ abstract class AndroidPermissions {
     sinceSDK: 29,
     group: 'activity_recognition',
     keywords: {'activity', 'fitness', 'motion'},
-    docNotes: {'Required to access physical activity data such as step count and movement recognition'},
+    docNotes: {
+      'Required to access physical activity data such as step count and movement recognition',
+    },
   );
 
   /// Set of all defined Android permissions.

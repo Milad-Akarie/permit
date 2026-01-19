@@ -229,10 +229,14 @@ class PermissionGetterSnippet {
     }
     if (platforms.length == 1) {
       docs.add('');
-      docs.add('Returns [PermissionStatus.notApplicable] for platforms other than (${platforms.join(', ')})');
+      docs.add(
+        'Returns [PermissionStatus.notApplicable] for platforms other than (${platforms.join(', ')})',
+      );
     }
 
-    final plat = platforms.isNotEmpty ? ", platforms: {${platforms.map((e) => "'$e'").join(', ')}}" : '';
+    final plat = platforms.isNotEmpty
+        ? ", platforms: {${platforms.map((e) => "'$e'").join(', ')}}"
+        : '';
     final className = hasService ? 'PermissionWithService' : 'Permission';
     return '''${docs.map((e) => '  /// $e').join('\n')}
   static const ${name.toCamelCase()} = $className._('$name', _channel$plat);

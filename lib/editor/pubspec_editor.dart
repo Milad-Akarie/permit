@@ -58,7 +58,8 @@ class PubspecEditor {
   bool removeDependency(String packageName) {
     try {
       final dependenciesNode = _editor.parseAt(['dependencies']);
-      if (dependenciesNode is YamlMap && dependenciesNode.containsKey(packageName)) {
+      if (dependenciesNode is YamlMap &&
+          dependenciesNode.containsKey(packageName)) {
         _editor.remove(['dependencies', packageName]);
         return true;
       }

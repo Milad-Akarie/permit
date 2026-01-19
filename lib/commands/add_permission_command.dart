@@ -132,7 +132,8 @@ class AddPermissionCommand extends PermitCommand {
         removeCommentsOnUpdate: (c) => c.startsWith('@permit'),
       );
       final permissionDef = lookup.findByKey(entry.key);
-      if (permissionDef is AndroidPermissionDef && permissionDef.legacyKeys != null) {
+      if (permissionDef is AndroidPermissionDef &&
+          permissionDef.legacyKeys != null) {
         for (final legacyEntry in permissionDef.legacyKeys!.entries) {
           editor.addPermission(
             name: legacyEntry.key,
@@ -184,35 +185,42 @@ class AddPermissionCommand extends PermitCommand {
     final desc = argResults?['desc'] as String?;
     var selectedEntries = entries;
 
-    final existingUsageDescriptions = Map<String, PListUsageDescription>.fromEntries(
-      _infoPlist?.$1.getUsageDescriptions().map(
-            (e) => MapEntry(e.key, e),
-          ) ??
-          [],
-    );
+    final existingUsageDescriptions =
+        Map<String, PListUsageDescription>.fromEntries(
+          _infoPlist?.$1.getUsageDescriptions().map(
+                (e) => MapEntry(e.key, e),
+              ) ??
+              [],
+        );
 
     final canUpdateInfoPlist = entries.whereType<IosPermissionDef>().any(
       (e) => existingUsageDescriptions.containsKey(e.key),
     );
     // Prompt user to select permissions if multiple found or if the found entry does not exactly match the search key
     if (entries.length > 1 || !entries.first.matches(searchKey)) {
-      final maxLineLength = entries.map((e) => e.name.length).reduce((a, b) => a > b ? a : b);
+      final maxLineLength = entries
+          .map((e) => e.name.length)
+          .reduce((a, b) => a > b ? a : b);
 
       selectedEntries = multiSelect(
         'Select permissions to add${canUpdateInfoPlist ? ' or update' : ''}',
         options: entries,
         display: (entry) {
-          final platform = entry is AndroidPermissionDef ? 'Android: ' : 'iOS: ';
+          final platform = entry is AndroidPermissionDef
+              ? 'Android: '
+              : 'iOS: ';
           var note = entry.promptNote != null ? '(${entry.promptNote})' : '';
           final option = platform + entry.name;
-          if (entry is IosPermissionDef && existingUsageDescriptions.containsKey(entry.key)) {
+          if (entry is IosPermissionDef &&
+              existingUsageDescriptions.containsKey(entry.key)) {
             note += ' (Update)';
           }
 
           if (note.isEmpty) {
             return option;
           }
-          return option.padRight(maxLineLength + 13) + Logger.mutedPen.write(note);
+          return option.padRight(maxLineLength + 13) +
+              Logger.mutedPen.write(note);
         },
       );
     }
@@ -223,7 +231,9 @@ class AddPermissionCommand extends PermitCommand {
         ManifestPermissionEntry(
           key: androidEntry.key,
           comments: [
-            generateCode && androidEntry.runtime ? '@permit:code DO-NOT-REMOVE' : '@permit',
+            generateCode && androidEntry.runtime
+                ? '@permit:code DO-NOT-REMOVE'
+                : '@permit',
           ],
         ),
       );
@@ -246,7 +256,10 @@ class AddPermissionCommand extends PermitCommand {
     for (var entry in iosEntries) {
       final desc = prompt(
         'Usage description for "${entry.name}"',
-        defaultValue: existingUsageDescriptions[entry.key]?.description ?? argResults?['desc'] ?? '',
+        defaultValue:
+            existingUsageDescriptions[entry.key]?.description ??
+            argResults?['desc'] ??
+            '',
         validatorErrorMessage: 'Description cannot be empty',
       );
       resolvedEntries.add(

@@ -9,7 +9,9 @@ class PhotosPermissionHandler extends SwiftHandlerSnippet {
   /// Constructor for [PhotosPermissionHandler].
   PhotosPermissionHandler({this.addOnly = false})
     : super(
-        entry: addOnly ? IosPermissions.photoLibraryAdd : IosPermissions.photoLibrary,
+        entry: addOnly
+            ? IosPermissions.photoLibraryAdd
+            : IosPermissions.photoLibrary,
         imports: {'Photos'},
       );
 

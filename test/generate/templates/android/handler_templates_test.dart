@@ -18,19 +18,39 @@ void main() {
 
   group('Handler Templates - Code Generation', () {
     group('SystemAlertWindowHandler', () {
-      test('should generate valid Kotlin code with getStatus and handleRequest', () {
-        final handler = SystemAlertWindowHandler();
-        final code = handler.generate(1001);
+      test(
+        'should generate valid Kotlin code with getStatus and handleRequest',
+        () {
+          final handler = SystemAlertWindowHandler();
+          final code = handler.generate(1001);
 
-        expect(code, contains('class SystemAlertWindowHandler : PermissionHandler('));
-        expect(code, contains('override fun getStatus(activity: Activity): Int {'));
-        expect(code, contains('Settings.canDrawOverlays(activity)'));
-        expect(code, contains('override fun handleRequest(activity: Activity, result: MethodChannel.Result)'));
-        expect(code, contains('Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)'));
-        expect(code, contains('"package:\${activity.packageName}".toUri()'));
-        expect(code, contains('activity.startActivityForResult(intent, requestCode)'));
-        expect(code, contains('pendingResult = result'));
-      });
+          expect(
+            code,
+            contains('class SystemAlertWindowHandler : PermissionHandler('),
+          );
+          expect(
+            code,
+            contains('override fun getStatus(activity: Activity): Int {'),
+          );
+          expect(code, contains('Settings.canDrawOverlays(activity)'));
+          expect(
+            code,
+            contains(
+              'override fun handleRequest(activity: Activity, result: MethodChannel.Result)',
+            ),
+          );
+          expect(
+            code,
+            contains('Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)'),
+          );
+          expect(code, contains('"package:\${activity.packageName}".toUri()'));
+          expect(
+            code,
+            contains('activity.startActivityForResult(intent, requestCode)'),
+          );
+          expect(code, contains('pendingResult = result'));
+        },
+      );
 
       test('should write valid Kotlin code to file', () {
         final handler = SystemAlertWindowHandler();
@@ -57,12 +77,20 @@ void main() {
         // Check balanced braces
         final openBraces = '{'.allMatches(code).length;
         final closeBraces = '}'.allMatches(code).length;
-        expect(openBraces, equals(closeBraces), reason: 'Unbalanced braces in generated code');
+        expect(
+          openBraces,
+          equals(closeBraces),
+          reason: 'Unbalanced braces in generated code',
+        );
 
         // Check balanced parentheses
         final openParens = '('.allMatches(code).length;
         final closeParens = ')'.allMatches(code).length;
-        expect(openParens, equals(closeParens), reason: 'Unbalanced parentheses in generated code');
+        expect(
+          openParens,
+          equals(closeParens),
+          reason: 'Unbalanced parentheses in generated code',
+        );
       });
     });
 

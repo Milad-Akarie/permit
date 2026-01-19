@@ -23,19 +23,39 @@ void main() {
 
   group('Handler Templates - Code Generation', () {
     group('SystemAlertWindowHandler', () {
-      test('should generate valid Kotlin code with getStatus and handleRequest', () {
-        final handler = SystemAlertWindowHandler();
-        final code = handler.generate(1001);
+      test(
+        'should generate valid Kotlin code with getStatus and handleRequest',
+        () {
+          final handler = SystemAlertWindowHandler();
+          final code = handler.generate(1001);
 
-        expect(code, contains('class SystemAlertWindowHandler : PermissionHandler('));
-        expect(code, contains('override fun getStatus(activity: Activity): Int {'));
-        expect(code, contains('Settings.canDrawOverlays(activity)'));
-        expect(code, contains('override fun handleRequest(activity: Activity, result: MethodChannel.Result)'));
-        expect(code, contains('Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)'));
-        expect(code, contains('"package:\${activity.packageName}".toUri()'));
-        expect(code, contains('activity.startActivityForResult(intent, requestCode)'));
-        expect(code, contains('pendingResult = result'));
-      });
+          expect(
+            code,
+            contains('class SystemAlertWindowHandler : PermissionHandler('),
+          );
+          expect(
+            code,
+            contains('override fun getStatus(activity: Activity): Int {'),
+          );
+          expect(code, contains('Settings.canDrawOverlays(activity)'));
+          expect(
+            code,
+            contains(
+              'override fun handleRequest(activity: Activity, result: MethodChannel.Result)',
+            ),
+          );
+          expect(
+            code,
+            contains('Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)'),
+          );
+          expect(code, contains('"package:\${activity.packageName}".toUri()'));
+          expect(
+            code,
+            contains('activity.startActivityForResult(intent, requestCode)'),
+          );
+          expect(code, contains('pendingResult = result'));
+        },
+      );
 
       test('should write valid Kotlin code to file', () {
         final handler = SystemAlertWindowHandler();
@@ -62,12 +82,20 @@ void main() {
         // Check balanced braces
         final openBraces = '{'.allMatches(code).length;
         final closeBraces = '}'.allMatches(code).length;
-        expect(openBraces, equals(closeBraces), reason: 'Unbalanced braces in generated code');
+        expect(
+          openBraces,
+          equals(closeBraces),
+          reason: 'Unbalanced braces in generated code',
+        );
 
         // Check balanced parentheses
         final openParens = '('.allMatches(code).length;
         final closeParens = ')'.allMatches(code).length;
-        expect(openParens, equals(closeParens), reason: 'Unbalanced parentheses in generated code');
+        expect(
+          openParens,
+          equals(closeParens),
+          reason: 'Unbalanced parentheses in generated code',
+        );
       });
     });
 
@@ -76,18 +104,35 @@ void main() {
         final handler = IgnoreBatteryOptimizationsHandler();
         final code = handler.generate(1002);
 
-        expect(code, contains('class IgnoreBatteryOptimizationsHandler : PermissionHandler('));
-        expect(code, contains('Build.VERSION.SDK_INT >= Build.VERSION_CODES.M'));
+        expect(
+          code,
+          contains(
+            'class IgnoreBatteryOptimizationsHandler : PermissionHandler(',
+          ),
+        );
+        expect(
+          code,
+          contains('Build.VERSION.SDK_INT >= Build.VERSION_CODES.M'),
+        );
         expect(code, contains('PowerManager'));
-        expect(code, contains('isIgnoringBatteryOptimizations(activity.packageName)'));
-        expect(code, contains('Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS'));
+        expect(
+          code,
+          contains('isIgnoringBatteryOptimizations(activity.packageName)'),
+        );
+        expect(
+          code,
+          contains('Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS'),
+        );
         expect(code, contains('2 // RESTRICTED'));
       });
 
       test('should write valid Kotlin code to file', () {
         final handler = IgnoreBatteryOptimizationsHandler();
         final code = handler.generate(1002);
-        final filePath = path.join(tempDir.path, 'IgnoreBatteryOptimizationsHandler.kt');
+        final filePath = path.join(
+          tempDir.path,
+          'IgnoreBatteryOptimizationsHandler.kt',
+        );
 
         File(filePath).writeAsStringSync(code);
 
@@ -100,15 +145,26 @@ void main() {
         final handler = IgnoreBatteryOptimizationsHandler();
         final code = handler.generate(1002);
 
-        expect(code, contains('override fun getStatus(activity: Activity): Int {'));
-        expect(code, contains('val pm = activity.getSystemService(Context.POWER_SERVICE) as PowerManager'));
+        expect(
+          code,
+          contains('override fun getStatus(activity: Activity): Int {'),
+        );
+        expect(
+          code,
+          contains(
+            'val pm = activity.getSystemService(Context.POWER_SERVICE) as PowerManager',
+          ),
+        );
       });
 
       test('should check Android version before using PowerManager', () {
         final handler = IgnoreBatteryOptimizationsHandler();
         final code = handler.generate(1002);
 
-        expect(code, contains('if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {'));
+        expect(
+          code,
+          contains('if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {'),
+        );
         expect(code, contains('return 2 // RESTRICTED'));
       });
 
@@ -127,16 +183,28 @@ void main() {
         final handler = ManageExternalStorageHandler();
         final code = handler.generate(1003);
 
-        expect(code, contains('class ManageExternalStorageHandler : PermissionHandler('));
-        expect(code, contains('Build.VERSION.SDK_INT >= Build.VERSION_CODES.R'));
+        expect(
+          code,
+          contains('class ManageExternalStorageHandler : PermissionHandler('),
+        );
+        expect(
+          code,
+          contains('Build.VERSION.SDK_INT >= Build.VERSION_CODES.R'),
+        );
         expect(code, contains('Environment.isExternalStorageManager()'));
-        expect(code, contains('Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION'));
+        expect(
+          code,
+          contains('Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION'),
+        );
       });
 
       test('should write valid Kotlin code to file', () {
         final handler = ManageExternalStorageHandler();
         final code = handler.generate(1003);
-        final filePath = path.join(tempDir.path, 'ManageExternalStorageHandler.kt');
+        final filePath = path.join(
+          tempDir.path,
+          'ManageExternalStorageHandler.kt',
+        );
 
         File(filePath).writeAsStringSync(code);
 
@@ -156,16 +224,28 @@ void main() {
         final handler = RequestInstallPackagesHandler();
         final code = handler.generate(1004);
 
-        expect(code, contains('class RequestInstallPackagesHandler : PermissionHandler('));
-        expect(code, contains('Build.VERSION.SDK_INT >= Build.VERSION_CODES.O'));
-        expect(code, contains('activity.packageManager.canRequestPackageInstalls()'));
+        expect(
+          code,
+          contains('class RequestInstallPackagesHandler : PermissionHandler('),
+        );
+        expect(
+          code,
+          contains('Build.VERSION.SDK_INT >= Build.VERSION_CODES.O'),
+        );
+        expect(
+          code,
+          contains('activity.packageManager.canRequestPackageInstalls()'),
+        );
         expect(code, contains('Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES'));
       });
 
       test('should write valid Kotlin code to file', () {
         final handler = RequestInstallPackagesHandler();
         final code = handler.generate(1004);
-        final filePath = path.join(tempDir.path, 'RequestInstallPackagesHandler.kt');
+        final filePath = path.join(
+          tempDir.path,
+          'RequestInstallPackagesHandler.kt',
+        );
 
         File(filePath).writeAsStringSync(code);
 
@@ -185,8 +265,14 @@ void main() {
         final handler = ScheduleExactAlarmHandler();
         final code = handler.generate(1005);
 
-        expect(code, contains('class ScheduleExactAlarmHandler : PermissionHandler('));
-        expect(code, contains('Build.VERSION.SDK_INT >= Build.VERSION_CODES.S'));
+        expect(
+          code,
+          contains('class ScheduleExactAlarmHandler : PermissionHandler('),
+        );
+        expect(
+          code,
+          contains('Build.VERSION.SDK_INT >= Build.VERSION_CODES.S'),
+        );
         expect(code, contains('AlarmManager'));
         expect(code, contains('alarmManager.canScheduleExactAlarms()'));
         expect(code, contains('Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM'));
@@ -195,7 +281,10 @@ void main() {
       test('should write valid Kotlin code to file', () {
         final handler = ScheduleExactAlarmHandler();
         final code = handler.generate(1005);
-        final filePath = path.join(tempDir.path, 'ScheduleExactAlarmHandler.kt');
+        final filePath = path.join(
+          tempDir.path,
+          'ScheduleExactAlarmHandler.kt',
+        );
 
         File(filePath).writeAsStringSync(code);
 
@@ -227,19 +316,31 @@ void main() {
       });
 
       test('should have ignore_battery_optimizations handler', () {
-        expect(customKotlinHandlers.containsKey('ignore_battery_optimizations'), isTrue);
+        expect(
+          customKotlinHandlers.containsKey('ignore_battery_optimizations'),
+          isTrue,
+        );
       });
 
       test('should have manage_external_storage handler', () {
-        expect(customKotlinHandlers.containsKey('manage_external_storage'), isTrue);
+        expect(
+          customKotlinHandlers.containsKey('manage_external_storage'),
+          isTrue,
+        );
       });
 
       test('should have request_install_packages handler', () {
-        expect(customKotlinHandlers.containsKey('request_install_packages'), isTrue);
+        expect(
+          customKotlinHandlers.containsKey('request_install_packages'),
+          isTrue,
+        );
       });
 
       test('should have schedule_exact_alarm handler', () {
-        expect(customKotlinHandlers.containsKey('schedule_exact_alarm'), isTrue);
+        expect(
+          customKotlinHandlers.containsKey('schedule_exact_alarm'),
+          isTrue,
+        );
       });
 
       test('should create correct handler instances', () {
@@ -247,9 +348,13 @@ void main() {
         expect(sawHandler, isA<SystemAlertWindowHandler>());
         expect(sawHandler.className, equals('SystemAlertWindowHandler'));
 
-        final bioHandler = customKotlinHandlers['ignore_battery_optimizations']!();
+        final bioHandler =
+            customKotlinHandlers['ignore_battery_optimizations']!();
         expect(bioHandler, isA<IgnoreBatteryOptimizationsHandler>());
-        expect(bioHandler.className, equals('IgnoreBatteryOptimizationsHandler'));
+        expect(
+          bioHandler.className,
+          equals('IgnoreBatteryOptimizationsHandler'),
+        );
 
         final mesHandler = customKotlinHandlers['manage_external_storage']!();
         expect(mesHandler, isA<ManageExternalStorageHandler>());
@@ -287,7 +392,11 @@ void main() {
         // Verify all files were created
         expect(files.length, equals(5));
         for (final filePath in files) {
-          expect(File(filePath).existsSync(), isTrue, reason: 'File $filePath was not created');
+          expect(
+            File(filePath).existsSync(),
+            isTrue,
+            reason: 'File $filePath was not created',
+          );
         }
       });
 
@@ -364,14 +473,20 @@ void main() {
           );
           expect(
             code,
-            contains('override fun handleRequest(activity: Activity, result: MethodChannel.Result)'),
+            contains(
+              'override fun handleRequest(activity: Activity, result: MethodChannel.Result)',
+            ),
             reason: '${handler.className} missing handleRequest method',
           );
 
           // Verify syntax
           final openBraces = '{'.allMatches(code).length;
           final closeBraces = '}'.allMatches(code).length;
-          expect(openBraces, equals(closeBraces), reason: '${handler.className} has unbalanced braces');
+          expect(
+            openBraces,
+            equals(closeBraces),
+            reason: '${handler.className} has unbalanced braces',
+          );
         }
       });
     });
@@ -391,7 +506,11 @@ void main() {
           final code = handler.generate(1001 + i);
 
           // All should use Intent and Uri for launching settings
-          expect(code, contains('Intent('), reason: '${handler.className} missing Intent instantiation');
+          expect(
+            code,
+            contains('Intent('),
+            reason: '${handler.className} missing Intent instantiation',
+          );
           expect(
             code,
             contains('"package:\${activity.packageName}".toUri()'),
@@ -412,15 +531,24 @@ void main() {
 
         final bioHandler = IgnoreBatteryOptimizationsHandler();
         final bioCode = bioHandler.generate(1002);
-        expect(bioCode, contains('2 // RESTRICTED')); // Return RESTRICTED for unsupported
+        expect(
+          bioCode,
+          contains('2 // RESTRICTED'),
+        ); // Return RESTRICTED for unsupported
 
         final seaHandler = ScheduleExactAlarmHandler();
         final seaCode = seaHandler.generate(1005);
-        expect(seaCode, contains('1 // GRANTED for older versions')); // Default to GRANTED
+        expect(
+          seaCode,
+          contains('1 // GRANTED for older versions'),
+        ); // Default to GRANTED
       });
 
       test('should use correct Settings actions', () {
-        expect(SystemAlertWindowHandler().generate(1001), contains('Settings.ACTION_MANAGE_OVERLAY_PERMISSION'));
+        expect(
+          SystemAlertWindowHandler().generate(1001),
+          contains('Settings.ACTION_MANAGE_OVERLAY_PERMISSION'),
+        );
         expect(
           IgnoreBatteryOptimizationsHandler().generate(1002),
           contains('Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS'),
@@ -429,8 +557,14 @@ void main() {
           ManageExternalStorageHandler().generate(1003),
           contains('Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION'),
         );
-        expect(RequestInstallPackagesHandler().generate(1004), contains('Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES'));
-        expect(ScheduleExactAlarmHandler().generate(1005), contains('Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM'));
+        expect(
+          RequestInstallPackagesHandler().generate(1004),
+          contains('Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES'),
+        );
+        expect(
+          ScheduleExactAlarmHandler().generate(1005),
+          contains('Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM'),
+        );
       });
     });
   });

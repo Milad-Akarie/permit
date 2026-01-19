@@ -478,7 +478,10 @@ void main() {
       );
 
       // Should not crash and location description should remain
-      expect(editor.toString(), contains('NSLocationWhenInUseUsageDescription'));
+      expect(
+        editor.toString(),
+        contains('NSLocationWhenInUseUsageDescription'),
+      );
     });
 
     test('removes multiple descriptions one by one', () {
@@ -523,12 +526,24 @@ void main() {
       final descriptions = editor.getUsageDescriptions();
 
       expect(descriptions, hasLength(3));
-      expect(descriptions[0].key, equals('NSLocationWhenInUseUsageDescription'));
-      expect(descriptions[0].description, equals('This app needs your location'));
+      expect(
+        descriptions[0].key,
+        equals('NSLocationWhenInUseUsageDescription'),
+      );
+      expect(
+        descriptions[0].description,
+        equals('This app needs your location'),
+      );
       expect(descriptions[1].key, equals('NSCameraUsageDescription'));
-      expect(descriptions[1].description, equals('This app needs camera access'));
+      expect(
+        descriptions[1].description,
+        equals('This app needs camera access'),
+      );
       expect(descriptions[2].key, equals('NSPhotoLibraryUsageDescription'));
-      expect(descriptions[2].description, equals('This app needs photo library access'));
+      expect(
+        descriptions[2].description,
+        equals('This app needs photo library access'),
+      );
     });
 
     test('retrieves usage descriptions with associated comments', () {
@@ -593,7 +608,10 @@ void main() {
 
       expect(descriptions, hasLength(2));
       expect(descriptions[0].key, equals('NSCameraUsageDescription'));
-      expect(descriptions[1].key, equals('NSLocationWhenInUseUsageDescription'));
+      expect(
+        descriptions[1].key,
+        equals('NSLocationWhenInUseUsageDescription'),
+      );
     });
 
     test('preserves description order from original plist', () {
@@ -616,7 +634,10 @@ void main() {
 
       expect(descriptions[0].key, equals('NSPhotoLibraryUsageDescription'));
       expect(descriptions[1].key, equals('NSCameraUsageDescription'));
-      expect(descriptions[2].key, equals('NSLocationWhenInUseUsageDescription'));
+      expect(
+        descriptions[2].key,
+        equals('NSLocationWhenInUseUsageDescription'),
+      );
       expect(descriptions[3].key, equals('NSMicrophoneUsageDescription'));
     });
 
@@ -881,7 +902,10 @@ void main() {
 
       final result = editor.toString();
       // XML encodes special characters like & to &amp;
-      expect(result, contains('Camera access &amp; photo taking (requires permission)'));
+      expect(
+        result,
+        contains('Camera access &amp; photo taking (requires permission)'),
+      );
     });
 
     test('detects NS usage description keys correctly', () {
@@ -895,14 +919,20 @@ void main() {
       expect(editor.isNSUsageDesc('CFBundleName'), false);
       expect(editor.isNSUsageDesc('SomeRandomKey'), false);
       expect(editor.isNSUsageDesc('NSCameraPermission'), false);
-      expect(editor.isNSUsageDesc('NSUsageDescription'), true); // Matches the pattern
+      expect(
+        editor.isNSUsageDesc('NSUsageDescription'),
+        true,
+      ); // Matches the pattern
     });
 
     test('handles whitespace in key detection', () {
       final editor = PListEditor('<plist></plist>');
 
       expect(editor.isNSUsageDesc('  NSCameraUsageDescription  '), true);
-      expect(editor.isNSUsageDesc('\tNSLocationWhenInUseUsageDescription\t'), true);
+      expect(
+        editor.isNSUsageDesc('\tNSLocationWhenInUseUsageDescription\t'),
+        true,
+      );
     });
   });
 }
