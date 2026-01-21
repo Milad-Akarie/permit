@@ -30,7 +30,8 @@ List<T> multiSelect<T>(
   required String Function(T) display,
 }) {
   final selection = MultiSelect.withTheme(
-    prompt: '$message ${Logger.mutedPen.write('(↑↓ navigate, space to select)')}',
+    prompt:
+        '$message ${Logger.mutedPen.write('(↑↓ navigate, space to select)')}',
     options: List.of(options.map(display)),
     theme: checkboxTheme,
   ).interact();
