@@ -1,5 +1,4 @@
 test/
-example/
 build/
 coverage/
 .dart_tool/

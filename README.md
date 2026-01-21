@@ -347,26 +347,23 @@ E.g after adding camera permission with code generation:
 import 'package:permit_plugin/permit.dart';
 
 // check permission status
-final status = await
-Permit.camera.status;
+final status = await Permit.camera.status;
 
-switch
-(
-status){
-case PermissionStatus.denied:
-// Permission was denied or not yet requested.
-case PermissionStatus.granted:
-//  Permission was granted.
-case PermissionStatus.restricted:
-//  Permission is restricted (iOS only).
-case PermissionStatus.limited:
-//  Permission is limited (iOS only).
-case PermissionStatus.permanentlyDenied:
-//  Permission is permanently denied, user must enable it from settings.
-case PermissionStatus.provisional:
-// Permission is provisional (iOS only).
-case PermissionStatus.notApplicable:
-// Permission is not applicable for this platform, either not supported or not added in config files.
+switch(status){
+    case PermissionStatus.denied:
+    // Permission was denied or not yet requested.
+    case PermissionStatus.granted:
+    //  Permission was granted.
+    case PermissionStatus.restricted:
+    //  Permission is restricted (iOS only).
+    case PermissionStatus.limited:
+    //  Permission is limited (iOS only).
+    case PermissionStatus.permanentlyDenied:
+    //  Permission is permanently denied, user must enable it from settings.
+    case PermissionStatus.provisional:
+    // Permission is provisional (iOS only).
+    case PermissionStatus.notApplicable:
+    // Permission is not applicable for this platform, either not supported or not added in config files.
 }
 
 // request permission
