@@ -335,7 +335,8 @@ Rebuilds runtime permission code based on the current platform permission metada
 
 ```xml
 <!--@permit:code-->
-<key>NSCameraUsageDescription</key><string>This app requires camera access to take photos.</string>
+<key>NSCameraUsageDescription</key>
+<string>This app requires camera access to take photos.</string>
 ```
 
 ### Generated Code
@@ -363,7 +364,8 @@ switch(status){
     case PermissionStatus.provisional:
     // Permission is provisional (iOS only).
     case PermissionStatus.notApplicable:
-    // Permission is not applicable for this platform, either not supported or not added in config files.
+    // Permission is not applicable for this platform, 
+    // either not supported or not added in config files.
 }
 
 // request permission
