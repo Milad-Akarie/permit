@@ -26,15 +26,12 @@ A command-line tool for managing permissions in Flutter projects.
 `permit` simplifies adding, removing, and listing permissions in `AndroidManifest.xml` and
 `Info.plist`.
 
----
 
 ## Installation
 
 ```bash
 dart pub global activate permit
 ```
-
----
 
 ## Motivation & Features
 
@@ -52,15 +49,11 @@ dart pub global activate permit
 * **Zero external dependencies**: generates a local plugin you own and control—no third-party
   versioning issues.
 
----
-
 ## Usage
 
 ```bash
 permit <command> [options]
 ```
-
----
 
 ## `add` Command
 
@@ -155,7 +148,6 @@ This will:
 * Hot-restart or rebuild after plugin updates
 * Add command updates existing keys, you can use it to update usage descriptions as well
 
----
 
 ## `remove` Command
 
@@ -211,8 +203,6 @@ Select which permissions to remove ›
 [ ] iOS: NSMicrophoneUsageDescription
 ```
 
----
-
 ## `list` Command
 
 ```bash
@@ -247,8 +237,6 @@ iOS: Usage Descriptions (2):
 ```bash
 permit list -a
 ```
-
----
 
 ## `localize` Command (iOS only)
 
@@ -298,8 +286,6 @@ permit localize fr de
 ```
 
 Creates French and German localization files if they don’t already exist.
-
----
 
 ## `build` Command
 
@@ -380,8 +366,6 @@ final shouldShowRationale = await Permit.microphone.shouldShowRequestRationale;
 // open app settings
 final wasOpened = await Permit.openSettings();
 ```
-
----
 
 ## Support Permit
 
