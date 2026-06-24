@@ -606,7 +606,7 @@ void main() {
           },
         );
 
-        runZoned(
+        await runZoned(
           () async => runner.run(['localize']),
           zoneSpecification: spec,
         ).catchError((error, stack) {
@@ -1175,7 +1175,7 @@ void main() {
           },
         );
 
-        runZoned(
+        await runZoned(
           () async => runner.run(['localize']),
           zoneSpecification: spec,
         ).catchError((error, stack) {
