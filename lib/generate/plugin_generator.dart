@@ -9,7 +9,7 @@ import 'package:permit/generate/templates/android/plugin_gradle_temp.dart';
 import 'package:permit/generate/templates/android/plugin_kotlin_class_temp.dart';
 import 'package:permit/generate/templates/android/plugin_manifest_temp.dart';
 import 'package:permit/generate/templates/ios/handlers/swift_handler_snippet.dart';
-import 'package:permit/generate/templates/ios/plugin_pod_temp.dart';
+import 'package:permit/generate/templates/ios/plugin_package_swift_temp.dart';
 import 'package:permit/generate/templates/ios/plugin_privacy_manifest.dart';
 import 'package:permit/generate/templates/ios/plugin_swift_class_temp.dart';
 import 'package:permit/generate/templates/plugin_dart_temp.dart';
@@ -119,7 +119,7 @@ class PluginGenerator {
     final swiftHandlers = _getSwiftHandlers();
     if (swiftHandlers.isNotEmpty) {
       templates.addAll([
-        PluginPodTemp(),
+        PluginPackageSwiftTemp(),
         PluginPrivacyManifestTemp(),
         PluginSwiftClassTemp(List.of(swiftHandlers)),
       ]);

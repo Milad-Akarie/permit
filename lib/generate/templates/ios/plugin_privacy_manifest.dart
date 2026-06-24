@@ -1,14 +1,21 @@
+import 'package:permit/generate/templates/constants.dart';
 import 'package:permit/generate/templates/template.dart';
 
 /// Template for generating the iOS PrivacyInfo.xcprivacy file for a plugin package.
 ///
 /// This file is required to comply with Apple's privacy requirements.
+/// Lives next to the Swift sources so SwiftPM's `.process` resource rule
+/// can pick it up.
 class PluginPrivacyManifestTemp extends Template {
   /// Constructor for [PluginPrivacyManifestTemp].
-  const PluginPrivacyManifestTemp();
+  const PluginPrivacyManifestTemp({this.pluginName = kDartPackageName});
+
+  /// The snake_case name of the plugin package — used to build the SwiftPM
+  /// source directory path.
+  final String pluginName;
 
   @override
-  String get path => 'ios/Resources/PrivacyInfo.xcprivacy';
+  String get path => 'ios/$pluginName/Sources/$pluginName/PrivacyInfo.xcprivacy';
 
   @override
   String generate() {
