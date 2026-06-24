@@ -7,6 +7,7 @@ class PluginPubspecTemp extends Template {
   /// Constructor for [PluginPubspecTemp].
   PluginPubspecTemp({
     this.dartConstraint = kDefaultDartConstraint,
+    this.flutterConstraint = kDefaultFlutterConstraint,
     this.packageName = kDartPackageName,
     this.androidPackageName = kAndroidPackageName,
     this.android = true,
@@ -15,6 +16,10 @@ class PluginPubspecTemp extends Template {
 
   /// The Dart SDK constraint to use.
   final String dartConstraint;
+
+  /// The Flutter SDK constraint to use. Required for Swift Package Manager
+  /// support on iOS.
+  final String flutterConstraint;
 
   /// The name of the package.
   final String packageName;
@@ -41,6 +46,7 @@ class PluginPubspecTemp extends Template {
       'version': '1.0.0+1',
       'environment': {
         'sdk': dartConstraint,
+        'flutter': flutterConstraint,
       },
       'dependencies': {
         'flutter': {'sdk': 'flutter'},

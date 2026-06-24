@@ -139,19 +139,21 @@ void main() {
     });
 
     group('PluginManifestTemp', () {
-      test('should generate AndroidManifest.xml with default package', () {
-        final template = PluginManifestTemp();
-        final content = template.generate();
+      test(
+        'should generate AndroidManifest.xml without the deprecated package attribute',
+        () {
+          // AGP 9 forbids `package` on <manifest>; namespace is set in gradle.
+          final template = PluginManifestTemp();
+          final content = template.generate();
 
-        expect(content, contains('package="$kAndroidPackageName"'));
-      });
-
-      test('should generate AndroidManifest.xml with custom package', () {
-        final template = PluginManifestTemp(packageName: 'com.custom.manifest');
-        final content = template.generate();
-
-        expect(content, contains('package="com.custom.manifest"'));
-      });
+          expect(content, contains('<manifest'));
+          expect(content, isNot(contains('package=')));
+          expect(
+            content,
+            contains('xmlns:android="http://schemas.android.com/apk/res/android"'),
+          );
+        },
+      );
 
       test('should have correct path', () {
         final template = PluginManifestTemp();

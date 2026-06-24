@@ -10,7 +10,8 @@ import 'package:permit/generate/templates/template.dart';
 /// Uses the provided [handlers] to generate the necessary code for each permission handler.
 class PluginSwiftClassTemp extends Template {
   @override
-  String get path => 'ios/Classes/PermitPlugin.swift';
+  String get path =>
+      'ios/$pluginName/Sources/$pluginName/PermitPlugin.swift';
 
   /// The list of permission handler snippets to include.
   final List<SwiftHandlerSnippet> handlers;
@@ -18,8 +19,16 @@ class PluginSwiftClassTemp extends Template {
   /// The method channel name to use.
   final String channelName;
 
+  /// The snake_case name of the plugin package — used to build the SwiftPM
+  /// source directory path.
+  final String pluginName;
+
   /// Default constructor for [PluginSwiftClassTemp].
-  PluginSwiftClassTemp(this.handlers, {this.channelName = kDefaultChannelName});
+  PluginSwiftClassTemp(
+    this.handlers, {
+    this.channelName = kDefaultChannelName,
+    this.pluginName = kDartPackageName,
+  });
 
   @override
   String generate() {

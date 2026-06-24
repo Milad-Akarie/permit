@@ -121,6 +121,17 @@ class LocalizePermissionsCommand extends PermitCommand {
     }
 
     if (await isXcodeprojInstalled() != true) {
+      // Skip the interactive prompt when there is no terminal attached
+      // (CI, test harness, piped stdin) — would otherwise hang forever
+      // waiting on `Input.interact()`.
+      if (!stdin.hasTerminal) {
+        Logger.error(
+          'xcodeproj gem is required to add localization references. '
+          'Install it with: gem install xcodeproj',
+        );
+        return;
+      }
+
       // prompt to try install
       final installIt = prompt(
         'xcodeproj gem is not installed. try to install it now? [y/N]: ',

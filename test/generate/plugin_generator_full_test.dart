@@ -100,7 +100,10 @@ dependencies:
       // Check iOS generated code
       final iosDir = Directory('${pluginDir.path}/ios');
       expect(iosDir.existsSync(), isTrue);
-      expect(File('${iosDir.path}/permit_plugin.podspec').existsSync(), isTrue);
+      expect(
+        File('${iosDir.path}/permit_plugin/Package.swift').existsSync(),
+        isTrue,
+      );
       // Swift class (Camera handler code generated)
       final swiftFiles = iosDir
           .listSync(recursive: true)
